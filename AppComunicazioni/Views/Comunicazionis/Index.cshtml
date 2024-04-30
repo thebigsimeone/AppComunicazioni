@@ -1,0 +1,97 @@
+﻿@model IEnumerable<AppComunicazioni.Models.Comunicazioni>
+
+@{
+    ViewData["Title"] = "Comunicazioni";
+}
+
+<h1>Comunicazioni</h1>
+
+<p>
+    <a class="btn btn-outline-primary" asp-action="Create">Crea nuova comunicazione</a>
+</p>
+<table class="table table-hover" id="comunicazioniTable">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.FileName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DateA)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DateF)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NProtocol)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NsProtocol)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            loadComunicazioni(1); // Carica la prima pagina all'avvio
+        });
+
+        function loadComunicazioni(pageNumber) {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetComunicazionis", "Comunicazionis")' + `?pageNumber=${pageNumber}&pageSize=5`,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    $("#comunicazioniTable tbody").empty();
+                    $.each(response.comunicazioni, function (index, item) {
+                        var row = `<tr>
+                                            <td>${item.fileName}</td>
+                                            <td>${item.dateA}</td>
+                                            <td>${item.dateF}</td>
+                                            <td>${item.nProtocol}</td>
+                                            <td>${item.nsProtocol}</td>
+                                            <td>
+                                                <a href='/Comunicazionis/Edit/${item.id}' class="text-primary">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </a> |
+                                                <a href='/Comunicazionis/Details/${item.id}' class="text-info">
+                                                    <i class="bi bi-info-circle-fill"></i>
+                                                </a> |
+                                                <a href='/Comunicazionis/Delete/${item.id}' class="text-danger">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                </a>
+                                            </td>
+                                        </tr>`;
+                        $("#comunicazioniTable tbody").append(row);
+                    });
+
+                    // Aggiorna i controlli di navigazione
+                    updatePaginationControls(response.currentPage, response.totalPages);
+                },
+                error: function (errormessage) {
+                    alert("An error has occurred while loading data");
+                }
+            });
+        }
+
+        function updatePaginationControls(currentPage, totalPages) {
+            var paginationContainer = $('#paginationControls');
+            paginationContainer.empty(); // Pulisci i vecchi controlli
+            for (let i = 1; i <= totalPages; i++) {
+                var pageLink = $(`<a href="#" onclick="loadComunicazioni(${i});return false;">${i}</a> `);
+                if (i === currentPage) {
+                    pageLink.css('font-weight', 'bold');
+                }
+                paginationContainer.append(pageLink);
+            }
+        }
+    </script>
+}
+
+<div id="paginationControls"></div>
+

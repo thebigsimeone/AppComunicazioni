@@ -1,0 +1,194 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using AppComunicazioni.Data;
+using AppComunicazioni.Models;
+using AutoMapper;
+using apiSanges.Service;
+using AppComunicazioni.Models.DTO_s;
+
+namespace AppComunicazioni.Controllers
+{
+    public class ComunicazionisController : Controller
+    {
+        private readonly ComDbContext _context;
+        private IMapper _mapper;
+        private IEmailService _emailService;
+        private ILogger<ComunicazionisController> _logger;
+
+        public ComunicazionisController(ComDbContext context, IMapper mapper, IEmailService emailService, ILogger<ComunicazionisController> logger)
+        {
+            _context = context;
+            _mapper = mapper;
+            _emailService = emailService;
+            _logger = logger;
+        }
+
+        // GET: Comunicazionis
+        public async Task<IActionResult> Index()
+        {
+            return View(await _context.Comunicazionis.ToListAsync());
+        }
+
+        // GET: Comunicazionis/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var comunicazioni = await _context.Comunicazionis
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (comunicazioni == null)
+            {
+                return NotFound();
+            }
+
+            return View(comunicazioni);
+        }
+
+        // GET: Comunicazionis/Create
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        // POST: Comunicazionis/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Note")] ComunicazioniDTO comunicazioniDTO)
+        {
+            if (ModelState.IsValid)
+            {
+                var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
+                _context.Add(comunicazioni);
+                await _context.SaveChangesAsync();
+
+                var destinatari = await _context.Destinataris.ToListAsync();
+                if (destinatari == null || destinatari.Count == 0)
+                {
+                    _logger.LogWarning("Non ci sono destinatari");
+                }
+                else
+                {
+                    string subject = "E' STATA AGGIUNTA UNA NUOVA COMUNICAZIONE NELL'AREA COMUNICAZIONI";
+                    string message = $"<p>Il seguente file è stato aggiunto nell'area comunicazioni: {comunicazioni.FileName} <br>" +
+                        $"con il numero protocolli {comunicazioni.NProtocol} <br>" +
+                        $"e questi sono i protocolli da controllare {comunicazioni.NsProtocol}: <br>" +
+                        $"{comunicazioni.Note}" +
+                        $"<br>" +
+                        $"Cordiali saluti,<br>" +
+                        $"<br>" +
+                        $"Flavio Simeone</p>";
+
+                    foreach (var destinatario in destinatari)
+                    {
+                        try
+                        {
+                            await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
+                        }
+                    }
+                }
+
+                return RedirectToAction(nameof(Index));
+            }
+            return View(comunicazioniDTO);
+        }
+
+        // GET: Comunicazionis/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var comunicazioni = await _context.Comunicazionis.FindAsync(id);
+            if (comunicazioni == null)
+            {
+                return NotFound();
+            }
+            return View(comunicazioni);
+        }
+
+        // POST: Comunicazionis/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Note")] Comunicazioni comunicazioni)
+        {
+            if (id != comunicazioni.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(comunicazioni);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ComunicazioniExists(comunicazioni.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            return View(comunicazioni);
+        }
+
+        // GET: Comunicazionis/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var comunicazioni = await _context.Comunicazionis
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (comunicazioni == null)
+            {
+                return NotFound();
+            }
+
+            return View(comunicazioni);
+        }
+
+        // POST: Comunicazionis/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var comunicazioni = await _context.Comunicazionis.FindAsync(id);
+            if (comunicazioni != null)
+            {
+                _context.Comunicazionis.Remove(comunicazioni);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool ComunicazioniExists(int id)
+        {
+            return _context.Comunicazionis.Any(e => e.Id == id);
+        }
+    }
+}

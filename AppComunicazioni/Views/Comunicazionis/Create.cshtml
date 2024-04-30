@@ -1,0 +1,61 @@
+﻿@model AppComunicazioni.Models.Comunicazioni
+
+@{
+    ViewData["Title"] = "Crea";
+}
+
+<h1>Crea</h1>
+
+<h4>Comunicazione</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="FileName" class="control-label">Nome file</label>
+                <input asp-for="FileName" class="form-control" />
+                <span asp-validation-for="FileName" class="text-danger"></span>
+            </div>
+            <div class="form-group ">
+                <label asp-for="DateA" class="control-label">Data di arrivo</label>
+                <input asp-for="DateA" class="form-control" />
+                <span asp-validation-for="DateA" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DateF" class="control-label">Data di smarco</label>
+                <input asp-for="DateF" class="form-control" />
+                <span asp-validation-for="DateF" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="NProtocol" class="control-label">Numero di protocolli</label>
+                <input asp-for="NProtocol" class="form-control" />
+                <span asp-validation-for="NProtocol" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="NsProtocol" class="control-label">Protocolli da rivedere</label>
+                <input asp-for="NsProtocol" class="form-control" />
+                <span asp-validation-for="NsProtocol" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Note" class="control-label"></label>
+                <textarea asp-for="Note" class="form-control"></textarea>
+                <span asp-validation-for="Note" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-outline-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a class="btn btn-outline-secondary" asp-action="Index">Indietro</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+
