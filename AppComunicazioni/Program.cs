@@ -21,17 +21,18 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddSingleton<IEmailService, EmailService>();
 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
+/*    app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "AppComunicazioni v1");
         c.RoutePrefix = "swagger";
-    });
+    });*/
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
