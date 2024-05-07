@@ -24,33 +24,27 @@ namespace AppComunicazioni.Controllers
         }
 
         // GET: Comunicazionis
-        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, int pageNumber = 1)
         {
-            IQueryable<Comunicazioni> query = _context.Comunicazionis;
+            int pageSize = 10;
+            var query = _context.Comunicazionis.AsQueryable();
 
             if (startDate.HasValue)
-            {
-                query = query.Where(c => c.DateA >= startDate.Value);
-            }
-
+                query = query.Where(x => x.DateA >= startDate.Value);
             if (endDate.HasValue)
-            {
-                query = query.Where(c => c.DateF <= endDate.Value);
-            }
+                query = query.Where(x => x.DateF <= endDate.Value);
 
-            var totalRecords = await query.CountAsync();
-            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
-            var comunicazioni = await query
-                                    .OrderBy(c => c.DateA)
-                                    .Skip((pageNumber - 1) * pageSize)
-                                    .Take(pageSize)
-                                    .ToListAsync();
+            var totalItems = await query.CountAsync();
+            var items = await query.OrderBy(x => x.DateA)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             var model = new ComunicazioniViewModel
             {
-                Comunicazioni = comunicazioni,
+                Comunicazioni = items,
                 CurrentPage = pageNumber,
-                TotalPages = totalPages,
+                TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
                 StartDate = startDate,
                 EndDate = endDate
             };
@@ -58,21 +52,12 @@ namespace AppComunicazioni.Controllers
             return View(model);
         }
 
-    // GET: Comunicazionis/Details/5
-    public async Task<IActionResult> Details(int? id)
+        // GET: Comunicazionis/Details/5
+        public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var comunicazioni = await _context.Comunicazionis
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (comunicazioni == null)
-            {
-                return NotFound();
-            }
-
+            if (id == null) return NotFound();
+            var comunicazioni = await _context.Comunicazionis.FindAsync(id);
+            if (comunicazioni == null) return NotFound();
             return View(comunicazioni);
         }
 

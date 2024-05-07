@@ -41,7 +41,9 @@
         @foreach (var item in Model.Comunicazioni)
         {
             <tr>
-                <td>@Html.DisplayFor(modelItem => item.FileName)</td>
+                <td>
+                    <a class="btn btn-outline-info" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
+                </td>
                 <td>@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
                 <td>@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>
                 <td>@item.NProtocol</td>
@@ -49,7 +51,7 @@
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id" class="text-primary">
                         <i class="bi bi-pencil-square"></i>
-                    </a>
+                    </a> |
                     <a asp-action="Delete" asp-route-id="@item.Id" class="text-danger">
                         <i class="bi bi-trash-fill"></i>
                     </a>
