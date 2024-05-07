@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+﻿using apiSanges.Service;
 using AppComunicazioni.Data;
 using AppComunicazioni.Models;
-using AutoMapper;
-using apiSanges.Service;
 using AppComunicazioni.Models.DTO_s;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AppComunicazioni.Controllers
 {
@@ -29,13 +24,42 @@ namespace AppComunicazioni.Controllers
         }
 
         // GET: Comunicazionis
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, int pageNumber = 1, int pageSize = 10)
         {
-            return View(await _context.Comunicazionis.ToListAsync());
+            IQueryable<Comunicazioni> query = _context.Comunicazionis;
+
+            if (startDate.HasValue)
+            {
+                query = query.Where(c => c.DateA >= startDate.Value);
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(c => c.DateF <= endDate.Value);
+            }
+
+            var totalRecords = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var comunicazioni = await query
+                                    .OrderBy(c => c.DateA)
+                                    .Skip((pageNumber - 1) * pageSize)
+                                    .Take(pageSize)
+                                    .ToListAsync();
+
+            var model = new ComunicazioniViewModel
+            {
+                Comunicazioni = comunicazioni,
+                CurrentPage = pageNumber,
+                TotalPages = totalPages,
+                StartDate = startDate,
+                EndDate = endDate
+            };
+
+            return View(model);
         }
 
-        // GET: Comunicazionis/Details/5
-        public async Task<IActionResult> Details(int? id)
+    // GET: Comunicazionis/Details/5
+    public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
             {

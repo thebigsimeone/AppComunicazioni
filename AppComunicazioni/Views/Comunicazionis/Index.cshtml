@@ -1,4 +1,4 @@
-﻿@model IEnumerable<AppComunicazioni.Models.Comunicazioni>
+﻿@model AppComunicazioni.Models.ComunicazioniViewModel
 
 @{
     ViewData["Title"] = "Comunicazioni";
@@ -10,109 +10,62 @@
     <a class="btn btn-outline-primary" asp-action="Create">Crea nuova comunicazione</a>
 </p>
 
-<div class="row mb-3">
-    <div class="col">
-        <label for="startDate">Da:</label>
-        <input type="date" id="startDate" class="form-control">
+<form asp-action="Index" method="get">
+    <div class="row mb-3">
+        <div class="col">
+            <label for="startDate">Da:</label>
+            <input type="date" name="startDate" class="form-control" value="@Model.StartDate?.ToString("yyyy-MM-dd")">
+        </div>
+        <div class="col">
+            <label for="endDate">A:</label>
+            <input type="date" name="endDate" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")">
+        </div>
+        <div class="col-auto align-self-end">
+            <button type="submit" class="btn btn-primary">Filtra</button>
+        </div>
     </div>
-    <div class="col">
-        <label for="endDate">A:</label>
-        <input type="date" id="endDate" class="form-control">
-    </div>
-    <div class="col-auto align-self-end">
-        <button class="btn btn-primary" onclick="loadComunicazioni(1);">Filtra</button>
-    </div>
-</div>
-<table class="table table-hover" id="comunicazioniTable">
+</form>
+
+<table class="table table-hover">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.FileName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DateA)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DateF)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.NProtocol)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.NsProtocol)
-            </th>
-
-            <th></th>
+            <th>@Html.DisplayNameFor(m => m.Comunicazioni.First().FileName)</th>
+            <th>@Html.DisplayNameFor(m => m.Comunicazioni.First().DateA)</th>
+            <th>@Html.DisplayNameFor(m => m.Comunicazioni.First().DateF)</th>
+            <th>@Html.DisplayNameFor(m => m.Comunicazioni.First().NProtocol)</th>
+            <th>@Html.DisplayNameFor(m => m.Comunicazioni.First().NsProtocol)</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
+        @foreach (var item in Model.Comunicazioni)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.FileName)</td>
+                <td>@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
+                <td>@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>
+                <td>@item.NProtocol</td>
+                <td>@item.NsProtocol</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="text-primary">
+                        <i class="bi bi-pencil-square"></i>
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="text-danger">
+                        <i class="bi bi-trash-fill"></i>
+                    </a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
 
-@section Scripts {
-    <script>
-        $(document).ready(function () {
-            loadComunicazioni(1); // Carica la prima pagina all'avvio
-        });
-
-        function formatDate(dateString) {
-            var date = new Date(dateString);
-            var day = ("0" + date.getDate()).slice(-2);
-            var month = ("0" + (date.getMonth() + 1)).slice(-2);
-            var year = date.getFullYear();
-            var hours = ("0" + date.getHours()).slice(-2);
-            var minutes = ("0" + date.getMinutes()).slice(-2);
-            return `${day}/${month}/${year} | ${hours}:${minutes}`;
+<nav aria-label="Page navigation example">
+    <ul class="pagination">
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">@i</a>
+            </li>
         }
-
-        function loadComunicazioni(pageNumber) {
-            var startDate = $('#startDate').val();
-            var endDate = $('#endDate').val();
-            $.ajax({
-                type: "GET",
-                url: `@Url.Action("GetComunicazionis", "Comunicazionis")?pageNumber=${pageNumber}&pageSize=5&startDate=${startDate}&endDate=${endDate}`,
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
-                success: function (response) {
-                    $("#comunicazioniTable tbody").empty();
-                    $.each(response.comunicazioni, function (index, item) {
-                        var row = `<tr>
-                                        <td><a class="btn btn-outline-info" href='/Comunicazionis/Details/${item.id}'>${item.fileName}</a></td>
-                                        <td>${formatDate(item.dateA)}</td>
-                                        <td>${formatDate(item.dateF)}</td>
-                                        <td>${item.nProtocol}</td>
-                                        <td>${item.nsProtocol}</td>
-                                        <td>
-                                            <a href='/Comunicazionis/Edit/${item.id}' class="text-primary">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </a> |
-                                            <a href='/Comunicazionis/Delete/${item.id}' class="text-danger">
-                                                <i class="bi bi-trash-fill"></i>
-                                            </a>
-                                        </td>
-                                    </tr>`;
-                        $("#comunicazioniTable tbody").append(row);
-                    });
-                    updatePaginationControls(response.currentPage, response.totalPages);
-                },
-                error: function (errormessage) {
-                    alert("An error has occurred while loading data");
-                }
-            });
-        }
-
-        function updatePaginationControls(currentPage, totalPages) {
-            var paginationContainer = $('#paginationControls');
-            paginationContainer.empty(); // Pulisci i vecchi controlli
-            for (let i = 1; i <= totalPages; i++) {
-                var pageLink = $(`<a href="#" onclick="loadComunicazioni(${i});return false;">${i}</a> `);
-                if (i === currentPage) {
-                    pageLink.css('font-weight', 'bold');
-                }
-                paginationContainer.append(pageLink);
-            }
-        }
-    </script>
-}
-
-<div id="paginationControls"></div>
+    </ul>
+</nav>
