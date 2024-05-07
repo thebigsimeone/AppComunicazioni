@@ -12,20 +12,26 @@ public partial class Comunicazioni
 
     [Column("file_name")]
     [StringLength(50)]
+    [Display(Name = "Nome file")]
     public string? FileName { get; set; }
 
     [Column("date_a", TypeName = "datetime")]
+    [Display(Name = "Data di arrivo")]
     public DateTime? DateA { get; set; }
 
     [Column("date_f", TypeName = "datetime")]
+    [Display(Name = "Data di fine smarco")]
     public DateTime? DateF { get; set; }
 
     [Column("n_protocol")]
+    [Display(Name = "Numero protocolli")]
     public int? NProtocol { get; set; }
 
     [Column("ns_protocol")]
+    [Display(Name = "Protocolli da rivedere")]
     public int? NsProtocol { get; set; }
 
     [Column("note")]
+    [Display(Name = "Note")]
     public string? Note { get; set; }
 }

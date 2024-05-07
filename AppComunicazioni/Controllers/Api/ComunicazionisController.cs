@@ -27,15 +27,26 @@ namespace AppComunicazioni.Controllers.Api
 
         // GET: api/Comunicazionis
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ComunicazioniDTO>>> GetComunicazionis(int pageNumber = 1, int pageSize = 10)
+        public async Task<ActionResult<IEnumerable<ComunicazioniDTO>>> GetComunicazionis(int pageNumber = 1, int pageSize = 10, DateTime? startDate = null, DateTime? endDate = null)
         {
-            var comunicazioni = await _context.Comunicazionis
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            IQueryable<Comunicazioni> query = _context.Comunicazionis;
 
-            var totalRecords = await _context.Comunicazionis.CountAsync();
+            if (startDate.HasValue)
+            {
+                query = query.Where(x => x.DateA >= startDate.Value);
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(x => x.DateF <= endDate.Value);
+            }
+
+            var totalRecords = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var comunicazioni = await query
+                                    .Skip((pageNumber - 1) * pageSize)
+                                    .Take(pageSize)
+                                    .ToListAsync();
 
             return Ok(new
             {

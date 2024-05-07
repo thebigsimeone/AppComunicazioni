@@ -9,6 +9,20 @@
 <p>
     <a class="btn btn-outline-primary" asp-action="Create">Crea nuova comunicazione</a>
 </p>
+
+<div class="row mb-3">
+    <div class="col">
+        <label for="startDate">Da:</label>
+        <input type="date" id="startDate" class="form-control">
+    </div>
+    <div class="col">
+        <label for="endDate">A:</label>
+        <input type="date" id="endDate" class="form-control">
+    </div>
+    <div class="col-auto align-self-end">
+        <button class="btn btn-primary" onclick="loadComunicazioni(1);">Filtra</button>
+    </div>
+</div>
 <table class="table table-hover" id="comunicazioniTable">
     <thead>
         <tr>
@@ -27,6 +41,7 @@
             <th>
                 @Html.DisplayNameFor(model => model.NsProtocol)
             </th>
+
             <th></th>
         </tr>
     </thead>
@@ -41,36 +56,33 @@
         });
 
         function loadComunicazioni(pageNumber) {
+            var startDate = $('#startDate').val();
+            var endDate = $('#endDate').val();
             $.ajax({
                 type: "GET",
-                url: '@Url.Action("GetComunicazionis", "Comunicazionis")' + `?pageNumber=${pageNumber}&pageSize=5`,
+                url: `@Url.Action("GetComunicazionis", "Comunicazionis")?pageNumber=${pageNumber}&pageSize=5&startDate=${startDate}&endDate=${endDate}`,
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (response) {
                     $("#comunicazioniTable tbody").empty();
                     $.each(response.comunicazioni, function (index, item) {
                         var row = `<tr>
-                                            <td>${item.fileName}</td>
-                                            <td>${item.dateA}</td>
-                                            <td>${item.dateF}</td>
-                                            <td>${item.nProtocol}</td>
-                                            <td>${item.nsProtocol}</td>
-                                            <td>
-                                                <a href='/Comunicazionis/Edit/${item.id}' class="text-primary">
-                                                    <i class="bi bi-pencil-square"></i>
-                                                </a> |
-                                                <a href='/Comunicazionis/Details/${item.id}' class="text-info">
-                                                    <i class="bi bi-info-circle-fill"></i>
-                                                </a> |
-                                                <a href='/Comunicazionis/Delete/${item.id}' class="text-danger">
-                                                    <i class="bi bi-trash-fill"></i>
-                                                </a>
-                                            </td>
-                                        </tr>`;
+                                        <td><a class="btn btn-outline-info" href='/Comunicazionis/Details/${item.id}'>${item.fileName}</a></td>
+                                        <td>${item.dateA}</td>
+                                        <td>${item.dateF}</td>
+                                        <td>${item.nProtocol}</td>
+                                        <td>${item.nsProtocol}</td>
+                                        <td>
+                                            <a href='/Comunicazionis/Edit/${item.id}' class="text-primary">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a> |
+                                            <a href='/Comunicazionis/Delete/${item.id}' class="text-danger">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </a>
+                                        </td>
+                                    </tr>`;
                         $("#comunicazioniTable tbody").append(row);
                     });
-
-                    // Aggiorna i controlli di navigazione
                     updatePaginationControls(response.currentPage, response.totalPages);
                 },
                 error: function (errormessage) {
@@ -78,6 +90,7 @@
                 }
             });
         }
+
 
         function updatePaginationControls(currentPage, totalPages) {
             var paginationContainer = $('#paginationControls');
@@ -94,4 +107,3 @@
 }
 
 <div id="paginationControls"></div>
-
