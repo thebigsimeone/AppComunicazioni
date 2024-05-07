@@ -17,10 +17,12 @@ public partial class Comunicazioni
 
     [Column("date_a", TypeName = "datetime")]
     [Display(Name = "Data di arrivo")]
+    [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy | HH:mm}", ApplyFormatInEditMode = true)]
     public DateTime? DateA { get; set; }
 
     [Column("date_f", TypeName = "datetime")]
     [Display(Name = "Data di fine smarco")]
+    [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy | HH:mm}", ApplyFormatInEditMode = true)]
     public DateTime? DateF { get; set; }
 
     [Column("n_protocol")]

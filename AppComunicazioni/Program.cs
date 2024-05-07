@@ -24,6 +24,14 @@ builder.Services.AddSingleton<IEmailService, EmailService>();
 
 var app = builder.Build();
 
+var supportedCultures = new[] { "it-IT" };
+var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
+                                                          .AddSupportedCultures(supportedCultures)
+                                                          .AddSupportedUICultures(supportedCultures);
+
+app.UseRequestLocalization(localizationOptions);
+
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

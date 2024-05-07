@@ -38,7 +38,7 @@ namespace AppComunicazioni.Controllers.Api
 
             if (endDate.HasValue)
             {
-                query = query.Where(x => x.DateF <= endDate.Value);
+                query = query.Where(x => x.DateA <= endDate.Value);
             }
 
             var totalRecords = await query.CountAsync();

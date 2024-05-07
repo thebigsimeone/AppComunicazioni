@@ -55,6 +55,16 @@
             loadComunicazioni(1); // Carica la prima pagina all'avvio
         });
 
+        function formatDate(dateString) {
+            var date = new Date(dateString);
+            var day = ("0" + date.getDate()).slice(-2);
+            var month = ("0" + (date.getMonth() + 1)).slice(-2);
+            var year = date.getFullYear();
+            var hours = ("0" + date.getHours()).slice(-2);
+            var minutes = ("0" + date.getMinutes()).slice(-2);
+            return `${day}/${month}/${year} | ${hours}:${minutes}`;
+        }
+
         function loadComunicazioni(pageNumber) {
             var startDate = $('#startDate').val();
             var endDate = $('#endDate').val();
@@ -68,8 +78,8 @@
                     $.each(response.comunicazioni, function (index, item) {
                         var row = `<tr>
                                         <td><a class="btn btn-outline-info" href='/Comunicazionis/Details/${item.id}'>${item.fileName}</a></td>
-                                        <td>${item.dateA}</td>
-                                        <td>${item.dateF}</td>
+                                        <td>${formatDate(item.dateA)}</td>
+                                        <td>${formatDate(item.dateF)}</td>
                                         <td>${item.nProtocol}</td>
                                         <td>${item.nsProtocol}</td>
                                         <td>
@@ -90,7 +100,6 @@
                 }
             });
         }
-
 
         function updatePaginationControls(currentPage, totalPages) {
             var paginationContainer = $('#paginationControls');
