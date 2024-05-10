@@ -26,8 +26,8 @@ namespace apiSanges.Service
             using var smtp = new SmtpClient();
             
             await smtp.ConnectAsync(emailSettings["MailServer"], emailSettings.GetValue<int>("MailPort"), SecureSocketOptions.StartTls);
-            var Password = Environment.GetEnvironmentVariable("BREVO_PASS");
-            await smtp.AuthenticateAsync(emailSettings["Sender"], Password);
+            //var Password = Environment.GetEnvironmentVariable("BREVO_PASS");
+            await smtp.AuthenticateAsync(emailSettings["Sender"], emailSettings["Password"]);
             await smtp.SendAsync(email);
             await smtp.DisconnectAsync(true);
         }
