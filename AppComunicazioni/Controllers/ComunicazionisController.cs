@@ -78,6 +78,7 @@ namespace AppComunicazioni.Controllers
                 _context.Add(comunicazioni);
                 await _context.SaveChangesAsync();
 
+                bool emailSuccess = true;
                 var destinatari = await _context.Destinataris.ToListAsync();
                 if (destinatari == null || destinatari.Count == 0)
                 {
@@ -104,10 +105,12 @@ namespace AppComunicazioni.Controllers
                         catch (Exception ex)
                         {
                             _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
+                            emailSuccess = false;
                         }
                     }
                 }
 
+                TempData["Message"] = emailSuccess ? "Comunicazione creata e email inviate con successo." : "Comunicazione creata, ma l'invio delle email è fallito.";
                 return RedirectToAction(nameof(Index));
             }
             return View(comunicazioniDTO);
