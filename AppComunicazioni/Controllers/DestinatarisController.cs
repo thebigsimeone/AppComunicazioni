@@ -7,16 +7,20 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using AppComunicazioni.Data;
 using AppComunicazioni.Models;
+using AppComunicazioni.Models.DTO_s;
+using AutoMapper;
 
 namespace AppComunicazioni.Controllers
 {
     public class DestinatarisController : Controller
     {
         private readonly ComDbContext _context;
+        private readonly IMapper _mapper;
 
-        public DestinatarisController(ComDbContext context)
+        public DestinatarisController(ComDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: Destinataris
@@ -39,8 +43,8 @@ namespace AppComunicazioni.Controllers
             {
                 return NotFound();
             }
-
-            return View(destinatari);
+            var destinatariDTO = _mapper.Map<DestinatariDTO>(destinatari);
+            return View(destinatariDTO);
         }
 
         // GET: Destinataris/Create
@@ -50,19 +54,18 @@ namespace AppComunicazioni.Controllers
         }
 
         // POST: Destinataris/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Destinatario")] Destinatari destinatari)
+        public async Task<IActionResult> Create([Bind("Id,Destinatario")] DestinatariDTO destinatariDTO)
         {
             if (ModelState.IsValid)
             {
+                var destinatari = _mapper.Map<Destinatari>(destinatariDTO);
                 _context.Add(destinatari);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(destinatari);
+            return View(destinatariDTO);
         }
 
         // GET: Destinataris/Edit/5
@@ -78,16 +81,16 @@ namespace AppComunicazioni.Controllers
             {
                 return NotFound();
             }
-            return View(destinatari);
+            var destinatariDTO = _mapper.Map<DestinatariDTO>(destinatari);
+            return View(destinatariDTO);
         }
 
         // POST: Destinataris/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Destinatario")] Destinatari destinatari)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Destinatario")] DestinatariDTO destinatariDTO)
         {
+            var destinatari = _mapper.Map<Destinatari>(destinatariDTO);
             if (id != destinatari.Id)
             {
                 return NotFound();
@@ -113,7 +116,7 @@ namespace AppComunicazioni.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(destinatari);
+            return View(destinatariDTO);
         }
 
         // GET: Destinataris/Delete/5

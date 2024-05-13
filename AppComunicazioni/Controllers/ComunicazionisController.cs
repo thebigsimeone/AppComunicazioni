@@ -58,7 +58,8 @@ namespace AppComunicazioni.Controllers
             if (id == null) return NotFound();
             var comunicazioni = await _context.Comunicazionis.FindAsync(id);
             if (comunicazioni == null) return NotFound();
-            return View(comunicazioni);
+            var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
+            return View(comunicazioniDTO);
         }
 
         // GET: Comunicazionis/Create
@@ -129,29 +130,35 @@ namespace AppComunicazioni.Controllers
             {
                 return NotFound();
             }
-            return View(comunicazioni);
+            var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
+            return View(comunicazioniDTO);
         }
 
         // POST: Comunicazionis/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Note")] Comunicazioni comunicazioni)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Note")] ComunicazioniDTO comunicazioniDTO)
         {
-            if (id != comunicazioni.Id)
+            if (id != comunicazioniDTO.Id)
             {
                 return NotFound();
             }
 
             if (ModelState.IsValid)
             {
+                var comunicazioniToUpdate = await _context.Comunicazionis.FindAsync(id);
+                if (comunicazioniToUpdate == null)
+                {
+                    return NotFound();
+                }
+                _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
                 try
                 {
-                    _context.Update(comunicazioni);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ComunicazioniExists(comunicazioni.Id))
+                    if (!ComunicazioniExists(id))
                     {
                         return NotFound();
                     }
@@ -162,7 +169,7 @@ namespace AppComunicazioni.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(comunicazioni);
+            return View(comunicazioniDTO);
         }
 
         // GET: Comunicazionis/Delete/5
