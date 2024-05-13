@@ -15,5 +15,6 @@ public partial class Destinatari
 
     [Column("destinatario")]
     [StringLength(100)]
+    [Required(ErrorMessage = "Il campo Destinatario è obbligatorio.")]
     public string? Destinatario { get; set; }
 }
