@@ -27,9 +27,11 @@ namespace AppComunicazioni.Controllers
             return View();
         }
 
+        [HttpGet("/Error")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
+            _logger.LogError("Si è verificato un errore durante l'elaborazione della richiesta.");
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }

@@ -29,13 +29,15 @@ app.UseRequestLocalization(localizationOptions);
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    // Abilita HSTS per migliorare la sicurezza
+    app.UseExceptionHandler("/Error");
+    app.UseStatusCodePagesWithReExecute("/error/{0}");
     app.UseHsts();
 }
 else
-{
+{ 
     app.UseDeveloperExceptionPage();
+    app.UseExceptionHandler("/Error");
+    app.UseStatusCodePagesWithReExecute("/error/{0}");
 }
 
 app.UseStaticFiles();
