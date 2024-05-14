@@ -1,0 +1,18 @@
+﻿@model ErrorViewModel
+
+@{
+    ViewData["Title"] = "Error";
+}
+
+<h1 class="text-danger">Si è verificato un errore.</h1>
+<h2 class="text-secondary">Ops! Qualcosa è andato storto sul nostro lato.</h2>
+
+@if (Model.ShowRequestId)
+{
+    <p>
+        <strong>Request ID:</strong> @Model.RequestId
+    </p>
+}
+
+<p>Si prega di tornare indietro o contattare il supporto se il problema persiste.</p>
+

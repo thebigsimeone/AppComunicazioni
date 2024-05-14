@@ -27,14 +27,15 @@ var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(sup
 app.UseRequestLocalization(localizationOptions);
 
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
-} else
-{
     app.UseExceptionHandler("/Home/Error");
+    // Abilita HSTS per migliorare la sicurezza
     app.UseHsts();
+}
+else
+{
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseStaticFiles();
