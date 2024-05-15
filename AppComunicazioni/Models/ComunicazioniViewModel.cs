@@ -12,4 +12,6 @@ public class ComunicazioniViewModel
     public string SortField { get; set; } = "DateA";
     public string SortOrder { get; set; } = "asc";
 
+    public string? SearchTerm { get; set; }
+
 }

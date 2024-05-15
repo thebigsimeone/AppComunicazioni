@@ -25,11 +25,14 @@ namespace AppComunicazioni.Controllers
         }
 
         // GET: Comunicazionis
-        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, int pageNumber = 1, string sortField = "DateA", string sortOrder = "default")
+        public async Task<IActionResult> Index(string searchTerm, DateTime? startDate, DateTime? endDate, int pageNumber = 1, string sortField = "DateA", string sortOrder = "default")
         {
             int pageSize = 10;
             var query = _context.Comunicazionis.AsQueryable();
-
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(x => x.FileName.Contains(searchTerm));
+            }
             if (startDate.HasValue)
                 query = query.Where(x => x.DateA >= startDate.Value);
             if (endDate.HasValue)
@@ -60,7 +63,6 @@ namespace AppComunicazioni.Controllers
                     };
                     break;
                 default:
-                    // Default ordering by DateA
                     query = query.OrderBy(x => x.DateA);
                     break;
             }
@@ -76,7 +78,8 @@ namespace AppComunicazioni.Controllers
                 StartDate = startDate,
                 EndDate = endDate,
                 SortField = sortField,
-                SortOrder = sortOrder
+                SortOrder = sortOrder,
+                SearchTerm = searchTerm
             };
 
             return View(model);
