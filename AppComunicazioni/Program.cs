@@ -36,8 +36,6 @@ if (!app.Environment.IsDevelopment())
 else
 { 
     app.UseDeveloperExceptionPage();
-    app.UseExceptionHandler("/Error");
-    app.UseStatusCodePagesWithReExecute("/error/{0}");
 }
 
 app.UseStaticFiles();
