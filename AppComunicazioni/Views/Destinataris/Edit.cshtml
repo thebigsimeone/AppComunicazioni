@@ -13,9 +13,9 @@
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Destinatario" class="control-label"></label>
-                <input asp-for="Destinatario" class="form-control" />
+            <div class="form-floating mb-3">
+                <input asp-for="Destinatario" class="form-control" id="destinatario" placeholder="Destinatario">
+                <label asp-for="Destinatario">Destinatario</label>
                 <span asp-validation-for="Destinatario" class="text-danger"></span>
             </div>
             </br>

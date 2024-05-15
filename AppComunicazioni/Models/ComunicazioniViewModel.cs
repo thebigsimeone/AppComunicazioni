@@ -9,4 +9,7 @@ public class ComunicazioniViewModel
     public int TotalPages { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
+    public string SortField { get; set; } = "DateA";
+    public string SortOrder { get; set; } = "asc";
+
 }

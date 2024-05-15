@@ -27,10 +27,12 @@ public partial class Comunicazioni
 
     [Column("n_protocol")]
     [Display(Name = "Numero protocolli")]
+    [Range(0, int.MaxValue, ErrorMessage = "Il numero di protocolli non può essere negativo.")]
     public int? NProtocol { get; set; }
 
     [Column("ns_protocol")]
     [Display(Name = "Protocolli da rivedere")]
+    [Range(0, int.MaxValue, ErrorMessage = "Il numero di protocolli non può essere negativo.")]
     public int? NsProtocol { get; set; }
 
     [Column("note")]

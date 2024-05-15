@@ -25,11 +25,31 @@
 <table class="table table-hover">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(m => m.Comunicazioni.First().FileName)</th>
-            <th>@Html.DisplayNameFor(m => m.Comunicazioni.First().DateA)</th>
-            <th>@Html.DisplayNameFor(m => m.Comunicazioni.First().DateF)</th>
-            <th>@Html.DisplayNameFor(m => m.Comunicazioni.First().NProtocol)</th>
-            <th>@Html.DisplayNameFor(m => m.Comunicazioni.First().NsProtocol)</th>
+            <th>
+                <a asp-action="Index" asp-route-sortField="FileName" asp-route-sortOrder="@(Model.SortField == "FileName" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "FileName" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().FileName)
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortField="DateA" asp-route-sortOrder="@(Model.SortField == "DateA" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "DateA" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().DateA)
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortField="DateF" asp-route-sortOrder="@(Model.SortField == "DateF" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "DateF" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().DateF)
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortField="NProtocol" asp-route-sortOrder="@(Model.SortField == "NProtocol" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "NProtocol" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().NProtocol)
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortField="NsProtocol" asp-route-sortOrder="@(Model.SortField == "NsProtocol" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "NsProtocol" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().NsProtocol)
+                </a>
+            </th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -62,7 +82,7 @@
         @for (int i = 1; i <= Model.TotalPages; i++)
         {
             <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">@i</a>
+                <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">@i</a>
             </li>
         }
     </ul>

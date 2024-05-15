@@ -3,6 +3,7 @@ using AppComunicazioni.Data;
 using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
 using AutoMapper;
+using MailKit.Search;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,7 +25,7 @@ namespace AppComunicazioni.Controllers
         }
 
         // GET: Comunicazionis
-        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, int pageNumber = 1)
+        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, int pageNumber = 1, string sortField = "DateA", string sortOrder = "default")
         {
             int pageSize = 10;
             var query = _context.Comunicazionis.AsQueryable();
@@ -34,11 +35,38 @@ namespace AppComunicazioni.Controllers
             if (endDate.HasValue)
                 query = query.Where(x => x.DateF <= endDate.Value);
 
+            switch (sortOrder)
+            {
+                case "asc":
+                    query = sortField switch
+                    {
+                        "FileName" => query.OrderBy(x => x.FileName),
+                        "DateA" => query.OrderBy(x => x.DateA),
+                        "DateF" => query.OrderBy(x => x.DateF),
+                        "NProtocol" => query.OrderBy(x => x.NProtocol),
+                        "NsProtocol" => query.OrderBy(x => x.NsProtocol),
+                        _ => query.OrderBy(x => x.DateA)
+                    };
+                    break;
+                case "desc":
+                    query = sortField switch
+                    {
+                        "FileName" => query.OrderByDescending(x => x.FileName),
+                        "DateA" => query.OrderByDescending(x => x.DateA),
+                        "DateF" => query.OrderByDescending(x => x.DateF),
+                        "NProtocol" => query.OrderByDescending(x => x.NProtocol),
+                        "NsProtocol" => query.OrderByDescending(x => x.NsProtocol),
+                        _ => query.OrderByDescending(x => x.DateA)
+                    };
+                    break;
+                default:
+                    // Default ordering by DateA
+                    query = query.OrderBy(x => x.DateA);
+                    break;
+            }
+
             var totalItems = await query.CountAsync();
-            var items = await query.OrderBy(x => x.DateA)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
 
             var model = new ComunicazioniViewModel
             {
@@ -46,7 +74,9 @@ namespace AppComunicazioni.Controllers
                 CurrentPage = pageNumber,
                 TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
                 StartDate = startDate,
-                EndDate = endDate
+                EndDate = endDate,
+                SortField = sortField,
+                SortOrder = sortOrder
             };
 
             return View(model);
