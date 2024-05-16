@@ -2,19 +2,21 @@
 using AppComunicazioni.Data;
 using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
+using AppComunicazioni.Utility;
 using AutoMapper;
-using MailKit.Search;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace AppComunicazioni.Controllers
 {
     public class ComunicazionisController : Controller
     {
         private readonly ComDbContext _context;
-        private IMapper _mapper;
-        private IEmailService _emailService;
-        private ILogger<ComunicazionisController> _logger;
+        private readonly IMapper _mapper;
+        private readonly IEmailService _emailService;
+        private readonly ILogger<ComunicazionisController> _logger;
 
         public ComunicazionisController(ComDbContext context, IMapper mapper, IEmailService emailService, ILogger<ComunicazionisController> logger)
         {
@@ -28,44 +30,45 @@ namespace AppComunicazioni.Controllers
         public async Task<IActionResult> Index(string searchTerm, DateTime? startDate, DateTime? endDate, int pageNumber = 1, string sortField = "DateA", string sortOrder = "default")
         {
             int pageSize = 10;
-            var query = _context.Comunicazionis.AsQueryable();
+            IQueryable<Comunicazioni> query = _context.Comunicazionis;
+
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 query = query.Where(x => x.FileName.Contains(searchTerm));
             }
-            if (startDate.HasValue)
-                query = query.Where(x => x.DateA >= startDate.Value);
-            if (endDate.HasValue)
-                query = query.Where(x => x.DateF <= endDate.Value);
 
-            switch (sortOrder)
+            if (startDate.HasValue)
             {
-                case "asc":
-                    query = sortField switch
-                    {
-                        "FileName" => query.OrderBy(x => x.FileName),
-                        "DateA" => query.OrderBy(x => x.DateA),
-                        "DateF" => query.OrderBy(x => x.DateF),
-                        "NProtocol" => query.OrderBy(x => x.NProtocol),
-                        "NsProtocol" => query.OrderBy(x => x.NsProtocol),
-                        _ => query.OrderBy(x => x.DateA)
-                    };
-                    break;
-                case "desc":
-                    query = sortField switch
-                    {
-                        "FileName" => query.OrderByDescending(x => x.FileName),
-                        "DateA" => query.OrderByDescending(x => x.DateA),
-                        "DateF" => query.OrderByDescending(x => x.DateF),
-                        "NProtocol" => query.OrderByDescending(x => x.NProtocol),
-                        "NsProtocol" => query.OrderByDescending(x => x.NsProtocol),
-                        _ => query.OrderByDescending(x => x.DateA)
-                    };
-                    break;
-                default:
-                    query = query.OrderBy(x => x.DateA);
-                    break;
+                query = query.Where(x => x.DateA >= startDate.Value);
             }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(x => x.DateF <= endDate.Value);
+            }
+
+            query = sortOrder switch
+            {
+                "asc" => sortField switch
+                {
+                    "FileName" => query.OrderBy(x => x.FileName),
+                    "DateA" => query.OrderBy(x => x.DateA),
+                    "DateF" => query.OrderBy(x => x.DateF),
+                    "NProtocol" => query.OrderBy(x => x.NProtocol),
+                    "NsProtocol" => query.OrderBy(x => x.NsProtocol),
+                    _ => query.OrderBy(x => x.DateA),
+                },
+                "desc" => sortField switch
+                {
+                    "FileName" => query.OrderByDescending(x => x.FileName),
+                    "DateA" => query.OrderByDescending(x => x.DateA),
+                    "DateF" => query.OrderByDescending(x => x.DateF),
+                    "NProtocol" => query.OrderByDescending(x => x.NProtocol),
+                    "NsProtocol" => query.OrderByDescending(x => x.NsProtocol),
+                    _ => query.OrderByDescending(x => x.DateA),
+                },
+                _ => query.OrderBy(x => x.DateA),
+            };
 
             var totalItems = await query.CountAsync();
             var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
@@ -89,9 +92,12 @@ namespace AppComunicazioni.Controllers
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
+
             var comunicazioni = await _context.Comunicazionis.FindAsync(id);
             if (comunicazioni == null) return NotFound();
+
             var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
+            comunicazioniDTO.Note = ViewHelpers.FormatNoteForDisplay(comunicazioniDTO.Note);
             return View(comunicazioniDTO);
         }
 
@@ -114,21 +120,20 @@ namespace AppComunicazioni.Controllers
 
                 bool emailSuccess = true;
                 var destinatari = await _context.Destinataris.ToListAsync();
-                if (destinatari == null || destinatari.Count == 0)
+                if (destinatari.Count == 0)
                 {
                     _logger.LogWarning("Non ci sono destinatari");
                 }
                 else
                 {
                     string subject = "E' STATA AGGIUNTA UNA NUOVA COMUNICAZIONE NELL'AREA COMUNICAZIONI";
-                    string message = $"<p>Il seguente file è stato aggiunto nell'area comunicazioni: {comunicazioni.FileName} <br>" +
-                        $"con il numero protocolli {comunicazioni.NProtocol} <br>" +
-                        $"e questi sono i protocolli da controllare {comunicazioni.NsProtocol}: <br>" +
-                        $"{comunicazioni.Note}" +
-                        $"<br>" +
-                        $"Cordiali saluti,<br>" +
-                        $"<br>" +
-                        $"Flavio Simeone</p>";
+                    string formattedNote = FormatNote(comunicazioni.Note);
+                    string message = $"<p>Il seguente file è stato aggiunto nell'area comunicazioni: {comunicazioni.FileName}<br>" +
+                                     $"con il numero protocolli: {comunicazioni.NProtocol}<br><br>" +
+                                     $"Questi sono i protocolli da controllare: {comunicazioni.NsProtocol}<br><br>" +
+                                     $"{formattedNote}<br><br>" +
+                                     $"Cordiali saluti,<br><br>" +
+                                     $"Flavio Simeone</p>";
 
                     foreach (var destinatario in destinatari)
                     {
@@ -150,19 +155,35 @@ namespace AppComunicazioni.Controllers
             return View(comunicazioniDTO);
         }
 
+        private string FormatNote(string note)
+        {
+            if (string.IsNullOrEmpty(note))
+                return note;
+
+            var formattedNote = new StringBuilder();
+            var lines = note.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var line in lines)
+            {
+                var parts = line.Split('|');
+                if (parts.Length >= 2)
+                {
+                    formattedNote.AppendLine($"{parts[0].Trim()} | {parts[1].Trim()}<br>");
+                }
+            }
+
+            return formattedNote.ToString();
+        }
+
+
         // GET: Comunicazionis/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var comunicazioni = await _context.Comunicazionis.FindAsync(id);
-            if (comunicazioni == null)
-            {
-                return NotFound();
-            }
+            if (comunicazioni == null) return NotFound();
+
             var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
             return View(comunicazioniDTO);
         }
@@ -172,33 +193,23 @@ namespace AppComunicazioni.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Note")] ComunicazioniDTO comunicazioniDTO)
         {
-            if (id != comunicazioniDTO.Id)
-            {
-                return NotFound();
-            }
+            if (id != comunicazioniDTO.Id) return NotFound();
 
             if (ModelState.IsValid)
             {
                 var comunicazioniToUpdate = await _context.Comunicazionis.FindAsync(id);
-                if (comunicazioniToUpdate == null)
-                {
-                    return NotFound();
-                }
+                if (comunicazioniToUpdate == null) return NotFound();
+
                 _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
+
                 try
                 {
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ComunicazioniExists(id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    if (!ComunicazioniExists(id)) return NotFound();
+                    throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -208,17 +219,10 @@ namespace AppComunicazioni.Controllers
         // GET: Comunicazionis/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var comunicazioni = await _context.Comunicazionis
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (comunicazioni == null)
-            {
-                return NotFound();
-            }
+            var comunicazioni = await _context.Comunicazionis.FirstOrDefaultAsync(m => m.Id == id);
+            if (comunicazioni == null) return NotFound();
 
             return View(comunicazioni);
         }
@@ -232,9 +236,8 @@ namespace AppComunicazioni.Controllers
             if (comunicazioni != null)
             {
                 _context.Comunicazionis.Remove(comunicazioni);
+                await _context.SaveChangesAsync();
             }
-
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
