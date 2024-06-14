@@ -126,7 +126,7 @@ namespace AppComunicazioni.Controllers
                 }
                 else
                 {
-                    string subject = "E' STATA AGGIUNTA UNA NUOVA COMUNICAZIONE NELL'AREA COMUNICAZIONI";
+                    string subject = $"SMARCO ACCERTAMENTI DEL FILE: {comunicazioni.FileName}";
                     string formattedNote = FormatNote(comunicazioni.Note);
                     string message = $"<p>Il seguente file è stato aggiunto nell'area comunicazioni: {comunicazioni.FileName}<br>" +
                                      $"con il numero protocolli: {comunicazioni.NProtocol}<br><br>" +
@@ -154,6 +154,7 @@ namespace AppComunicazioni.Controllers
             }
             return View(comunicazioniDTO);
         }
+
 
         private string FormatNote(string note)
         {
