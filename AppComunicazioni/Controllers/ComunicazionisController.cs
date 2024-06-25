@@ -166,16 +166,33 @@ namespace AppComunicazioni.Controllers
 
             foreach (var line in lines)
             {
-                var parts = line.Split('|');
-                if (parts.Length >= 2)
+                // Controllo per il formato con pipe (|)
+                if (line.Contains('|'))
                 {
-                    formattedNote.AppendLine($"{parts[0].Trim()} | {parts[1].Trim()}<br>");
+                    var parts = line.Split('|');
+                    if (parts.Length >= 2)
+                    {
+                        formattedNote.AppendLine($"{parts[0].Trim()} | {parts[1].Trim()}<br>");
+                    }
+                }
+                // Controllo per il formato con trattino (-)
+                else if (line.Contains('-'))
+                {
+                    var parts = line.Split('-');
+                    if (parts.Length >= 2)
+                    {
+                        formattedNote.AppendLine($"{parts[0].Trim()} - {parts[1].Trim()}<br>");
+                    }
+                }
+                // Per altre righe che non seguono i formati sopra
+                else
+                {
+                    formattedNote.AppendLine($"{line.Trim()}<br>");
                 }
             }
 
             return formattedNote.ToString();
         }
-
 
         // GET: Comunicazionis/Edit/5
         public async Task<IActionResult> Edit(int? id)
