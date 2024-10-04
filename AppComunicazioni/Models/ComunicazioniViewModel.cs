@@ -11,7 +11,7 @@ public class ComunicazioniViewModel
     public DateTime? EndDate { get; set; }
     public string SortField { get; set; } = "DateA";
     public string SortOrder { get; set; } = "asc";
-
     public string? SearchTerm { get; set; }
+    public int PageSize { get; set; }
 
 }

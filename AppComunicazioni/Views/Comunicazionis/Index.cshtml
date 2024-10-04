@@ -81,13 +81,26 @@
     </tbody>
 </table>
 
-<nav aria-label="Page navigation example">
+<nav>
     <ul class="pagination">
-        @for (int i = 1; i <= Model.TotalPages; i++)
+        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="1" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-pageSize="@Model.PageSize">Prima</a>
+        </li>
+        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.CurrentPage - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-pageSize="@Model.PageSize">&laquo;</a>
+        </li>
+        @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.CurrentPage + 2, Model.TotalPages); i++)
         {
             <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">@i</a>
+                <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-pageSize="@Model.PageSize">@i</a>
             </li>
         }
+        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.CurrentPage + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-pageSize="@Model.PageSize">&raquo;</a>
+        </li>
+        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-pageSize="@Model.PageSize">Ultima</a>
+        </li>
     </ul>
 </nav>
+
