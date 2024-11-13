@@ -1,0 +1,111 @@
+﻿@model AppComunicazioni.Models.ComunicazioniViewModel
+
+@{
+    ViewData["Title"] = "Comunicazioni";
+}
+
+<h1>Comunicazioni</h1>
+
+<form asp-action="Index" method="get">
+    <div class="row mb-3">
+        <div class="col">
+            <label for="searchTerm">Cerca File:</label>
+            <input type="text" name="searchTerm" class="form-control" placeholder="Nome file" value="@Model.SearchTerm">
+        </div>
+        <div class="col">
+            <label for="startDate">Da:</label>
+            <input type="date" name="startDate" class="form-control" value="@Model.StartDate?.ToString("yyyy-MM-dd")">
+        </div>
+        <div class="col">
+            <label for="endDate">A:</label>
+            <input type="date" name="endDate" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")">
+        </div>
+        <div class="col-auto align-self-end">
+            <button type="submit" class="btn btn-primary">Filtra</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>
+                <a asp-action="Index" asp-route-sortField="FileName" asp-route-sortOrder="@(Model.SortField == "FileName" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "FileName" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().FileName)
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortField="DateA" asp-route-sortOrder="@(Model.SortField == "DateA" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "DateA" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().DateA)
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortField="DateF" asp-route-sortOrder="@(Model.SortField == "DateF" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "DateF" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().DateF)
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortField="NProtocol" asp-route-sortOrder="@(Model.SortField == "NProtocol" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "NProtocol" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().NProtocol)
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortField="NsProtocol" asp-route-sortOrder="@(Model.SortField == "NsProtocol" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "NsProtocol" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().NsProtocol)
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortField="Servizio" asp-route-sortOrder="@(Model.SortField == "Servizio" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "Servizio" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().Servizio)
+                </a>
+            </th>
+            <th>Azioni</th> 
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Comunicazioni)
+        {
+            <tr>
+                <td>
+                    <a class="btn btn-outline-info" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
+                </td>
+                <td>@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
+                <td>@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>
+                <td>@item.NProtocol</td>
+                <td>@item.NsProtocol</td>
+                <td>@item.Servizio</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="text-primary">
+                        <i class="bi bi-pencil-square"></i>
+                    </a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="text-danger">
+                        <i class="bi bi-trash-fill"></i>
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<nav>
+    <ul class="pagination">
+        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="1" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-pageSize="@Model.PageSize">Prima</a>
+        </li>
+        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.CurrentPage - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-pageSize="@Model.PageSize">&laquo;</a>
+        </li>
+        @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.CurrentPage + 2, Model.TotalPages); i++)
+        {
+            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-pageSize="@Model.PageSize">@i</a>
+            </li>
+        }
+        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.CurrentPage + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-pageSize="@Model.PageSize">&raquo;</a>
+        </li>
+        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-pageSize="@Model.PageSize">Ultima</a>
+        </li>
+    </ul>
+</nav>

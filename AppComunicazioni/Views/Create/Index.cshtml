@@ -1,17 +1,17 @@
 ﻿@model AppComunicazioni.Models.DTO_s.ComunicazioniDTO
+
 @{
-    ViewData["Title"] = "Modifica";
+    ViewData["Title"] = "Crea";
 }
 
-<h1>Modifica</h1>
+<h1>Crea</h1>
 
 <h4>Comunicazione</h4>
 <hr />
 <div class="row">
     <div class="col-md-6">
-        <form asp-action="Edit" method="post">
+        <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
 
             <div class="form-floating mb-3">
                 <input asp-for="FileName" class="form-control" id="FileName" placeholder="Nome file">
@@ -20,14 +20,14 @@
             </div>
 
             <div class="form-floating mb-3">
-                <input asp-for="DateA" type="datetime-local" class="form-control" id="DateA" placeholder="Data di arrivo">
+                <input asp-for="DateA" type="datetime-local" class="form-control" id="DateA" placeholder="Data di invio">
                 <label asp-for="DateA">Data di arrivo</label>
                 <span asp-validation-for="DateA" class="text-danger"></span>
             </div>
 
             <div class="form-floating mb-3">
-                <input asp-for="DateF" type="datetime-local" class="form-control" id="DateF" placeholder="Data di fine smarco">
-                <label asp-for="DateF">Data di fine smarco</label>
+                <input asp-for="DateF" type="datetime-local" class="form-control" id="DateF" placeholder="Data di smarco">
+                <label asp-for="DateF">Data di smarco</label>
                 <span asp-validation-for="DateF" class="text-danger"></span>
             </div>
 
@@ -44,13 +44,21 @@
             </div>
 
             <div class="form-floating mb-3">
+                <select asp-for="Servizio" class="form-control" asp-items="ViewBag.ServizioOptions">
+                    <option value="">-- Seleziona Servizio --</option>
+                </select>
+                <label asp-for="Servizio">Servizio</label>
+                <span asp-validation-for="Servizio" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
                 <textarea asp-for="Note" class="form-control" id="Note" placeholder="Note" style="height: 100px;"></textarea>
                 <label asp-for="Note">Note</label>
                 <span asp-validation-for="Note" class="text-danger"></span>
             </div>
 
-            <div class="d-flex justify-content-between align-items-end">
-                <button type="submit" class="btn btn-primary">Save</button>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-primary">Crea</button>
                 <a class="btn btn-secondary" asp-action="Index">Indietro</a>
             </div>
         </form>
@@ -61,4 +69,10 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(document).on('submit', 'form', function () {
+            $(this).find(':submit').prop('disabled', true);
+            $('body').append('<div class="spinner-border" role="status"><span class="sr-only"></span></div>');
+        });
+    </script>
 }

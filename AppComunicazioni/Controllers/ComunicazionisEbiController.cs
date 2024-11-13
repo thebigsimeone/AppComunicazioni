@@ -1,36 +1,40 @@
-﻿using apiSanges.Service;
-using AppComunicazioni.Data;
+﻿using AppComunicazioni.Data;
+using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
 using AppComunicazioni.Utility;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace AppComunicazioni.Controllers
 {
-    public class ComunicazionisController : Controller
+    public class ComunicazionisEbiController : Controller
     {
         private readonly ComDbContext _context;
         private readonly IMapper _mapper;
         private readonly IEmailService _emailService;
-        private readonly ILogger<ComunicazionisController> _logger;
+        private readonly IMonitoringService _monitoringService;
+        private readonly ILogger<ComunicazionisEbiController> _logger;
 
-        public ComunicazionisController(ComDbContext context, IMapper mapper, IEmailService emailService, ILogger<ComunicazionisController> logger)
+        public ComunicazionisEbiController(ComDbContext context, IMapper mapper, IEmailService emailService, IMonitoringService monitoringService, ILogger<ComunicazionisEbiController> logger)
         {
             _context = context;
             _mapper = mapper;
             _emailService = emailService;
             _logger = logger;
+            _monitoringService = monitoringService;
         }
 
-        // GET: Comunicazionis
+        // GET: ComunicazionisSsc
         public async Task<IActionResult> Index(string searchTerm, DateTime? startDate, DateTime? endDate, int pageNumber = 1, string sortField = "DateA", string sortOrder = "default")
         {
             int pageSize = 10;
-            IQueryable<Comunicazioni> query = _context.Comunicazionis;
+            IQueryable<Comunicazioni> query = _context.Comunicazionis.AsQueryable();
+
+            // Aggiunge un filtro per selezionare solo le comunicazioni che iniziano con "SSC"
+            query = query.Where(x => x.FileName.StartsWith("EBI"));
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -88,7 +92,7 @@ namespace AppComunicazioni.Controllers
             return View(model);
         }
 
-        // GET: Comunicazionis/Details/5
+        // GET: ComunicazionisSsc/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -101,100 +105,7 @@ namespace AppComunicazioni.Controllers
             return View(comunicazioniDTO);
         }
 
-        // GET: Comunicazionis/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Comunicazionis/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Note")] ComunicazioniDTO comunicazioniDTO)
-        {
-            if (ModelState.IsValid)
-            {
-                var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
-                _context.Add(comunicazioni);
-                await _context.SaveChangesAsync();
-
-                bool emailSuccess = true;
-                var destinatari = await _context.Destinataris.ToListAsync();
-                if (destinatari.Count == 0)
-                {
-                    _logger.LogWarning("Non ci sono destinatari");
-                }
-                else
-                {
-                    string subject = $"SMARCO ACCERTAMENTI DEL FILE: {comunicazioni.FileName}";
-                    string formattedNote = FormatNote(comunicazioni.Note);
-                    string message = $"<p>Il seguente file è stato aggiunto nell'area comunicazioni: {comunicazioni.FileName}<br>" +
-                                     $"con il numero protocolli: {comunicazioni.NProtocol}<br><br>" +
-                                     $"Questi sono i protocolli da controllare: {comunicazioni.NsProtocol}<br><br>" +
-                                     $"{formattedNote}<br><br>" +
-                                     $"Cordiali saluti,<br><br>" +
-                                     $"Flavio Simeone</p>";
-
-                    foreach (var destinatario in destinatari)
-                    {
-                        try
-                        {
-                            await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
-                            emailSuccess = false;
-                        }
-                    }
-                }
-
-                TempData["Message"] = emailSuccess ? "Comunicazione creata e email inviate con successo." : "Comunicazione creata, ma l'invio delle email è fallito.";
-                return RedirectToAction(nameof(Index));
-            }
-            return View(comunicazioniDTO);
-        }
-
-
-        private string FormatNote(string note)
-        {
-            if (string.IsNullOrEmpty(note))
-                return note;
-
-            var formattedNote = new StringBuilder();
-            var lines = note.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var line in lines)
-            {
-                // Controllo per il formato con pipe (|)
-                if (line.Contains('|'))
-                {
-                    var parts = line.Split('|');
-                    if (parts.Length >= 2)
-                    {
-                        formattedNote.AppendLine($"{parts[0].Trim()} | {parts[1].Trim()}<br>");
-                    }
-                }
-                // Controllo per il formato con trattino (-)
-                else if (line.Contains('-'))
-                {
-                    var parts = line.Split('-');
-                    if (parts.Length >= 2)
-                    {
-                        formattedNote.AppendLine($"{parts[0].Trim()} - {parts[1].Trim()}<br>");
-                    }
-                }
-                // Per altre righe che non seguono i formati sopra
-                else
-                {
-                    formattedNote.AppendLine($"{line.Trim()}<br>");
-                }
-            }
-
-            return formattedNote.ToString();
-        }
-
-        // GET: Comunicazionis/Edit/5
+        // GET: ComunicazionisSsc/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -203,13 +114,23 @@ namespace AppComunicazioni.Controllers
             if (comunicazioni == null) return NotFound();
 
             var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
+
+            // Passa le opzioni enum alla vista usando ViewBag
+            ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
+                                          .Cast<ServizioType>()
+                                          .Select(s => new SelectListItem
+                                          {
+                                              Value = s.ToString(),
+                                              Text = s.ToString()
+                                          }).ToList();
+
             return View(comunicazioniDTO);
         }
 
-        // POST: Comunicazionis/Edit/5
+        // POST: ComunicazionisSsc/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Note")] ComunicazioniDTO comunicazioniDTO)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note")] ComunicazioniDTO comunicazioniDTO)
         {
             if (id != comunicazioniDTO.Id) return NotFound();
 
@@ -223,29 +144,75 @@ namespace AppComunicazioni.Controllers
                 try
                 {
                     await _context.SaveChangesAsync();
+
+                    // Invia l'email come nel metodo Create
+                    bool emailSuccess = true;
+                    var destinatari = await _context.Destinataris.ToListAsync();
+                    if (destinatari.Count == 0)
+                    {
+                        _logger.LogWarning("Non ci sono destinatari");
+                    }
+                    else
+                    {
+                        string subject = $"SMARCO ACCERTAMENTI DEL FILE: {comunicazioniToUpdate.FileName}";
+                        string formattedNote = _emailService.FormatNote(comunicazioniToUpdate.Note);
+                        string message = $"<p>Il seguente file è stato smarcato: {comunicazioniToUpdate.FileName}<br>" +
+                                         $"con il numero protocolli: {comunicazioniToUpdate.NProtocol}<br><br>" +
+                                         $"Questi sono i protocolli da controllare: {comunicazioniToUpdate.NsProtocol}<br><br>" +
+                                         $"{formattedNote}<br><br>" +
+                                         $"Cordiali saluti,<br><br>" +
+                                         $"Flavio Simeone</p>";
+
+                        foreach (var destinatario in destinatari)
+                        {
+                            try
+                            {
+                                await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
+                                emailSuccess = false;
+                            }
+                        }
+                    }
+
+                    TempData["Message"] = emailSuccess ? "Comunicazione modificata e email inviate con successo." : "Comunicazione modificata, ma l'invio delle email è fallito.";
+
+                    // Interrompi il monitoraggio per la comunicazione modificata
+                    try
+                    {
+                        await _monitoringService.StopMonitoringForComunicazioneAsync(id);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Errore durante l'interruzione del monitoraggio per la comunicazione modificata: {ex.Message}");
+                    }
+
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!ComunicazioniExists(id)) return NotFound();
                     throw;
                 }
-                return RedirectToAction(nameof(Index));
             }
             return View(comunicazioniDTO);
         }
 
-        // GET: Comunicazionis/Delete/5
+        // GET: ComunicazionisSsc/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
 
-            var comunicazioni = await _context.Comunicazionis.FirstOrDefaultAsync(m => m.Id == id);
+            var comunicazioni = await _context.Comunicazionis
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (comunicazioni == null) return NotFound();
 
             return View(comunicazioni);
         }
 
-        // POST: Comunicazionis/Delete/5
+        // POST: ComunicazionisSsc/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

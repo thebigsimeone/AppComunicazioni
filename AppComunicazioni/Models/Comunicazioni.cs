@@ -16,7 +16,7 @@ public partial class Comunicazioni
     public string? FileName { get; set; }
 
     [Column("date_a", TypeName = "datetime")]
-    [Display(Name = "Data di arrivo")]
+    [Display(Name = "Data di invio")]
     [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy | HH:mm}", ApplyFormatInEditMode = true)]
     public DateTime? DateA { get; set; }
 
@@ -38,4 +38,8 @@ public partial class Comunicazioni
     [Column("note")]
     [Display(Name = "Note")]
     public string? Note { get; set; }
+
+    [Column("servizio")]
+    [Display(Name = "Servizio")]
+    public string? Servizio { get; set; }
 }

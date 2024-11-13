@@ -15,9 +15,13 @@ namespace AppComunicazioni.Controllers
 
         public IActionResult Index()
         {
-            return RedirectToAction("Index", "Comunicazionis");
+            return View();
         }
-        public IActionResult ComunicaionisController()
+        public IActionResult ComunicaionisSscController()
+        {
+            return View();
+        }
+        public IActionResult CreateController()
         {
             return View();
         }

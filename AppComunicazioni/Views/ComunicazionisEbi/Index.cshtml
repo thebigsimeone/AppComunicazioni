@@ -54,6 +54,11 @@
                     @Html.DisplayNameFor(m => m.Comunicazioni.First().NsProtocol)
                 </a>
             </th>
+            <th>
+                <a asp-action="Index" asp-route-sortField="NsProtocolServizio" asp-route-sortOrder="@(Model.SortField == "Servizio" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "Servizio" && Model.SortOrder == "desc" ? "default" : "asc")">
+                    @Html.DisplayNameFor(m => m.Comunicazioni.First().Servizio)
+                </a>
+            </th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -68,6 +73,7 @@
                 <td>@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>
                 <td>@item.NProtocol</td>
                 <td>@item.NsProtocol</td>
+                <td>@item.Servizio</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id" class="text-primary">
                         <i class="bi bi-pencil-square"></i>

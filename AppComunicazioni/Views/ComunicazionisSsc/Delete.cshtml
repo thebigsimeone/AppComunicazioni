@@ -1,14 +1,14 @@
-﻿@using AppComunicazioni.Utility
-@model AppComunicazioni.Models.DTO_s.ComunicazioniDTO
+﻿@model AppComunicazioni.Models.Comunicazioni
 
 @{
-    ViewData["Title"] = "Dettaglio";
+    ViewData["Title"] = "Elimina";
 }
 
-<h1>Dettaglio</h1>
+<h1>Elimina</h1>
 
+<h3>Sei sicuro di voler eliminare la comunicazione?</h3>
 <div>
-    <h4>Comunicazione</h4>
+    <h4>Comunicazioni</h4>
     <hr />
     <dl class="row">
         <dt class="col-sm-2">
@@ -41,13 +41,11 @@
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.NsProtocol)
         </dd>
-        <dd class="col-sm-10">
-            @Html.Raw(ViewHelpers.FormatNoteForDisplay(Model.Note))
-        </dd>
     </dl>
-</div>
-<div>
-    <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@Model?.Id">Modifica</a> |
-    <a class="btn btn-outline-secondary" asp-action="Index">Indietro</a>
-</div>
 
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Delete" class="btn btn-outline-danger" /> |
+        <a class="btn btn-outline-secondary" asp-action="Index">Indietro</a>
+    </form>
+</div>
