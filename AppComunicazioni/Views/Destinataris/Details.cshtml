@@ -16,6 +16,20 @@
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Destinatario)
         </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Attivo)
+        </dt>
+        <dd class="col-sm-10">
+            @(Model.Attivo == "S" ? "Attivo" : "Non Attivo")
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Monitor)
+        </dt>
+        <dd class="col-sm-10">
+            @(Model.Monitor == "S" ? "Attivo" : "Non Attivo")
+        </dd>
     </dl>
 </div>
 <div>

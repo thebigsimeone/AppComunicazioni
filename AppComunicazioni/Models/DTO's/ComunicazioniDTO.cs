@@ -11,16 +11,16 @@ namespace AppComunicazioni.Models.DTO_s
         public string? FileName { get; set; }
 
         [Required(ErrorMessage = "Il campo Data di invio è obbligatorio.")]
-        public DateTime DateA { get; set; }
+        public DateTimeOffset? DateA { get; set; }
 
-        public DateTime? DateF { get; set; } // Cambiato a nullable
+        public DateTimeOffset? DateF { get; set; }
 
         [Range(0, int.MaxValue, ErrorMessage = "Il numero di protocolli non può essere negativo.")]
         [Required(ErrorMessage = "Il campo Numero di protocolli è obbligatorio.")]
         public int NProtocol { get; set; }
 
         [Range(0, int.MaxValue, ErrorMessage = "Il numero di protocolli non può essere negativo.")]
-        public int? NsProtocol { get; set; } // Cambiato a nullable
+        public int? NsProtocol { get; set; }
 
         public string? Note { get; set; }
 

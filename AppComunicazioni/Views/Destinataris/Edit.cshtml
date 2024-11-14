@@ -13,14 +13,27 @@
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
+
             <div class="form-floating mb-3">
                 <input asp-for="Destinatario" class="form-control" id="destinatario" placeholder="Destinatario">
                 <label asp-for="Destinatario">Destinatario</label>
                 <span asp-validation-for="Destinatario" class="text-danger"></span>
             </div>
-            </br>
+
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="attivo" name="Attivo" value="S" @(Model.Attivo == "S" ? "checked" : "") />
+                <label class="form-check-label" for="attivo">Attivo</label>
+                <span asp-validation-for="Attivo" class="text-danger"></span>
+            </div>
+
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="monitor" name="Monitor" value="S" @(Model.Monitor == "S" ? "checked" : "") />
+                <label class="form-check-label" for="monitor">Monitoraggio</label>
+                <span asp-validation-for="Monitor" class="text-danger"></span>
+            </div>
+
             <div class="form-group d-flex justify-content-between align-items-end">
-                <button type="submit" class="btn btn-outline-primary">Save</button>
+                <button type="submit" class="btn btn-outline-primary">Salva</button>
                 <a class="btn btn-outline-secondary" asp-action="Index">Indietro</a>
             </div>
         </form>
@@ -32,4 +45,3 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
-

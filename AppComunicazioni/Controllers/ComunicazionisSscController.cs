@@ -127,7 +127,6 @@ namespace AppComunicazioni.Controllers
             return View(comunicazioniDTO);
         }
 
-
         // POST: ComunicazionisSsc/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -148,10 +147,15 @@ namespace AppComunicazioni.Controllers
 
                     // Invia l'email come nel metodo Create
                     bool emailSuccess = true;
-                    var destinatari = await _context.Destinataris.ToListAsync();
+
+                    // Seleziona solo i destinatari attivi
+                    var destinatari = await _context.Destinataris
+                        .Where(d => d.Attivo == "S")
+                        .ToListAsync();
+
                     if (destinatari.Count == 0)
                     {
-                        _logger.LogWarning("Non ci sono destinatari");
+                        _logger.LogWarning("Non ci sono destinatari attivi.");
                     }
                     else
                     {

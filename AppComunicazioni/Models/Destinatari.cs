@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace AppComunicazioni.Models;
 
@@ -17,4 +14,14 @@ public partial class Destinatari
     [StringLength(100)]
     [Required(ErrorMessage = "Il campo Destinatario è obbligatorio.")]
     public string? Destinatario { get; set; }
+
+    [Column("monitor")]
+    [StringLength(1)]
+    [Display(Name = "Monitor")]
+    public string? Monitor { get; set; }
+
+    [Column("attivo")]
+    [StringLength(1)]
+    [Display(Name = "Attivo")]
+    public string? Attivo { get; set; }
 }

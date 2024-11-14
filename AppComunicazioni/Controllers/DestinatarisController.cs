@@ -55,6 +55,9 @@ namespace AppComunicazioni.Controllers
         {
             if (ModelState.IsValid)
             {
+                destinatariDTO.Monitor = Request.Form["Monitor"].Contains("true") ? "S" : "N";
+                destinatariDTO.Attivo = Request.Form["Attivo"].Contains("true") ? "S" : "N";
+
                 var destinatari = _mapper.Map<Destinatari>(destinatariDTO);
                 _context.Add(destinatari);
                 await _context.SaveChangesAsync();
@@ -62,6 +65,7 @@ namespace AppComunicazioni.Controllers
             }
             return View(destinatariDTO);
         }
+
 
         // GET: Destinataris/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -83,24 +87,28 @@ namespace AppComunicazioni.Controllers
         // POST: Destinataris/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Destinatario")] DestinatariDTO destinatariDTO)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Destinatario,Monitor,Attivo")] DestinatariDTO destinatariDTO)
         {
-            var destinatari = _mapper.Map<Destinatari>(destinatariDTO);
-            if (id != destinatari.Id)
+            if (id != destinatariDTO.Id)
             {
                 return NotFound();
             }
 
             if (ModelState.IsValid)
             {
+                // Se Monitor o Attivo non sono inviati, significa che la checkbox non è selezionata.
+                destinatariDTO.Monitor = Request.Form.ContainsKey("Monitor") ? "S" : "N";
+                destinatariDTO.Attivo = Request.Form.ContainsKey("Attivo") ? "S" : "N";
+
                 try
                 {
+                    var destinatari = _mapper.Map<Destinatari>(destinatariDTO);
                     _context.Update(destinatari);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!DestinatariExists(destinatari.Id))
+                    if (!DestinatariExists(destinatariDTO.Id))
                     {
                         return NotFound();
                     }

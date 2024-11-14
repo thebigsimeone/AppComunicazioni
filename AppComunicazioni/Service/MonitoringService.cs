@@ -19,7 +19,7 @@ public class MonitoringService : IMonitoringService
 
     public async Task CheckAndSendNotificationsAsync(List<int> destinatariIds = null)
     {
-        var currentDate = DateTime.Now;
+        var currentDate = DateTimeOffset.UtcNow;
         var notifications = new List<ComunicazioniWithDaysModel>();
 
         try
@@ -40,8 +40,8 @@ public class MonitoringService : IMonitoringService
                     // Utilizza la colonna Servizio invece di FileName per determinare il servizio
                     var nomeServizio = x.Servizio?.ToUpper() ?? "";
 
-                    // Log per debug
-                    Console.WriteLine($"Comunicazione ID: {x.Id}, Nome File: {x.FileName}, Servizio: {nomeServizio}");
+                    // Log per debug: valore di DateA letto dal database
+                    Console.WriteLine($"Comunicazione ID: {x.Id}, Nome File: {x.FileName}, Servizio: {nomeServizio}, DateA (letto dal DB): {x.DateA}");
 
                     return new ComunicazioniWithDaysModel
                     {
@@ -63,7 +63,7 @@ public class MonitoringService : IMonitoringService
                             matches = x.TotalDays >= 3;
                             break;
                         case "PDL":
-                            matches = x.TotalMinutes >= 1; // Cambiato a 1 minuto per il test
+                            matches = x.TotalMinutes >= 5; // Deve aspettare 5 minuti
                             break;
                         case "DIM":
                             matches = x.TotalDays >= 5;
@@ -118,6 +118,19 @@ public class MonitoringService : IMonitoringService
         {
             var comunicazione = notification.Comunicazioni;
 
+            // Log il valore di currentDate e DateA per capire la differenza di tempo
+            Console.WriteLine($"Valore di currentDate: {currentDate}");
+            Console.WriteLine($"Valore di DateA per la comunicazione '{comunicazione.FileName}': {comunicazione.DateA}");
+
+            var differenceInMinutes = (currentDate - comunicazione.DateA)?.TotalMinutes ?? 0;
+            Console.WriteLine($"Differenza in minuti tra currentDate e DateA per la comunicazione '{comunicazione.FileName}': {differenceInMinutes}");
+
+            if (differenceInMinutes < 5)
+            {
+                Console.WriteLine($"L'email per la comunicazione '{comunicazione.FileName}' non viene ancora inviata perché non sono passati 5 minuti.");
+                continue;
+            }
+
             var subject = $"Notifica ritardo: {comunicazione.FileName}";
             var message = new StringBuilder();
             message.AppendLine("<p>Attenzione, il seguente file necessita di verifica:<br>");
@@ -126,21 +139,11 @@ public class MonitoringService : IMonitoringService
             message.AppendLine("<br>Il file non è stato ancora smarcato e il limite di tempo previsto è stato superato.<br>");
             message.AppendLine("Cordiali saluti,<br><br>App Comunicazioni</p>");
 
-            // Ensure recipient with ID 8 is included and retrieve other specified recipients
-            destinatariIds ??= new List<int>();
-            if (!destinatariIds.Contains(8))
-            {
-                destinatariIds.Add(8);
-            }
-
-            Console.WriteLine("ID destinatari inclusi per l'invio:");
-            destinatariIds.ForEach(id => Console.WriteLine($"ID destinatario: {id}"));
-
             try
             {
                 var destinatari = await _context.Destinataris
-                    .Where(d => destinatariIds.Contains(d.Id))
-                    .ToListAsync();
+                                .Where(d => d.Monitor == "S")
+                                .ToListAsync();
 
                 if (destinatari == null || destinatari.Count == 0)
                 {

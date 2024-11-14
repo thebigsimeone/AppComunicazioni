@@ -3,8 +3,10 @@ using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
 using AppComunicazioni.Properties;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Registra il contesto del database come Scoped
 builder.Services.AddDbContext<ComDbContext>(options =>
@@ -22,13 +24,14 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 var app = builder.Build();
 
-var supportedCultures = new[] { "it-IT" };
-var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
-                                                          .AddSupportedCultures(supportedCultures)
-                                                          .AddSupportedUICultures(supportedCultures);
+app.Use(async (context, next) =>
+{
+    var cultureInfo = new CultureInfo("it-IT");
+    Thread.CurrentThread.CurrentCulture = cultureInfo;
+    Thread.CurrentThread.CurrentUICulture = cultureInfo;
 
-app.UseRequestLocalization(localizationOptions);
-
+    await next.Invoke();
+});
 
 if (!app.Environment.IsDevelopment())
 {

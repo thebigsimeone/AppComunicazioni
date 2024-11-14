@@ -105,7 +105,7 @@ namespace AppComunicazioni.Controllers
             return View(comunicazioniDTO);
         }
 
-        // GET: ComunicazionisSsc/Edit/5
+        // GET: ComunicazionisEbi/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -147,10 +147,15 @@ namespace AppComunicazioni.Controllers
 
                     // Invia l'email come nel metodo Create
                     bool emailSuccess = true;
-                    var destinatari = await _context.Destinataris.ToListAsync();
+
+                    // Seleziona solo i destinatari attivi
+                    var destinatari = await _context.Destinataris
+                        .Where(d => d.Attivo == "S")
+                        .ToListAsync();
+
                     if (destinatari.Count == 0)
                     {
-                        _logger.LogWarning("Non ci sono destinatari");
+                        _logger.LogWarning("Non ci sono destinatari attivi.");
                     }
                     else
                     {
@@ -199,6 +204,7 @@ namespace AppComunicazioni.Controllers
             }
             return View(comunicazioniDTO);
         }
+
 
         // GET: ComunicazionisSsc/Delete/5
         public async Task<IActionResult> Delete(int? id)

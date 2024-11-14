@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AppComunicazioni.Models;
@@ -15,15 +16,15 @@ public partial class Comunicazioni
     [Display(Name = "Nome file")]
     public string? FileName { get; set; }
 
-    [Column("date_a", TypeName = "datetime")]
+    [Column("date_a")]
     [Display(Name = "Data di invio")]
     [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy | HH:mm}", ApplyFormatInEditMode = true)]
-    public DateTime? DateA { get; set; }
+    public DateTimeOffset? DateA { get; set; }
 
-    [Column("date_f", TypeName = "datetime")]
+    [Column("date_f")]
     [Display(Name = "Data di fine smarco")]
     [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy | HH:mm}", ApplyFormatInEditMode = true)]
-    public DateTime? DateF { get; set; }
+    public DateTimeOffset? DateF { get; set; }
 
     [Column("n_protocol")]
     [Display(Name = "Numero protocolli")]
