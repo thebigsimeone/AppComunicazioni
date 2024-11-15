@@ -67,7 +67,7 @@
         {
             <tr>
                 <td>
-                    <a class="btn btn-outline-info" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
+                    <a class="btn @(item.DateF == null ? "btn-outline-danger" : "btn-outline-success")" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
                 </td>
                 <td>@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
                 <td>@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>

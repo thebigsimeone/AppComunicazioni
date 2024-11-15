@@ -2,6 +2,7 @@ using apiSanges.Service;
 using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
 using AppComunicazioni.Properties;
+using AppComunicazioni.Service;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
@@ -13,6 +14,7 @@ builder.Services.AddDbContext<ComDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext")));
 
 // Registra i servizi come Scoped
+builder.Services.AddHostedService<NotificationBackgroundService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 

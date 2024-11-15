@@ -11,7 +11,8 @@
         VL1,
         VLA,
         VPP,
-        VSA
+        VSA,
+        S035
     }
 
 }

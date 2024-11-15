@@ -43,4 +43,6 @@ public partial class Comunicazioni
     [Column("servizio")]
     [Display(Name = "Servizio")]
     public string? Servizio { get; set; }
+
+    public bool? Notificato { get; set; }
 }

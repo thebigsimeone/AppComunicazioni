@@ -30,12 +30,12 @@ namespace AppComunicazioni.Controllers
         public IActionResult Index()
         {
             ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
-                                          .Cast<ServizioType>()
-                                          .Select(s => new SelectListItem
-                                          {
-                                              Value = s.ToString(),
-                                              Text = s.ToString()
-                                          }).ToList();
+                              .Cast<ServizioType>()
+                              .Select(s => new SelectListItem
+                              {
+                                  Value = s.ToString(),
+                                  Text = s == ServizioType.S035 ? "035" : s.ToString()
+                              }).ToList();
 
             return View();
         }
@@ -49,12 +49,21 @@ namespace AppComunicazioni.Controllers
             {
                 // Mappatura da DTO a Entity
                 var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
+                comunicazioni.Servizio = comunicazioniDTO.Servizio == ServizioType.S035 ? "035" : comunicazioniDTO.Servizio.ToString();
+
+                // Imposta il valore di Notificato a false di default
+                comunicazioni.Notificato = false;
+
                 _context.Add(comunicazioni);
                 await _context.SaveChangesAsync();
 
-                // Attiviamo il monitoraggio
+                _logger.LogInformation($"Comunicazione con ID {comunicazioni.Id} è stata creata e salvata correttamente.");
+
                 try
                 {
+                    // Aggiungi un piccolo ritardo per assicurarti che il salvataggio sia completamente processato dal database
+                    await Task.Delay(1000);
+
                     await _monitoringService.CheckAndSendNotificationsAsync();
                 }
                 catch (Exception ex)

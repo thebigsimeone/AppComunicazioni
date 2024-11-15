@@ -55,11 +55,11 @@
                 </a>
             </th>
             <th>
-                <a asp-action="Index" asp-route-sortField="NsProtocolServizio" asp-route-sortOrder="@(Model.SortField == "Servizio" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "Servizio" && Model.SortOrder == "desc" ? "default" : "asc")">
+                <a asp-action="Index" asp-route-sortField="Servizio" asp-route-sortOrder="@(Model.SortField == "Servizio" && Model.SortOrder == "asc" ? "desc" : Model.SortField == "Servizio" && Model.SortOrder == "desc" ? "default" : "asc")">
                     @Html.DisplayNameFor(m => m.Comunicazioni.First().Servizio)
                 </a>
             </th>
-            <th>Actions</th>
+            <th>Azioni</th>
         </tr>
     </thead>
     <tbody>
@@ -67,7 +67,7 @@
         {
             <tr>
                 <td>
-                    <a class="btn btn-outline-info" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
+                    <a class="btn @(item.DateF == null ? "btn-outline-danger" : "btn-outline-primary")" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
                 </td>
                 <td>@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
                 <td>@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>
@@ -109,4 +109,3 @@
         </li>
     </ul>
 </nav>
-
