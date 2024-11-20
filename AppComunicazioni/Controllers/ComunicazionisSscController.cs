@@ -146,44 +146,51 @@ namespace AppComunicazioni.Controllers
                 {
                     await _context.SaveChangesAsync();
 
-                    // Invia l'email come nel metodo Create
-                    bool emailSuccess = true;
-
-                    // Seleziona solo i destinatari attivi
-                    var destinatari = await _context.Destinataris
-                        .Where(d => d.Attivo == "S")
-                        .ToListAsync();
-
-                    if (destinatari.Count == 0)
+                    // Invia l'email solo se DateF è valorizzato
+                    if (comunicazioniToUpdate.DateF != null && comunicazioniToUpdate.DateF != DateTimeOffset.MinValue)
                     {
-                        _logger.LogWarning("Non ci sono destinatari attivi.");
+                        bool emailSuccess = true;
+
+                        // Seleziona solo i destinatari attivi
+                        var destinatari = await _context.Destinataris
+                            .Where(d => d.Attivo == "S")
+                            .ToListAsync();
+
+                        if (destinatari.Count == 0)
+                        {
+                            _logger.LogWarning("Non ci sono destinatari attivi.");
+                        }
+                        else
+                        {
+                            string subject = $"SMARCO ACCERTAMENTI DEL FILE: {comunicazioniToUpdate.FileName}";
+                            string formattedNote = _emailService.FormatNote(comunicazioniToUpdate.Note);
+                            string message = $"<p>Il seguente file è stato smarcato: {comunicazioniToUpdate.FileName}<br>" +
+                                             $"con il numero protocolli: {comunicazioniToUpdate.NProtocol}<br><br>" +
+                                             $"Questi sono i protocolli da controllare: {comunicazioniToUpdate.NsProtocol}<br><br>" +
+                                             $"{formattedNote}<br><br>" +
+                                             $"Cordiali saluti,<br><br>" +
+                                             $"Flavio Simeone</p>";
+
+                            foreach (var destinatario in destinatari)
+                            {
+                                try
+                                {
+                                    await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
+                                    emailSuccess = false;
+                                }
+                            }
+                        }
+
+                        TempData["Message"] = emailSuccess ? "Comunicazione modificata e email inviate con successo." : "Comunicazione modificata, ma l'invio delle email è fallito.";
                     }
                     else
                     {
-                        string subject = $"SMARCO ACCERTAMENTI DEL FILE: {comunicazioniToUpdate.FileName}";
-                        string formattedNote = _emailService.FormatNote(comunicazioniToUpdate.Note);
-                        string message = $"<p>Il seguente file è stato smarcato: {comunicazioniToUpdate.FileName}<br>" +
-                                         $"con il numero protocolli: {comunicazioniToUpdate.NProtocol}<br><br>" +
-                                         $"Questi sono i protocolli da controllare: {comunicazioniToUpdate.NsProtocol}<br><br>" +
-                                         $"{formattedNote}<br><br>" +
-                                         $"Cordiali saluti,<br><br>" +
-                                         $"Flavio Simeone</p>";
-
-                        foreach (var destinatario in destinatari)
-                        {
-                            try
-                            {
-                                await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
-                                emailSuccess = false;
-                            }
-                        }
+                        TempData["Message"] = "Comunicazione modificata senza inviare email perché DateF non è valorizzato.";
                     }
-
-                    TempData["Message"] = emailSuccess ? "Comunicazione modificata e email inviate con successo." : "Comunicazione modificata, ma l'invio delle email è fallito.";
 
                     // Interrompi il monitoraggio per la comunicazione modificata
                     try
