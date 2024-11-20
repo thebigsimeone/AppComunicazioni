@@ -10,8 +10,10 @@
         PDL,
         VL1,
         VLA,
+        VL3,
         VPP,
         VSA,
+        VSS,
         S035
     }
 

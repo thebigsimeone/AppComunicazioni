@@ -23,16 +23,16 @@ public class MonitoringService : IMonitoringService
         {
             // Usa DateTimeOffset.Now per la tua ora corrente con il fuso orario locale
             var currentTime = DateTimeOffset.Now;
-            Console.WriteLine($"Valore di currentTime: {currentTime}");
+            _logger.LogInformation($"Valore di currentTime: {currentTime}");
 
             // Recupera tutte le comunicazioni senza DateF e che non sono ancora state notificate
-            Console.WriteLine("Recupero tutte le comunicazioni senza DateF e non notificate...");
+            _logger.LogInformation("Recupero tutte le comunicazioni senza DateF e non notificate...");
             var comunicazioniList = await _context.Comunicazionis
                 .Where(x => !x.DateF.HasValue && (x.Notificato == false || x.Notificato == null))
                 .ToListAsync();
 
             // Log del numero di comunicazioni recuperate
-            Console.WriteLine($"Trovate {comunicazioniList.Count} comunicazioni senza DateF e non notificate.");
+            _logger.LogInformation($"Trovate {comunicazioniList.Count} comunicazioni senza DateF e non notificate.");
 
             var notifications = new List<ComunicazioniWithDaysModel>();
 
@@ -42,7 +42,7 @@ public class MonitoringService : IMonitoringService
                 var nomeServizio = comunicazione.Servizio?.ToUpper() ?? "";
 
                 // Log per debug: valore di DateA letto dal database
-                Console.WriteLine($"Comunicazione ID: {comunicazione.Id}, Nome File: {comunicazione.FileName}, Servizio: {nomeServizio}, DateA (letto dal DB): {comunicazione.DateA}");
+                _logger.LogInformation($"Comunicazione ID: {comunicazione.Id}, Nome File: {comunicazione.FileName}, Servizio: {nomeServizio}, DateA (letto dal DB): {comunicazione.DateA}");
 
                 // Calcola l'ora prevista di invio (basato su criteri del servizio)
                 var invioPrevisto = comunicazione.DateA;
@@ -55,8 +55,12 @@ public class MonitoringService : IMonitoringService
                     case "DIM":
                     case "MA7":
                     case "MIM":
+                    case "VL1":
+                    case "VLA":
+                    case "VL3":
                     case "VSA":
                     case "VPP":
+                    case "VSS":
                         invioPrevisto = comunicazione.DateA?.AddDays(5);
                         break;
                     case "ERE":
@@ -70,7 +74,7 @@ public class MonitoringService : IMonitoringService
                         break;
                 }
 
-                Console.WriteLine($"Giorno previsto per la comunicazione '{comunicazione.FileName}': {invioPrevisto}");
+                _logger.LogInformation($"Giorno previsto per la comunicazione '{comunicazione.FileName}': {invioPrevisto}");
 
                 // Verifica se è ora di inviare la notifica in base all'ora corrente e al tempo previsto
                 if (invioPrevisto.HasValue && currentTime >= invioPrevisto)
@@ -89,22 +93,22 @@ public class MonitoringService : IMonitoringService
                     // Verifica se la comunicazione soddisfa i criteri di notifica usando ControlloServizio
                     if (ControlloServizio(comunicazioneModel))
                     {
-                        Console.WriteLine($"Comunicazione '{comunicazione.FileName}' soddisfa i criteri di notifica.");
+                        _logger.LogInformation($"Comunicazione '{comunicazione.FileName}' soddisfa i criteri di notifica.");
                         notifications.Add(comunicazioneModel);
                     }
                     else
                     {
-                        Console.WriteLine($"Comunicazione '{comunicazione.FileName}' NON soddisfa i criteri di notifica.");
+                        _logger.LogInformation($"Comunicazione '{comunicazione.FileName}' NON soddisfa i criteri di notifica.");
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"Comunicazione '{comunicazione.FileName}' NON soddisfa i criteri di invio temporale.");
+                    _logger.LogInformation($"Comunicazione '{comunicazione.FileName}' NON soddisfa i criteri di invio temporale.");
                 }
             }
 
             // Log del numero di notifiche che devono essere inviate
-            Console.WriteLine($"Trovate {notifications.Count} comunicazioni che necessitano di notifica.");
+            _logger.LogInformation($"Trovate {notifications.Count} comunicazioni che necessitano di notifica.");
 
             // Invia le notifiche
             foreach (var notification in notifications)
@@ -127,7 +131,7 @@ public class MonitoringService : IMonitoringService
 
                     if (destinatari == null || destinatari.Count == 0)
                     {
-                        Console.WriteLine("Nessun destinatario trovato per inviare le notifiche.");
+                        _logger.LogInformation("Nessun destinatario trovato per inviare le notifiche.");
                         continue;
                     }
 
@@ -135,13 +139,13 @@ public class MonitoringService : IMonitoringService
                     {
                         try
                         {
-                            Console.WriteLine($"Invio email a: {destinatario.Destinatario}");
+                            _logger.LogInformation($"Invio email a: {destinatario.Destinatario}");
                             await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message.ToString());
-                            Console.WriteLine($"Email inviata a: {destinatario.Destinatario}");
+                            _logger.LogInformation($"Email inviata a: {destinatario.Destinatario}");
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Errore durante l'invio dell'email a {destinatario.Destinatario}: {ex.Message}");
+                            _logger.LogError($"Errore durante l'invio dell'email a {destinatario.Destinatario}: {ex.Message}");
                         }
                     }
 
@@ -149,17 +153,17 @@ public class MonitoringService : IMonitoringService
                     comunicazione.Notificato = true;
                     _context.Comunicazionis.Update(comunicazione);
                     await _context.SaveChangesAsync();
-                    Console.WriteLine($"Comunicazione '{comunicazione.FileName}' è stata notificata.");
+                    _logger.LogInformation($"Comunicazione '{comunicazione.FileName}' è stata notificata.");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Errore durante il recupero dei destinatari: {ex.Message}");
+                    _logger.LogError($"Errore durante il recupero dei destinatari: {ex.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Errore durante il recupero delle comunicazioni: {ex.Message}");
+            _logger.LogError($"Errore durante il recupero delle comunicazioni: {ex.Message}");
         }
     }
 
@@ -195,6 +199,18 @@ public class MonitoringService : IMonitoringService
             case "VSA":
                 matches = comunicazione.TotalDays >= 5;
                 break;
+            case "VL1":
+                matches = comunicazione.TotalDays >= 5;
+                break;
+            case "VLA":
+                matches = comunicazione.TotalDays >= 5;
+                break;
+            case "VL3":
+                matches = comunicazione.TotalDays >= 5;
+                break;
+            case "VSS":
+                matches = comunicazione.TotalDays >= 5;
+                break;
             case "VPP":
                 matches = comunicazione.TotalDays >= 5;
                 break;
@@ -216,12 +232,12 @@ public class MonitoringService : IMonitoringService
                 // Assumiamo che l'interruzione del monitoraggio possa essere semplicemente l'assegnazione di una data di smarco (DateF)
                 comunicazione.DateF = DateTime.Now;
                 await _context.SaveChangesAsync();
-                Console.WriteLine($"Il monitoraggio per la comunicazione con ID {comunicazioneId} è stato interrotto.");
+                _logger.LogInformation($"Il monitoraggio per la comunicazione con ID {comunicazioneId} è stato interrotto.");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Errore durante l'interruzione del monitoraggio per la comunicazione con ID {comunicazioneId}: {ex.Message}");
+            _logger.LogError($"Errore durante l'interruzione del monitoraggio per la comunicazione con ID {comunicazioneId}: {ex.Message}");
         }
     }
 }
