@@ -13,6 +13,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ComDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext")));
 
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tempo di scadenza della sessione
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+
 // Registra i servizi come Scoped
 builder.Services.AddHostedService<NotificationBackgroundService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -45,6 +53,8 @@ else
 { 
     app.UseDeveloperExceptionPage();
 }
+
+app.UseSession();
 
 app.UseStaticFiles();
 

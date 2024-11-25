@@ -20,11 +20,22 @@
             <label for="endDate">A:</label>
             <input type="date" name="endDate" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")">
         </div>
+        <div class="col">
+            <label for="monthYear">Mese/Anno:</label>
+            <input type="month" name="monthYear" class="form-control" value="@Model.MonthYear?.ToString("yyyy-MM")">
+        </div>
+        <div class="col">
+            <label for="codCor">Codice Correlato (CodCor):</label>
+            <select name="codCor" class="form-control" asp-items="ViewBag.CodCorOptions">
+                <option value="">-- Seleziona Codice Correlato --</option>
+            </select>
+        </div>
         <div class="col-auto align-self-end">
             <button type="submit" class="btn btn-primary">Filtra</button>
         </div>
     </div>
 </form>
+
 
 <table class="table table-hover">
     <thead>
