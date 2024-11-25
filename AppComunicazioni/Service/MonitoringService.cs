@@ -45,11 +45,11 @@ public class MonitoringService : IMonitoringService
                 _logger.LogInformation($"Comunicazione ID: {comunicazione.Id}, Nome File: {comunicazione.FileName}, Servizio: {nomeServizio}, DateA (letto dal DB): {comunicazione.DateA}");
 
                 // Calcola l'ora prevista di invio (basato su criteri del servizio)
-                var invioPrevisto = comunicazione.DateA;
+                int giorniDaAggiungere;
                 switch (nomeServizio)
                 {
                     case "035":
-                        invioPrevisto = comunicazione.DateA?.AddDays(3);
+                        giorniDaAggiungere = 3;
                         break;
                     case "PDL":
                     case "DIM":
@@ -61,18 +61,22 @@ public class MonitoringService : IMonitoringService
                     case "VSA":
                     case "VPP":
                     case "VSS":
-                        invioPrevisto = comunicazione.DateA?.AddDays(5);
+                        giorniDaAggiungere = 5;
                         break;
                     case "ERE":
-                        invioPrevisto = comunicazione.DateA?.AddDays(7);
+                        giorniDaAggiungere = 7;
                         break;
                     case "APP":
-                        invioPrevisto = comunicazione.DateA?.AddDays(8);
+                        giorniDaAggiungere = 8;
                         break;
                     default:
-                        invioPrevisto = null;
+                        giorniDaAggiungere = 0;
                         break;
                 }
+
+                var invioPrevisto = comunicazione.DateA.HasValue
+                    ? comunicazione.DateA.Value.AddDays(CalcolaGiorniLavorativi(comunicazione.DateA.Value, giorniDaAggiungere))
+                    : (DateTimeOffset?)null;
 
                 _logger.LogInformation($"Giorno previsto per la comunicazione '{comunicazione.FileName}': {invioPrevisto}");
 
@@ -80,7 +84,7 @@ public class MonitoringService : IMonitoringService
                 if (invioPrevisto.HasValue && currentTime >= invioPrevisto)
                 {
                     var totalMinutes = (currentTime - comunicazione.DateA)?.TotalMinutes ?? 0;
-                    var totalDays = (currentTime - comunicazione.DateA)?.TotalDays ?? 0;
+                    var totalDays = CalcolaGiorniLavorativi(comunicazione.DateA.Value, (currentTime - comunicazione.DateA.Value).Days);
 
                     var comunicazioneModel = new ComunicazioniWithDaysModel
                     {
@@ -167,6 +171,24 @@ public class MonitoringService : IMonitoringService
         }
     }
 
+    // Funzione per calcolare i giorni lavorativi
+    private int CalcolaGiorniLavorativi(DateTimeOffset dataInizio, int giorniDaAggiungere)
+    {
+        int giorniLavorativi = 0;
+        DateTimeOffset dataCorrente = dataInizio;
+
+        while (giorniLavorativi < giorniDaAggiungere)
+        {
+            dataCorrente = dataCorrente.AddDays(1);
+            if (dataCorrente.DayOfWeek != DayOfWeek.Saturday && dataCorrente.DayOfWeek != DayOfWeek.Sunday)
+            {
+                giorniLavorativi++;
+            }
+        }
+
+        return giorniLavorativi;
+    }
+
     // Funzione per verificare se la comunicazione soddisfa i criteri di notifica
     private bool ControlloServizio(ComunicazioniWithDaysModel comunicazione)
     {
@@ -179,40 +201,22 @@ public class MonitoringService : IMonitoringService
                 matches = comunicazione.TotalDays >= 3;
                 break;
             case "PDL":
-                matches = comunicazione.TotalDays >= 5;
-                break;
             case "DIM":
-                matches = comunicazione.TotalDays >= 5;
-                break;
             case "MA7":
+            case "MIM":
+            case "VL1":
+            case "VLA":
+            case "VL3":
+            case "VSA":
+            case "VPP":
+            case "VSS":
                 matches = comunicazione.TotalDays >= 5;
                 break;
             case "ERE":
                 matches = comunicazione.TotalDays >= 7;
                 break;
-            case "MIM":
-                matches = comunicazione.TotalDays >= 5;
-                break;
             case "APP":
                 matches = comunicazione.TotalDays >= 8;
-                break;
-            case "VSA":
-                matches = comunicazione.TotalDays >= 5;
-                break;
-            case "VL1":
-                matches = comunicazione.TotalDays >= 5;
-                break;
-            case "VLA":
-                matches = comunicazione.TotalDays >= 5;
-                break;
-            case "VL3":
-                matches = comunicazione.TotalDays >= 5;
-                break;
-            case "VSS":
-                matches = comunicazione.TotalDays >= 5;
-                break;
-            case "VPP":
-                matches = comunicazione.TotalDays >= 5;
                 break;
             default:
                 matches = false;

@@ -64,7 +64,7 @@ namespace AppComunicazioni.Service
         private DateTimeOffset GetNextRunTime(DateTimeOffset now)
         {
             // Imposta la prossima esecuzione alle 9:00 del mattino
-            var nextRun = new DateTimeOffset(now.Year, now.Month, now.Day, 9, 30, 0, now.Offset);
+            var nextRun = new DateTimeOffset(now.Year, now.Month, now.Day, 10, 00, 0, now.Offset);
 
             // Se sono passate le 9:00 di oggi, sposta la prossima esecuzione a domani
             if (now >= nextRun)
@@ -80,22 +80,5 @@ namespace AppComunicazioni.Service
             // Controlla se il giorno è dal lunedì al venerdì
             return date.DayOfWeek >= DayOfWeek.Monday && date.DayOfWeek <= DayOfWeek.Friday;
         }
-
-        /*protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                _logger.LogInformation("Esecuzione periodica del controllo notifiche...");
-
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var monitoringService = scope.ServiceProvider.GetRequiredService<IMonitoringService>();
-                    await monitoringService.CheckAndSendNotificationsAsync();
-                }
-
-                // Attendi 10 minuti prima di ripetere
-                await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
-            }
-        }*/
     }
 }
