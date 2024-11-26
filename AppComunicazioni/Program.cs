@@ -8,10 +8,12 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 // Registra il contesto del database come Scoped
 builder.Services.AddDbContext<ComDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext")));
+
+// Registra IHttpContextAccessor
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddSession(options =>
 {
@@ -20,11 +22,11 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-
 // Registra i servizi come Scoped
 builder.Services.AddHostedService<NotificationBackgroundService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
+builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddControllers();
@@ -50,7 +52,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 else
-{ 
+{
     app.UseDeveloperExceptionPage();
 }
 

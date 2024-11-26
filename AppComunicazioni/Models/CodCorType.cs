@@ -8,6 +8,8 @@ namespace AppComunicazioni.Models
         COD_8033,
 
         [Display(Name = "CESSIONI")]
-        COD_1990
+        COD_1990,
+        [Display(Name = "FORZA")]
+        COD_8096
     }
 }
