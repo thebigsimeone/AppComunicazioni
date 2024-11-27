@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Html;
-using System.Text;
-
-namespace AppComunicazioni.Utility
+﻿namespace AppComunicazioni.Utility
 {
     public class ViewHelpers
     {

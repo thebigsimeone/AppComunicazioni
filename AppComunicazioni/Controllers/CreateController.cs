@@ -1,11 +1,9 @@
-﻿using AppComunicazioni.Models.DTO_s;
-using AppComunicazioni.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using AppComunicazioni.Data;
-using AutoMapper;
-using System.Text;
+﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
+using AppComunicazioni.Models;
+using AppComunicazioni.Models.DTO_s;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace AppComunicazioni.Controllers

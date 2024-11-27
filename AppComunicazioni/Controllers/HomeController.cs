@@ -17,19 +17,6 @@ namespace AppComunicazioni.Controllers
         {
             return View();
         }
-        public IActionResult ComunicaionisSscController()
-        {
-            return View();
-        }
-        public IActionResult CreateController()
-        {
-            return View();
-        }
-
-        public IActionResult DestinatarisController()
-        {
-            return View();
-        }
 
         [HttpGet("/Error")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

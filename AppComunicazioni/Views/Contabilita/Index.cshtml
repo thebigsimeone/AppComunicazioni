@@ -18,6 +18,12 @@
                 <option value="">-- Seleziona Codice Correlato --</option>
             </select>
         </div>
+        <div class="col">
+            <label for="tipoAccertamento">Tipo Accertamento:</label>
+            <select name="tipoAccertamento" class="form-control" asp-items="ViewBag.TipoAccertamentoOptions">
+                <option value="">-- Seleziona Tipo Accertamento --</option>
+            </select>
+        </div>
         <div class="col-auto align-self-end">
             <button type="submit" class="btn btn-primary">Filtra</button>
         </div>

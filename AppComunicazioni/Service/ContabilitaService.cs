@@ -2,10 +2,6 @@
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace AppComunicazioni.Service
 {
@@ -18,7 +14,7 @@ namespace AppComunicazioni.Service
             _context = context;
         }
 
-        public async Task<List<ContabilitaAccertamentiViewModel>> GetTotaleAccertamentiAsync(DateTime? meseAnno = null, string codCor = null)
+        public async Task<List<ContabilitaAccertamentiViewModel>> GetTotaleAccertamentiAsync(DateTime? meseAnno = null, string codCor = null, string tipoAccertamento = null)
         {
             var query = _context.Comunicazionis.AsQueryable();
 
@@ -53,6 +49,12 @@ namespace AppComunicazioni.Service
                     // Filtro per un singolo codice specificato
                     query = query.Where(x => x.FileName.Contains(codCor));
                 }
+            }
+
+            // Applica il filtro per tipoAccertamento (EBI o SSC) se fornito
+            if (!string.IsNullOrEmpty(tipoAccertamento))
+            {
+                query = query.Where(x => x.FileName.Contains(tipoAccertamento));
             }
 
             var accertamenti = await query

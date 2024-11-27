@@ -1,7 +1,5 @@
 ﻿using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 
 namespace AppComunicazioni.Service
 {
