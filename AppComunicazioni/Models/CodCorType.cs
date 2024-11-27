@@ -3,7 +3,7 @@
 public enum CodCorType
 {
     [Display(Name = "DATAVIZ")]
-    COD_8033,
+    DATAVIZ,
 
     [Display(Name = "CESSIONI")]
     CESSIONI,

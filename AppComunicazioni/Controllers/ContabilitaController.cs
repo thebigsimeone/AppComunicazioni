@@ -22,18 +22,24 @@ namespace AppComunicazioni.Controllers
                                         .Select(c => new SelectListItem
                                         {
                                             Value = c.ToString().Replace("COD_", ""),
-                                            Text = c.GetDisplayName()
+                                            Text = c.GetDisplayName(),
+                                            Selected = codCor != null && c.ToString().Replace("COD_", "") == codCor
                                         }).ToList();
 
             // Configurazione del ViewBag per la select del TipoAccertamento (EBI o SSC)
             ViewBag.TipoAccertamentoOptions = new[]
             {
-                new SelectListItem { Value = "SSC", Text = "SSC" },
-                new SelectListItem { Value = "EBI", Text = "EBI" }
+                new SelectListItem { Value = "SSC", Text = "SSC", Selected = tipoAccertamento == "SSC" },
+                new SelectListItem { Value = "EBI", Text = "EBI", Selected = tipoAccertamento == "EBI" }
             };
+
+            ViewData["MeseAnno"] = meseAnno?.ToString("yyyy-MM");
+            ViewData["CodCor"] = codCor;
+            ViewData["TipoAccertamento"] = tipoAccertamento;
 
             var model = await _contabilitaService.GetTotaleAccertamentiAsync(meseAnno, codCor, tipoAccertamento);
             return View(model);
         }
+
     }
 }

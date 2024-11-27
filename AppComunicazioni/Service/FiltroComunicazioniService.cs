@@ -80,8 +80,13 @@ namespace AppComunicazioni.Service
                 }
                 else if (codCor == "FORZA")
                 {
-                    // Filtro per tutti i codici correlati a FORZA
+                    // Filtro per FORZA
                     query = query.Where(x => x.FileName.StartsWith("001-8096"));
+                }
+                else if (codCor == "DATAVIZ")
+                {
+                    // Filtro per FORZA
+                    query = query.Where(x => x.FileName.StartsWith("001-8033"));
                 }
                 else if (!string.IsNullOrEmpty(codCor))
                 {

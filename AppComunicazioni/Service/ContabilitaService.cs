@@ -44,6 +44,11 @@ namespace AppComunicazioni.Service
                     // Filtro per FORZA
                     query = query.Where(x => x.FileName.StartsWith("001-8096"));
                 }
+                else if (codCor == "DATAVIZ")
+                {
+                    // Filtro per FORZA
+                    query = query.Where(x => x.FileName.StartsWith("001-8033"));
+                }
                 else
                 {
                     // Filtro per un singolo codice specificato

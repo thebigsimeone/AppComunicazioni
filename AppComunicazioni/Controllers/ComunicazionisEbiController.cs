@@ -36,9 +36,16 @@ namespace AppComunicazioni.Controllers
                                         .Cast<CodCorType>()
                                         .Select(c => new SelectListItem
                                         {
-                                            Value = c.ToString(), // Cambiato per mantenere il valore dell'enumerazione (come "CESSIONI", "FORZA", etc.)
-                                            Text = c.GetDisplayName()
+                                            Value = c.ToString().Replace("COD_", ""),
+                                            Text = c.GetDisplayName(),
+                                            Selected = codCor != null && c.ToString().Replace("COD_", "") == codCor
                                         }).ToList();
+
+            ViewData["SearchTerm"] = searchTerm;
+            ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
+            ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
+            ViewData["MonthYear"] = monthYear?.ToString("yyyy-MM");
+            ViewData["CodCor"] = codCor;
 
             int pageSize = 10;
             IQueryable<Comunicazioni> query = _context.Comunicazionis.AsQueryable();
