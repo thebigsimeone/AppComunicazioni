@@ -30,12 +30,12 @@ namespace AppComunicazioni.Controllers
         public IActionResult Index()
         {
             ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
-                              .Cast<ServizioType>()
-                              .Select(s => new SelectListItem
-                              {
-                                  Value = s.ToString(),
-                                  Text = s == ServizioType.S035 ? "035" : s.ToString()
-                              }).ToList();
+                                          .Cast<ServizioType>()
+                                          .Select(s => new SelectListItem
+                                          {
+                                              Value = s == ServizioType.S035 ? "035" : s.ToString(),
+                                              Text = s == ServizioType.S035 ? "035" : s.ToString()
+                                          }).ToList();
 
             return View();
         }

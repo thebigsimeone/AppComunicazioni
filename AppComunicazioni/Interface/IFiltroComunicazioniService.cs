@@ -6,6 +6,7 @@ namespace AppComunicazioni.Interface
 {
     public interface IFiltroComunicazioniService
     {
+        void ResetFiltri();
         Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(
             IQueryable<Comunicazioni> query,
             string tenant,

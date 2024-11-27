@@ -31,11 +31,11 @@
             </select>
         </div>
         <div class="col-auto align-self-end">
-            <button type="submit" class="btn btn-primary">Filtra</button>
+            <button type="submit" class="btn btn-outline-primary">Filtra</button>
+            <button type="submit" formaction="@Url.Action("ResetFiltri")" formmethod="post" class="btn btn-outline-secondary">Reset Filtri</button>
         </div>
     </div>
 </form>
-
 
 <table class="table table-hover">
     <thead>
@@ -70,7 +70,7 @@
                     @Html.DisplayNameFor(m => m.Comunicazioni.First().Servizio)
                 </a>
             </th>
-            <th>Azioni</th> 
+            <th>Azioni</th>
         </tr>
     </thead>
     <tbody>
@@ -78,7 +78,7 @@
         {
             <tr>
                 <td>
-                    <a class="btn @(item.DateF == null ? "btn-outline-danger" : "btn-outline-success")" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
+                    <a class="btn @(item.DateF == null ? "btn-outline-danger" : "btn-outline-info")" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
                 </td>
                 <td>@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
                 <td>@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>

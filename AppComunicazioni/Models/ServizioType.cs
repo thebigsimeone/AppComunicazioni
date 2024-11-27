@@ -3,18 +3,22 @@
     public enum ServizioType
     {
         APP,
+        BA2,
+        BAN,
+        CEP,
         DIM,
+        DP1,
         ERE,
         MA7,
         MIM,
         PDL,
+        S035,
         VL1,
-        VLA,
         VL3,
+        VLA,
         VPP,
         VSA,
-        VSS,
-        S035
+        VED,
+        VSS
     }
-
 }

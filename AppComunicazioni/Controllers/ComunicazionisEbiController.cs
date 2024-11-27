@@ -34,6 +34,14 @@ namespace AppComunicazioni.Controllers
         // GET: ComunicazionisEbi
         public async Task<IActionResult> Index(string searchTerm, DateTime? startDate, DateTime? endDate, string codCor, DateTime? monthYear, int pageNumber = 1, string sortField = "DateA", string sortOrder = "default")
         {
+            ViewBag.CodCorOptions = Enum.GetValues(typeof(CodCorType))
+                                        .Cast<CodCorType>()
+                                        .Select(c => new SelectListItem
+                                        {
+                                            Value = c.ToString(), // Cambiato per mantenere il valore dell'enumerazione (come "CESSIONI", "FORZA", etc.)
+                                            Text = c.GetDisplayName()
+                                        }).ToList();
+
             int pageSize = 10;
             IQueryable<Comunicazioni> query = _context.Comunicazionis.AsQueryable();
 
@@ -85,12 +93,12 @@ namespace AppComunicazioni.Controllers
 
             // Passa le opzioni enum alla vista usando ViewBag
             ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
-                                   .Cast<ServizioType>()
-                                   .Select(s => new SelectListItem
-                                   {
-                                       Value = s.ToString(),
-                                       Text = s == ServizioType.S035 ? "035" : s.ToString()
-                                   }).ToList();
+                                          .Cast<ServizioType>()
+                                          .Select(s => new SelectListItem
+                                          {
+                                              Value = s == ServizioType.S035 ? "035" : s.ToString(),
+                                              Text = s == ServizioType.S035 ? "035" : s.ToString()
+                                          }).ToList();
 
             return View(comunicazioniDTO);
         }
@@ -210,5 +218,13 @@ namespace AppComunicazioni.Controllers
         {
             return _context.Comunicazionis.Any(e => e.Id == id);
         }
+
+        [HttpPost]
+        public IActionResult ResetFiltri()
+        {
+            _filtroService.ResetFiltri();
+            return RedirectToAction("Index");
+        }
+
     }
 }
