@@ -27,6 +27,7 @@ builder.Services.AddHostedService<NotificationBackgroundService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
+builder.Services.AddScoped<IContabilitaService, ContabilitaService>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddControllers();
