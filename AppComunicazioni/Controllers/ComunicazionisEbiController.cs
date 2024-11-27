@@ -2,7 +2,6 @@
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
-using AppComunicazioni.Utility;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -19,7 +18,9 @@ namespace AppComunicazioni.Controllers
         private readonly IFiltroComunicazioniService _filtroService;
         private readonly ILogger<ComunicazionisEbiController> _logger;
 
-        public ComunicazionisEbiController(ComDbContext context, IMapper mapper, IEmailService emailService, IMonitoringService monitoringService, IFiltroComunicazioniService filtroComunicazioniService, ILogger<ComunicazionisEbiController> logger)
+        public ComunicazionisEbiController(ComDbContext context, IMapper mapper, IEmailService emailService,
+                                           IMonitoringService monitoringService, IFiltroComunicazioniService filtroComunicazioniService,
+                                           ILogger<ComunicazionisEbiController> logger)
         {
             _context = context;
             _mapper = mapper;
@@ -30,25 +31,14 @@ namespace AppComunicazioni.Controllers
         }
 
         // GET: ComunicazionisEbi
-        public async Task<IActionResult> Index(string searchTerm, DateTime? startDate, DateTime? endDate, string codCor, DateTime? monthYear, int pageNumber = 1, string sortField = "DateA", string sortOrder = "default")
+        public async Task<IActionResult> Index(string searchTerm, DateTime? startDate, DateTime? endDate,
+                                               string codCor, DateTime? monthYear, int pageNumber = 1,
+                                               string sortField = "DateA", string sortOrder = "default")
         {
-            ViewBag.CodCorOptions = Enum.GetValues(typeof(CodCorType))
-                                        .Cast<CodCorType>()
-                                        .Select(c => new SelectListItem
-                                        {
-                                            Value = c.ToString().Replace("COD_", ""),
-                                            Text = c.GetDisplayName(),
-                                            Selected = codCor != null && c.ToString().Replace("COD_", "") == codCor
-                                        }).ToList();
-
-            ViewData["SearchTerm"] = searchTerm;
-            ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
-            ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
-            ViewData["MonthYear"] = monthYear?.ToString("yyyy-MM");
-            ViewData["CodCor"] = codCor;
+            SetViewBagOptions(codCor);
 
             int pageSize = 10;
-            IQueryable<Comunicazioni> query = _context.Comunicazionis.AsQueryable();
+            var query = _context.Comunicazionis.AsQueryable();
 
             // Utilizza il servizio per applicare i filtri
             query = await _filtroService.FiltraComunicazioniAsync(query, "EBI", searchTerm, startDate, endDate, codCor, monthYear, sortField, sortOrder);
@@ -82,7 +72,6 @@ namespace AppComunicazioni.Controllers
             if (comunicazioni == null) return NotFound();
 
             var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
-            comunicazioniDTO.Note = ViewHelpers.FormatNoteForDisplay(comunicazioniDTO.Note);
             return View(comunicazioniDTO);
         }
 
@@ -94,17 +83,8 @@ namespace AppComunicazioni.Controllers
             var comunicazioni = await _context.Comunicazionis.FindAsync(id);
             if (comunicazioni == null) return NotFound();
 
+            SetViewBagOptions();
             var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
-
-            // Passa le opzioni enum alla vista usando ViewBag
-            ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
-                                          .Cast<ServizioType>()
-                                          .Select(s => new SelectListItem
-                                          {
-                                              Value = s == ServizioType.S035 ? "035" : s.ToString(),
-                                              Text = s == ServizioType.S035 ? "035" : s.ToString()
-                                          }).ToList();
-
             return View(comunicazioniDTO);
         }
 
@@ -115,82 +95,69 @@ namespace AppComunicazioni.Controllers
         {
             if (id != comunicazioniDTO.Id) return NotFound();
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid) return View(comunicazioniDTO);
+
+            var comunicazioniToUpdate = await _context.Comunicazionis.FindAsync(id);
+            if (comunicazioniToUpdate == null) return NotFound();
+
+            _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
+
+            try
             {
-                var comunicazioniToUpdate = await _context.Comunicazionis.FindAsync(id);
-                if (comunicazioniToUpdate == null) return NotFound();
+                await _context.SaveChangesAsync();
+                await HandlePostEditActions(comunicazioniToUpdate);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ComunicazioniExists(id)) return NotFound();
+                throw;
+            }
+        }
 
-                _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
+        private async Task HandlePostEditActions(Comunicazioni comunicazioniToUpdate)
+        {
+            if (comunicazioniToUpdate.DateF != null)
+            {
+                await SendNotificationEmails(comunicazioniToUpdate);
+                await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
+            }
+        }
 
-                try
+        private async Task SendNotificationEmails(Comunicazioni comunicazioni)
+        {
+            bool emailSuccess = true;
+            var destinatari = await _context.Destinataris.Where(d => d.Attivo == "S").ToListAsync();
+
+            if (destinatari.Count == 0)
+            {
+                _logger.LogWarning("Non ci sono destinatari attivi.");
+            }
+            else
+            {
+                string subject = $"SMARCO ACCERTAMENTI DEL FILE: {comunicazioni.FileName}";
+                string formattedNote = _emailService.FormatNote(comunicazioni.Note);
+                string message = $"<p>Il seguente file è stato smarcato: {comunicazioni.FileName}<br>" +
+                                 $"con il numero protocolli: {comunicazioni.NProtocol}<br><br>" +
+                                 $"Questi sono i protocolli da controllare: {comunicazioni.NsProtocol}<br><br>" +
+                                 $"{formattedNote}<br><br>" +
+                                 $"Cordiali saluti,<br>Flavio Simeone</p>";
+
+                foreach (var destinatario in destinatari)
                 {
-                    await _context.SaveChangesAsync();
-
-                    // Invia l'email solo se DateF è valorizzato
-                    if (comunicazioniToUpdate.DateF != null && comunicazioniToUpdate.DateF != DateTimeOffset.MinValue)
-                    {
-                        bool emailSuccess = true;
-
-                        // Seleziona solo i destinatari attivi
-                        var destinatari = await _context.Destinataris
-                            .Where(d => d.Attivo == "S")
-                            .ToListAsync();
-
-                        if (destinatari.Count == 0)
-                        {
-                            _logger.LogWarning("Non ci sono destinatari attivi.");
-                        }
-                        else
-                        {
-                            string subject = $"SMARCO ACCERTAMENTI DEL FILE: {comunicazioniToUpdate.FileName}";
-                            string formattedNote = _emailService.FormatNote(comunicazioniToUpdate.Note);
-                            string message = $"<p>Il seguente file è stato smarcato: {comunicazioniToUpdate.FileName}<br>" +
-                                             $"con il numero protocolli: {comunicazioniToUpdate.NProtocol}<br><br>" +
-                                             $"Questi sono i protocolli da controllare: {comunicazioniToUpdate.NsProtocol}<br><br>" +
-                                             $"{formattedNote}<br><br>" +
-                                             $"Cordiali saluti,<br><br>" +
-                                             $"Flavio Simeone</p>";
-
-                            foreach (var destinatario in destinatari)
-                            {
-                                try
-                                {
-                                    await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
-                                    emailSuccess = false;
-                                }
-                            }
-                        }
-
-                        TempData["Message"] = emailSuccess ? "Comunicazione modificata e email inviate con successo." : "Comunicazione modificata, ma l'invio delle email è fallito.";
-                    }
-                    else
-                    {
-                        TempData["Message"] = "Comunicazione modificata senza inviare email perché DateF non è valorizzato.";
-                    }
-
-                    // Interrompi il monitoraggio per la comunicazione modificata
                     try
                     {
-                        await _monitoringService.StopMonitoringForComunicazioneAsync(id);
+                        await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError($"Errore durante l'interruzione del monitoraggio per la comunicazione modificata: {ex.Message}");
+                        _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
+                        emailSuccess = false;
                     }
-
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ComunicazioniExists(id)) return NotFound();
-                    throw;
                 }
             }
-            return View(comunicazioniDTO);
+
+            TempData["Message"] = emailSuccess ? "Comunicazione modificata e email inviate con successo." : "Comunicazione modificata, ma l'invio delle email è fallito.";
         }
 
         // GET: ComunicazionisEbi/Delete/5
@@ -198,8 +165,7 @@ namespace AppComunicazioni.Controllers
         {
             if (id == null) return NotFound();
 
-            var comunicazioni = await _context.Comunicazionis
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var comunicazioni = await _context.Comunicazionis.FirstOrDefaultAsync(m => m.Id == id);
             if (comunicazioni == null) return NotFound();
 
             return View(comunicazioni);
@@ -219,9 +185,26 @@ namespace AppComunicazioni.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ComunicazioniExists(int id)
+        private bool ComunicazioniExists(int id) => _context.Comunicazionis.Any(e => e.Id == id);
+
+        private void SetViewBagOptions(string? codCor = null)
         {
-            return _context.Comunicazionis.Any(e => e.Id == id);
+            ViewBag.CodCorOptions = Enum.GetValues(typeof(CodCorType))
+                                        .Cast<CodCorType>()
+                                        .Select(c => new SelectListItem
+                                        {
+                                            Value = c.ToString(), // Usa il nome esatto dell'enum come valore per la logica di filtraggio
+                                            Text = c.GetDisplayName(), // Mostra il testo definito nel DisplayAttribute per una migliore UX
+                                            Selected = codCor != null && codCor.Equals(c.ToString(), StringComparison.OrdinalIgnoreCase)
+                                        }).ToList();
+
+            ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
+                                          .Cast<ServizioType>()
+                                          .Select(s => new SelectListItem
+                                          {
+                                              Value = s == ServizioType.S035 ? "035" : s.ToString(),
+                                              Text = s == ServizioType.S035 ? "035" : s.ToString()
+                                          }).ToList();
         }
 
         [HttpPost]
@@ -230,6 +213,5 @@ namespace AppComunicazioni.Controllers
             _filtroService.ResetFiltri();
             return RedirectToAction("Index");
         }
-
     }
 }

@@ -17,12 +17,10 @@ public partial class Comunicazioni
 
     [Column("date_a")]
     [Display(Name = "Data di invio")]
-    [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy | HH:mm}", ApplyFormatInEditMode = true)]
     public DateTimeOffset? DateA { get; set; }
 
     [Column("date_f")]
     [Display(Name = "Data di fine smarco")]
-    [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy | HH:mm}", ApplyFormatInEditMode = true)]
     public DateTimeOffset? DateF { get; set; }
 
     [Column("n_protocol")]
@@ -43,5 +41,7 @@ public partial class Comunicazioni
     [Display(Name = "Servizio")]
     public string? Servizio { get; set; }
 
+    [Column("notificato")]
+    [Display(Name = "Notificato")]
     public bool? Notificato { get; set; }
 }

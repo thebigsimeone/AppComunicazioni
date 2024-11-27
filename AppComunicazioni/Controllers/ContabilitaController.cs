@@ -21,9 +21,9 @@ namespace AppComunicazioni.Controllers
                                         .Cast<CodCorType>()
                                         .Select(c => new SelectListItem
                                         {
-                                            Value = c.ToString().Replace("COD_", ""),
-                                            Text = c.GetDisplayName(),
-                                            Selected = codCor != null && c.ToString().Replace("COD_", "") == codCor
+                                            Value = c.ToString(), // Usa il nome esatto dell'enum come valore per la logica di filtraggio
+                                            Text = c.GetDisplayName(), // Mostra il testo definito nel DisplayAttribute per una migliore UX
+                                            Selected = codCor != null && codCor.Equals(c.ToString(), StringComparison.OrdinalIgnoreCase)
                                         }).ToList();
 
             // Configurazione del ViewBag per la select del TipoAccertamento (EBI o SSC)

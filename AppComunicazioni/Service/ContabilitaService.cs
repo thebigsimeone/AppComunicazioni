@@ -30,31 +30,31 @@ namespace AppComunicazioni.Service
             // Applica il filtro per CodCor se fornito
             if (!string.IsNullOrEmpty(codCor))
             {
-                if (codCor == "CESSIONI")
+                switch (codCor)
                 {
-                    // Filtro per tutti i codici correlati a CESSIONI
-                    query = query.Where(x =>
-                        x.FileName.StartsWith("001-1990") ||
-                        x.FileName.StartsWith("001-1989") ||
-                        x.FileName.StartsWith("001-8027") ||
-                        x.FileName.StartsWith("001-1988"));
-                }
-                else if (codCor == "FORZA")
-                {
-                    // Filtro per FORZA
-                    query = query.Where(x => x.FileName.StartsWith("001-8096"));
-                }
-                else if (codCor == "DATAVIZ")
-                {
-                    // Filtro per FORZA
-                    query = query.Where(x => x.FileName.StartsWith("001-8033"));
-                }
-                else
-                {
-                    // Filtro per un singolo codice specificato
-                    query = query.Where(x => x.FileName.Contains(codCor));
+                    case nameof(CodCorType.CESSIONI):
+                        query = query.Where(x =>
+                            x.FileName.StartsWith("001-1990") ||
+                            x.FileName.StartsWith("001-1989") ||
+                            x.FileName.StartsWith("001-8027") ||
+                            x.FileName.StartsWith("001-1988"));
+                        break;
+
+                    case nameof(CodCorType.FORZA):
+                        query = query.Where(x => x.FileName.StartsWith("001-8096"));
+                        break;
+
+                    case nameof(CodCorType.DATAVIZ):
+                        query = query.Where(x => x.FileName.StartsWith("001-8033"));
+                        break;
+
+                    default:
+                        // Filtro per un singolo codice specificato
+                        query = query.Where(x => x.FileName.Contains(codCor));
+                        break;
                 }
             }
+
 
             // Applica il filtro per tipoAccertamento (EBI o SSC) se fornito
             if (!string.IsNullOrEmpty(tipoAccertamento))
