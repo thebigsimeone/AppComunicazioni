@@ -8,44 +8,42 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Registra il contesto del database come Scoped
+// Configurazione del contesto del database - Scoped è corretto per evitare problemi di concorrenza
 builder.Services.AddDbContext<ComDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext")));
 
-// Registra IHttpContextAccessor
+// Servizi di contesto HTTP e sessione
 builder.Services.AddHttpContextAccessor();
-
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tempo di scadenza della sessione
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Timeout della sessione
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
-// Registra i servizi come Scoped
-builder.Services.AddHostedService<NotificationBackgroundService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IMonitoringService, MonitoringService>();
-builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
-builder.Services.AddScoped<IContabilitaService, ContabilitaService>();
+// Registrazione dei servizi - Utilizzo di Scoped, Transient e Singleton in base alle esigenze
+builder.Services.AddHostedService<NotificationBackgroundService>(); // Hosted service
+builder.Services.AddScoped<IEmailService, EmailService>(); // Servizio legato alla logica email
+builder.Services.AddScoped<IMonitoringService, MonitoringService>(); // Monitoraggio
+builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>(); // Filtro comunicazioni
+builder.Services.AddScoped<IContabilitaService, ContabilitaService>(); // Servizio contabilità
 
-builder.Services.AddHttpClient();
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddControllersWithViews();
+// Registrazione AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
+
+// Aggiunta delle funzionalità per HTTP Client, MVC e API Explorer
+builder.Services.AddHttpClient();
+builder.Services.AddMvc(); // AddMvc è più flessibile per l'uso di API e Views insieme
+builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-app.Use(async (context, next) =>
-{
-    var cultureInfo = new CultureInfo("it-IT");
-    Thread.CurrentThread.CurrentCulture = cultureInfo;
-    Thread.CurrentThread.CurrentUICulture = cultureInfo;
+// Configurazione della cultura - Impostata prima per garantire coerenza durante tutte le richieste
+var cultureInfo = new CultureInfo("it-IT");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
-    await next.Invoke();
-});
-
+// Gestione degli errori e delle pagine di stato
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -57,14 +55,19 @@ else
     app.UseDeveloperExceptionPage();
 }
 
+// Uso della sessione
 app.UseSession();
 
+// Configurazione dei file statici
 app.UseStaticFiles();
 
+// Routing
 app.UseRouting();
 
+// Autorizzazione - Posizionato correttamente per proteggere le risorse dopo il routing
 app.UseAuthorization();
 
+// Mappatura delle route per il controller - Posizionata dopo UseRouting per assicurare che le route siano configurate correttamente
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
