@@ -1,5 +1,6 @@
-﻿
-namespace AppComunicazioni.Models.DTO_s
+﻿using AppComunicazioni.Models;
+
+namespace AppComunicazioni.ViewModels
 {
     public class ComunicazioniWithDaysModel
     {

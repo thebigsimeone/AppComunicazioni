@@ -1,4 +1,4 @@
-﻿namespace AppComunicazioni.Models
+﻿namespace AppComunicazioni.ViewModels
 {
     public class ContabilitaAccertamentiViewModel
     {

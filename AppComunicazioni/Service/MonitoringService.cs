@@ -1,6 +1,6 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
-using AppComunicazioni.Models.DTO_s;
+using AppComunicazioni.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 

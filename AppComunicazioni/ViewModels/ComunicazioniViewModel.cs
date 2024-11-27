@@ -1,4 +1,6 @@
-﻿namespace AppComunicazioni.Models;
+﻿using AppComunicazioni.Models;
+
+namespace AppComunicazioni.ViewModels;
 using System;
 using System.Collections.Generic;
 
