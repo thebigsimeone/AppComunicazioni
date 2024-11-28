@@ -1,6 +1,6 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
-using AppComunicazioni.ViewModels;
+using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AppComunicazioni.Service

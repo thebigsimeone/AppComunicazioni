@@ -193,8 +193,8 @@ namespace AppComunicazioni.Controllers
                                         .Cast<CodCorType>()
                                         .Select(c => new SelectListItem
                                         {
-                                            Value = c.ToString(), // Usa il nome esatto dell'enum come valore per la logica di filtraggio
-                                            Text = c.GetDisplayName(), // Mostra il testo definito nel DisplayAttribute per una migliore UX
+                                            Value = c.ToString(),
+                                            Text = c.GetDisplayName(),
                                             Selected = codCor != null && codCor.Equals(c.ToString(), StringComparison.OrdinalIgnoreCase)
                                         }).ToList();
 
@@ -202,8 +202,8 @@ namespace AppComunicazioni.Controllers
                                           .Cast<ServizioType>()
                                           .Select(s => new SelectListItem
                                           {
-                                              Value = s == ServizioType.S035 ? "035" : s.ToString(),
-                                              Text = s == ServizioType.S035 ? "035" : s.ToString()
+                                              Value = s.ToString(), // Utilizziamo il nome effettivo dell'enum per il valore
+                                              Text = s.GetDisplayName() // Ottieni il nome visualizzato con DisplayAttribute
                                           }).ToList();
         }
 

@@ -1,6 +1,6 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
-using AppComunicazioni.ViewModels;
+using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
@@ -21,34 +21,28 @@ public class MonitoringService : IMonitoringService
     {
         try
         {
-            // Usa DateTimeOffset.Now per la tua ora corrente con il fuso orario locale
             var currentTime = DateTimeOffset.Now;
             _logger.LogInformation($"Valore di currentTime: {currentTime}");
 
-            // Recupera tutte le comunicazioni senza DateF e che non sono ancora state notificate
             _logger.LogInformation("Recupero tutte le comunicazioni senza DateF e non notificate...");
             var comunicazioniList = await _context.Comunicazionis
                 .Where(x => !x.DateF.HasValue && (x.Notificato == false || x.Notificato == null))
                 .ToListAsync();
 
-            // Log del numero di comunicazioni recuperate
             _logger.LogInformation($"Trovate {comunicazioniList.Count} comunicazioni senza DateF e non notificate.");
 
             var notifications = new List<ComunicazioniWithDaysModel>();
 
-            // Cicla attraverso tutte le comunicazioni
             foreach (var comunicazione in comunicazioniList)
             {
                 var nomeServizio = comunicazione.Servizio?.ToUpper() ?? "";
 
-                // Log per debug: valore di DateA letto dal database
                 _logger.LogInformation($"Comunicazione ID: {comunicazione.Id}, Nome File: {comunicazione.FileName}, Servizio: {nomeServizio}, DateA (letto dal DB): {comunicazione.DateA}");
 
-                // Calcola l'ora prevista di invio (basato su criteri del servizio)
                 int giorniDaAggiungere;
                 switch (nomeServizio)
                 {
-                    case "035":
+                    case "S035":
                         giorniDaAggiungere = 3;
                         break;
                     case "PDL":
@@ -75,26 +69,23 @@ public class MonitoringService : IMonitoringService
                 }
 
                 var invioPrevisto = comunicazione.DateA.HasValue
-                    ? comunicazione.DateA.Value.AddDays(CalcolaGiorniLavorativi(comunicazione.DateA.Value, giorniDaAggiungere))
+                    ? CalcolaDataInvio(comunicazione.DateA.Value, giorniDaAggiungere)
                     : (DateTimeOffset?)null;
 
                 _logger.LogInformation($"Giorno previsto per la comunicazione '{comunicazione.FileName}': {invioPrevisto}");
 
-                // Verifica se è ora di inviare la notifica in base all'ora corrente e al tempo previsto
                 if (invioPrevisto.HasValue && currentTime >= invioPrevisto)
                 {
-                    var totalMinutes = (currentTime - comunicazione.DateA)?.TotalMinutes ?? 0;
                     var totalDays = CalcolaGiorniLavorativi(comunicazione.DateA.Value, (currentTime - comunicazione.DateA.Value).Days);
 
                     var comunicazioneModel = new ComunicazioniWithDaysModel
                     {
                         Comunicazioni = comunicazione,
                         NomeServizio = nomeServizio,
-                        TotalMinutes = totalMinutes,
+                        TotalMinutes = (currentTime - comunicazione.DateA)?.TotalMinutes ?? 0,
                         TotalDays = totalDays
                     };
 
-                    // Verifica se la comunicazione soddisfa i criteri di notifica usando ControlloServizio
                     if (ControlloServizio(comunicazioneModel))
                     {
                         _logger.LogInformation($"Comunicazione '{comunicazione.FileName}' soddisfa i criteri di notifica.");
@@ -111,10 +102,8 @@ public class MonitoringService : IMonitoringService
                 }
             }
 
-            // Log del numero di notifiche che devono essere inviate
             _logger.LogInformation($"Trovate {notifications.Count} comunicazioni che necessitano di notifica.");
 
-            // Invia le notifiche
             foreach (var notification in notifications)
             {
                 var comunicazione = notification.Comunicazioni;
@@ -153,7 +142,6 @@ public class MonitoringService : IMonitoringService
                         }
                     }
 
-                    // Dopo aver inviato l'email, segna la comunicazione come notificata
                     comunicazione.Notificato = true;
                     _context.Comunicazionis.Update(comunicazione);
                     await _context.SaveChangesAsync();
@@ -171,13 +159,30 @@ public class MonitoringService : IMonitoringService
         }
     }
 
-    // Funzione per calcolare i giorni lavorativi
-    private int CalcolaGiorniLavorativi(DateTimeOffset dataInizio, int giorniDaAggiungere)
+    // Funzione per calcolare i giorni lavorativi e ottenere la data di invio
+    private DateTimeOffset CalcolaDataInvio(DateTimeOffset dataInizio, int giorniDaAggiungere)
+    {
+        DateTimeOffset dataCorrente = dataInizio;
+
+        while (giorniDaAggiungere > 0)
+        {
+            dataCorrente = dataCorrente.AddDays(1);
+            if (dataCorrente.DayOfWeek != DayOfWeek.Saturday && dataCorrente.DayOfWeek != DayOfWeek.Sunday)
+            {
+                giorniDaAggiungere--;
+            }
+        }
+
+        return dataCorrente;
+    }
+
+    // Funzione per calcolare i giorni lavorativi tra due date
+    private int CalcolaGiorniLavorativi(DateTimeOffset dataInizio, int giorniTotali)
     {
         int giorniLavorativi = 0;
         DateTimeOffset dataCorrente = dataInizio;
 
-        while (giorniLavorativi < giorniDaAggiungere)
+        for (int i = 0; i < giorniTotali; i++)
         {
             dataCorrente = dataCorrente.AddDays(1);
             if (dataCorrente.DayOfWeek != DayOfWeek.Saturday && dataCorrente.DayOfWeek != DayOfWeek.Sunday)
@@ -192,38 +197,14 @@ public class MonitoringService : IMonitoringService
     // Funzione per verificare se la comunicazione soddisfa i criteri di notifica
     private bool ControlloServizio(ComunicazioniWithDaysModel comunicazione)
     {
-        var matches = false;
-
-        // Applica i criteri di notifica in base al servizio
-        switch (comunicazione.NomeServizio)
+        return comunicazione.NomeServizio switch
         {
-            case "035":
-                matches = comunicazione.TotalDays >= 3;
-                break;
-            case "PDL":
-            case "DIM":
-            case "MA7":
-            case "MIM":
-            case "VL1":
-            case "VLA":
-            case "VL3":
-            case "VSA":
-            case "VPP":
-            case "VSS":
-                matches = comunicazione.TotalDays >= 5;
-                break;
-            case "ERE":
-                matches = comunicazione.TotalDays >= 7;
-                break;
-            case "APP":
-                matches = comunicazione.TotalDays >= 8;
-                break;
-            default:
-                matches = false;
-                break;
-        }
-
-        return matches;
+            "S035" => comunicazione.TotalDays >= 3,
+            "PDL" or "DIM" or "MA7" or "MIM" or "VL1" or "VLA" or "VL3" or "VSA" or "VPP" or "VSS" => comunicazione.TotalDays >= 5,
+            "ERE" => comunicazione.TotalDays >= 7,
+            "APP" => comunicazione.TotalDays >= 8,
+            _ => false,
+        };
     }
 
     public async Task StopMonitoringForComunicazioneAsync(int comunicazioneId)
@@ -233,7 +214,6 @@ public class MonitoringService : IMonitoringService
             var comunicazione = await _context.Comunicazionis.FindAsync(comunicazioneId);
             if (comunicazione != null)
             {
-                // Assumiamo che l'interruzione del monitoraggio possa essere semplicemente l'assegnazione di una data di smarco (DateF)
                 comunicazione.DateF = DateTime.Now;
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Il monitoraggio per la comunicazione con ID {comunicazioneId} è stato interrotto.");

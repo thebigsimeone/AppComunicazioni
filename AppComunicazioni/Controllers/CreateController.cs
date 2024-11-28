@@ -13,8 +13,8 @@ namespace AppComunicazioni.Controllers
         private readonly ComDbContext _context;
         private readonly IMapper _mapper;
         private readonly IEmailService _emailService;
-        private readonly IMonitoringService _monitoringService;
         private readonly ILogger<CreateController> _logger;
+        private readonly IMonitoringService _monitoringService;
 
         public CreateController(ComDbContext context, IMapper mapper, IEmailService emailService, ILogger<CreateController> logger, IMonitoringService monitoringService)
         {
@@ -27,18 +27,10 @@ namespace AppComunicazioni.Controllers
 
         public IActionResult Index()
         {
-            ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
-                                          .Cast<ServizioType>()
-                                          .Select(s => new SelectListItem
-                                          {
-                                              Value = s == ServizioType.S035 ? "035" : s.ToString(),
-                                              Text = s == ServizioType.S035 ? "035" : s.ToString()
-                                          }).ToList();
-
+            SetViewBagOptions();
             return View();
         }
 
-        // POST: Comunicazionis/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note")] ComunicazioniDTO comunicazioniDTO)
@@ -47,7 +39,9 @@ namespace AppComunicazioni.Controllers
             {
                 // Mappatura da DTO a Entity
                 var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
-                comunicazioni.Servizio = comunicazioniDTO.Servizio == ServizioType.S035 ? "035" : comunicazioniDTO.Servizio.ToString();
+
+                // Imposta il valore di "Servizio" per la logica del DB (S035 se utente ha selezionato "035")
+                comunicazioni.Servizio = comunicazioniDTO.Servizio == ServizioType.S035 ? "S035" : comunicazioniDTO.Servizio.ToString();
 
                 // Imposta il valore di Notificato a false di default
                 comunicazioni.Notificato = false;
@@ -59,9 +53,7 @@ namespace AppComunicazioni.Controllers
 
                 try
                 {
-                    // Aggiungi un piccolo ritardo per assicurarti che il salvataggio sia completamente processato dal database
                     await Task.Delay(1000);
-
                     await _monitoringService.CheckAndSendNotificationsAsync();
                 }
                 catch (Exception ex)
@@ -73,7 +65,20 @@ namespace AppComunicazioni.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(comunicazioniDTO);
+            // Se il modello non è valido, ripopola le opzioni del ViewBag e ritorna alla vista Index
+            SetViewBagOptions();
+            return View("Index", comunicazioniDTO); // Restituisci la vista "Index.cshtml" con il modello DTO
+        }
+
+        private void SetViewBagOptions()
+        {
+            ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
+                                          .Cast<ServizioType>()
+                                          .Select(s => new SelectListItem
+                                          {
+                                              Value = s.ToString(), // Utilizziamo il nome effettivo dell'enum per il valore
+                                              Text = s.GetDisplayName() // Ottieni il nome visualizzato con DisplayAttribute
+                                          }).ToList();
         }
     }
 }

@@ -1,4 +1,7 @@
-﻿namespace AppComunicazioni.Models
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+
+namespace AppComunicazioni.Models
 {
     public enum ServizioType
     {
@@ -13,6 +16,7 @@
         MA7,
         MIM,
         PDL,
+        [Display(Name = "035")]
         S035,
         VL1,
         VL3,

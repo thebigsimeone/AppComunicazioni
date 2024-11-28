@@ -1,4 +1,4 @@
-﻿using AppComunicazioni.ViewModels;
+﻿using AppComunicazioni.Models;
 
 namespace AppComunicazioni.Interface
 {

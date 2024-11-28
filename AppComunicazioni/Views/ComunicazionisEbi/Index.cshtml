@@ -78,7 +78,7 @@
         {
             <tr>
                 <td>
-                    <a class="btn @(item.DateF == null ? "btn-outline-danger" : "btn-outline-info")" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
+                    <a class="btn @(item.DateF == null ? "btn-outline-danger" : "btn-outline-primary")" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
                 </td>
                 <td>@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
                 <td>@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>
@@ -97,3 +97,25 @@
         }
     </tbody>
 </table>
+<nav>
+    <ul class="pagination">
+        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="1" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">Prima</a>
+        </li>
+        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.CurrentPage - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">&laquo;</a>
+        </li>
+        @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.CurrentPage + 2, Model.TotalPages); i++)
+        {
+            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">@i</a>
+            </li>
+        }
+        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.CurrentPage + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">&raquo;</a>
+        </li>
+        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">Ultima</a>
+        </li>
+    </ul>
+</nav>

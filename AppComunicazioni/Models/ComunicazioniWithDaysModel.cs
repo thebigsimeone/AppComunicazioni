@@ -1,6 +1,4 @@
-﻿using AppComunicazioni.Models;
-
-namespace AppComunicazioni.ViewModels
+﻿namespace AppComunicazioni.Models
 {
     public class ComunicazioniWithDaysModel
     {

@@ -1,9 +1,5 @@
 ﻿using AppComunicazioni.Models;
 
-namespace AppComunicazioni.ViewModels;
-using System;
-using System.Collections.Generic;
-
 public class ComunicazioniViewModel
 {
     public List<Comunicazioni> Comunicazioni { get; set; }
