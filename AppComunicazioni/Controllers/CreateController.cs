@@ -5,80 +5,90 @@ using AppComunicazioni.Models.DTO_s;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using OfficeOpenXml;
 
-namespace AppComunicazioni.Controllers
+public class CreateController : Controller
 {
-    public class CreateController : Controller
+    private readonly ComDbContext _context;
+    private readonly IMapper _mapper;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<CreateController> _logger;
+    private readonly IMonitoringService _monitoringService;
+    private readonly IExcelService _excelService;
+
+    public CreateController(ComDbContext context, IMapper mapper, IEmailService emailService, ILogger<CreateController> logger, IMonitoringService monitoringService, IExcelService excelService)
     {
-        private readonly ComDbContext _context;
-        private readonly IMapper _mapper;
-        private readonly IEmailService _emailService;
-        private readonly ILogger<CreateController> _logger;
-        private readonly IMonitoringService _monitoringService;
+        _context = context;
+        _mapper = mapper;
+        _emailService = emailService;
+        _logger = logger;
+        _monitoringService = monitoringService;
+        _excelService = excelService;
+    }
 
-        public CreateController(ComDbContext context, IMapper mapper, IEmailService emailService, ILogger<CreateController> logger, IMonitoringService monitoringService)
-        {
-            _context = context;
-            _mapper = mapper;
-            _emailService = emailService;
-            _logger = logger;
-            _monitoringService = monitoringService;
-        }
+    public IActionResult Index()
+    {
+        SetViewBagOptions();
+        return View();
+    }
 
-        public IActionResult Index()
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create([Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note")] ComunicazioniDTO comunicazioniDTO, IFormFile excelFile)
+    {
+        if (ModelState.IsValid)
         {
-            SetViewBagOptions();
-            return View();
-        }
+            // Mappatura da DTO a Entity
+            var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note")] ComunicazioniDTO comunicazioniDTO)
-        {
-            if (ModelState.IsValid)
+            // Imposta il valore di "Servizio" per la logica del DB (S035 se utente ha selezionato "035")
+            comunicazioni.Servizio = comunicazioniDTO.Servizio == ServizioType.S035 ? "S035" : comunicazioniDTO.Servizio.ToString();
+
+            // Imposta il valore di Notificato a false di default
+            comunicazioni.Notificato = false;
+
+            _context.Add(comunicazioni);
+            await _context.SaveChangesAsync();
+
+            if (excelFile != null && excelFile.Length > 0)
             {
-                // Mappatura da DTO a Entity
-                var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
-
-                // Imposta il valore di "Servizio" per la logica del DB (S035 se utente ha selezionato "035")
-                comunicazioni.Servizio = comunicazioniDTO.Servizio == ServizioType.S035 ? "S035" : comunicazioniDTO.Servizio.ToString();
-
-                // Imposta il valore di Notificato a false di default
-                comunicazioni.Notificato = false;
-
-                _context.Add(comunicazioni);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"Comunicazione con ID {comunicazioni.Id} è stata creata e salvata correttamente.");
-
-                try
+                var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioni.Id);
+                if (dettagli != null)
                 {
-                    await Task.Delay(1000);
-                    await _monitoringService.CheckAndSendNotificationsAsync();
+                    _context.ComunicazioniDettagli.AddRange(dettagli);
+                    await _context.SaveChangesAsync();
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Errore durante l'avvio del monitoraggio dopo la creazione: {ex.Message}");
-                }
-
-                TempData["Message"] = "Comunicazione creata con successo. Il monitoraggio è stato avviato.";
-                return RedirectToAction(nameof(Index));
             }
 
-            // Se il modello non è valido, ripopola le opzioni del ViewBag e ritorna alla vista Index
-            SetViewBagOptions();
-            return View("Index", comunicazioniDTO); // Restituisci la vista "Index.cshtml" con il modello DTO
+            _logger.LogInformation($"Comunicazione con ID {comunicazioni.Id} è stata creata e salvata correttamente.");
+
+            try
+            {
+                await Task.Delay(1000);
+                await _monitoringService.CheckAndSendNotificationsAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Errore durante l'avvio del monitoraggio dopo la creazione: {ex.Message}");
+            }
+
+            TempData["Message"] = "Comunicazione creata con successo. Il monitoraggio è stato avviato.";
+            return RedirectToAction(nameof(Index));
         }
 
-        private void SetViewBagOptions()
-        {
-            ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
-                                          .Cast<ServizioType>()
-                                          .Select(s => new SelectListItem
-                                          {
-                                              Value = s.ToString(), // Utilizziamo il nome effettivo dell'enum per il valore
-                                              Text = s.GetDisplayName() // Ottieni il nome visualizzato con DisplayAttribute
-                                          }).ToList();
-        }
+        // Se il modello non è valido, ripopola le opzioni del ViewBag e ritorna alla vista Index
+        SetViewBagOptions();
+        return View("Index", comunicazioniDTO);
+    }
+
+    private void SetViewBagOptions()
+    {
+        ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
+                                      .Cast<ServizioType>()
+                                      .Select(s => new SelectListItem
+                                      {
+                                          Value = s == ServizioType.S035 ? "035" : s.ToString(),
+                                          Text = s == ServizioType.S035 ? "035" : s.ToString(),
+                                      }).ToList();
     }
 }

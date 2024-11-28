@@ -5,8 +5,11 @@ using AppComunicazioni.Properties;
 using AppComunicazioni.Service;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
+
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 // Configurazione del contesto del database - Scoped è corretto per evitare problemi di concorrenza
 builder.Services.AddDbContext<ComDbContext>(options =>
@@ -21,12 +24,17 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Registrazione dei servizi - Utilizzo di Scoped, Transient e Singleton in base alle esigenze
-builder.Services.AddHostedService<NotificationBackgroundService>(); // Hosted service
+// Registrazione dei servizi
+builder.Services.AddHostedService<CleanupBackgroundService>();
+builder.Services.AddHostedService<NotificationBackgroundService>();
+
 builder.Services.AddScoped<IEmailService, EmailService>(); // Servizio legato alla logica email
 builder.Services.AddScoped<IMonitoringService, MonitoringService>(); // Monitoraggio
 builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>(); // Filtro comunicazioni
 builder.Services.AddScoped<IContabilitaService, ContabilitaService>(); // Servizio contabilità
+builder.Services.AddScoped<CleanupService>(); // Servizio pulizia dati vecchi
+builder.Services.AddScoped<IExcelService, ExcelService>(); // Servizio legato alla logica file excel
+builder.Services.AddScoped<ISendMailService, SendMailService>(); // Servizio all'invio email di smarco
 
 // Registrazione AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));

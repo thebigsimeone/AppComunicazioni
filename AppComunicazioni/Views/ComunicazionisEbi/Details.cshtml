@@ -1,56 +1,57 @@
-﻿@using AppComunicazioni.Utility
-@model AppComunicazioni.Models.DTO_s.ComunicazioniDTO
+﻿@model AppComunicazioni.Models.DTO_s.ComunicazioniDTO
 
-@{
-    ViewData["Title"] = "Dettaglio";
-}
-
-<h1>Dettaglio</h1>
-
+<h2>Dettagli Comunicazione</h2>
 <div>
-    <h4>Comunicazione</h4>
-    <hr />
     <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.FileName)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.FileName)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.DateA)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.DateA)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.DateF)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.DateF)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.NProtocol)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.NProtocol)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.NsProtocol)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.NsProtocol)
-        </dd>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Servizio)
-        </dd>
-        <dd class="col-sm-10">
-            @Html.Raw(ViewHelpers.FormatNoteForDisplay(Model.Note))
-        </dd>
+        <dt class="col-sm-2">Nome file</dt>
+        <dd class="col-sm-10">@Model.FileName</dd>
+        <dt class="col-sm-2">Data di invio</dt>
+        <dd class="col-sm-10">@Model.DateA?.ToString("dd/MM/yyyy HH:mm")</dd>
+        <dt class="col-sm-2">Data di fine smarco</dt>
+        <dd class="col-sm-10">@Model.DateF?.ToString("dd/MM/yyyy HH:mm")</dd>
+        <dt class="col-sm-2">Numero protocolli</dt>
+        <dd class="col-sm-10">@Model.NProtocol</dd>
+        <dt class="col-sm-2">Protocolli da rivedere</dt>
+        <dd class="col-sm-10">@Model.NsProtocol</dd>
+        <dt class="col-sm-2">Servizio</dt>
+        <dd class="col-sm-10">@Model.ServizioVisualizzato</dd>
     </dl>
 </div>
-<div>
-    <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@Model?.Id">Modifica</a> |
-    <a class="btn btn-outline-secondary" asp-action="Index">Indietro</a>
-</div>
-
+<h3>Dettagli del File Caricato</h3>
+@if (Model.Dettagli != null && Model.Dettagli.Any())
+{
+    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#dettagliTable" aria-expanded="false" aria-controls="dettagliTable">
+        Mostra/Nascondi Dettagli
+    </button>
+    <div class="collapse" id="dettagliTable">
+        <table class="table table-striped mt-3">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Protocollo</th>
+                    <th>Codice Fiscale</th>
+                    <th>Colonna Supplementare</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int rowNumber = 1;
+                }
+                @foreach (var dettaglio in Model.Dettagli)
+                {
+                    <tr>
+                        <td>@rowNumber</td>
+                        <td>@dettaglio.Protocollo</td>
+                        <td>@dettaglio.CodiceFiscale</td>
+                        <td>@dettaglio.ColonnaSupplementare</td>
+                    </tr>
+                    rowNumber++; // Incrementa il contatore
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <p>Nessun dettaglio disponibile per questa comunicazione.</p>
+}

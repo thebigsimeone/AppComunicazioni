@@ -10,6 +10,7 @@ namespace AppComunicazioni.Properties
         {
             CreateMap<Comunicazioni, ComunicazioniDTO>().ReverseMap();
             CreateMap<Destinatari, DestinatariDTO>().ReverseMap();
+            CreateMap<ComunicazioniDettaglio, ComunicazioniDettaglioDTO>().ReverseMap();
         }
     }
 }

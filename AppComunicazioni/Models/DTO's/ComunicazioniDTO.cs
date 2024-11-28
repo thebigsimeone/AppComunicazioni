@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace AppComunicazioni.Models.DTO_s
 {
@@ -28,6 +29,9 @@ namespace AppComunicazioni.Models.DTO_s
         public ServizioType Servizio { get; set; }
 
         public string ServizioVisualizzato => Servizio == ServizioType.S035 ? "035" : Servizio.ToString();
+
+        // Nuova proprietà per i dettagli
+        public List<ComunicazioniDettaglioDTO>? Dettagli { get; set; }
     }
 
 }

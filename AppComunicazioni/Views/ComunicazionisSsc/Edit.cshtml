@@ -9,7 +9,7 @@
 <hr />
 <div class="row">
     <div class="col-md-6">
-        <form asp-action="Edit" method="post">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
 
@@ -55,6 +55,10 @@
                 <textarea asp-for="Note" class="form-control" id="Note" placeholder="Note" style="height: 100px;"></textarea>
                 <label asp-for="Note">Note</label>
                 <span asp-validation-for="Note" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="file" name="excelFile" class="form-control" id="excelFile">
             </div>
 
             <div class="d-flex justify-content-between align-items-end">

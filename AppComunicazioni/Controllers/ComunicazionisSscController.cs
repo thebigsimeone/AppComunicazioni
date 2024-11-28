@@ -2,6 +2,7 @@
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
+using AppComunicazioni.Service;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -16,16 +17,20 @@ namespace AppComunicazioni.Controllers
         private readonly IEmailService _emailService;
         private readonly IMonitoringService _monitoringService;
         private readonly IFiltroComunicazioniService _filtroService;
+        private readonly IExcelService _excelService;
+        private readonly ISendMailService _sendMailService;
         private readonly ILogger<ComunicazionisSscController> _logger;
 
-        public ComunicazionisSscController(ComDbContext context, IMapper mapper, IEmailService emailService, IMonitoringService monitoringService,IFiltroComunicazioniService filtroComunicazioniService, ILogger<ComunicazionisSscController> logger)
+        public ComunicazionisSscController(ComDbContext context, IMapper mapper, IEmailService emailService, IMonitoringService monitoringService,IFiltroComunicazioniService filtroComunicazioniService, IExcelService excelService, ISendMailService sendMailService, ILogger<ComunicazionisSscController> logger)
         {
             _context = context;
             _mapper = mapper;
             _emailService = emailService;
             _filtroService = filtroComunicazioniService;
+            _excelService = excelService;
             _monitoringService = monitoringService;
             _logger = logger;
+            _sendMailService = sendMailService;
         }
 
         // GET: ComunicazionisSsc
@@ -66,7 +71,9 @@ namespace AppComunicazioni.Controllers
         {
             if (id == null) return NotFound();
 
-            var comunicazioni = await _context.Comunicazionis.FindAsync(id);
+            var comunicazioni = await _context.Comunicazionis
+                                              .Include(c => c.Dettagli)  // Include i dettagli della comunicazione
+                                              .FirstOrDefaultAsync(c => c.Id == id);
             if (comunicazioni == null) return NotFound();
 
             var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
@@ -89,21 +96,45 @@ namespace AppComunicazioni.Controllers
         // POST: ComunicazionisSsc/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note")] ComunicazioniDTO comunicazioniDTO)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note")] ComunicazioniDTO comunicazioniDTO, IFormFile excelFile)
         {
             if (id != comunicazioniDTO.Id) return NotFound();
 
-            if (!ModelState.IsValid) return View(comunicazioniDTO);
+            if (!ModelState.IsValid)
+            {
+                SetViewBagOptions();
+                return View(comunicazioniDTO);
+            }
 
             var comunicazioniToUpdate = await _context.Comunicazionis.FindAsync(id);
             if (comunicazioniToUpdate == null) return NotFound();
 
+            // Mappa i valori aggiornati dal DTO al modello esistente
             _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
 
             try
             {
                 await _context.SaveChangesAsync();
-                await HandlePostEditActions(comunicazioniToUpdate);
+
+                // Se un nuovo file Excel è stato caricato, processarlo e salvare i dettagli
+                if (excelFile != null && excelFile.Length > 0)
+                {
+                    // Elimina i dettagli precedenti collegati alla comunicazione
+                    var existingDetails = _context.ComunicazioniDettagli.Where(d => d.ComunicazioneId == comunicazioniToUpdate.Id);
+                    _context.ComunicazioniDettagli.RemoveRange(existingDetails);
+                    await _context.SaveChangesAsync();
+
+                    // Processa il nuovo file Excel e salva i dettagli
+                    var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioniToUpdate.Id);
+                    if (dettagli != null)
+                    {
+                        _context.ComunicazioniDettagli.AddRange(dettagli);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                // Gestisci eventuali azioni dopo la modifica
+                await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateConcurrencyException)
@@ -111,51 +142,6 @@ namespace AppComunicazioni.Controllers
                 if (!ComunicazioniExists(id)) return NotFound();
                 throw;
             }
-        }
-
-        private async Task HandlePostEditActions(Comunicazioni comunicazioniToUpdate)
-        {
-            if (comunicazioniToUpdate.DateF != null)
-            {
-                await SendNotificationEmails(comunicazioniToUpdate);
-                await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
-            }
-        }
-
-        private async Task SendNotificationEmails(Comunicazioni comunicazioni)
-        {
-            bool emailSuccess = true;
-            var destinatari = await _context.Destinataris.Where(d => d.Attivo == "S").ToListAsync();
-
-            if (destinatari.Count == 0)
-            {
-                _logger.LogWarning("Non ci sono destinatari attivi.");
-            }
-            else
-            {
-                string subject = $"SMARCO ACCERTAMENTI DEL FILE: {comunicazioni.FileName}";
-                string formattedNote = _emailService.FormatNote(comunicazioni.Note);
-                string message = $"<p>Il seguente file è stato smarcato: {comunicazioni.FileName}<br>" +
-                                 $"con il numero protocolli: {comunicazioni.NProtocol}<br><br>" +
-                                 $"Questi sono i protocolli da controllare: {comunicazioni.NsProtocol}<br><br>" +
-                                 $"{formattedNote}<br><br>" +
-                                 $"Cordiali saluti,<br>Flavio Simeone</p>";
-
-                foreach (var destinatario in destinatari)
-                {
-                    try
-                    {
-                        await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
-                        emailSuccess = false;
-                    }
-                }
-            }
-
-            TempData["Message"] = emailSuccess ? "Comunicazione modificata e email inviate con successo." : "Comunicazione modificata, ma l'invio delle email è fallito.";
         }
 
         // GET: ComunicazionisSsc/Delete/5
@@ -174,12 +160,23 @@ namespace AppComunicazioni.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var comunicazioni = await _context.Comunicazionis.FindAsync(id);
+            var comunicazioni = await _context.Comunicazionis
+                .Include(c => c.Dettagli) // Includi i dettagli collegati
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             if (comunicazioni != null)
             {
+                // Elimina tutti i dettagli associati a questa comunicazione
+                if (comunicazioni.Dettagli != null && comunicazioni.Dettagli.Any())
+                {
+                    _context.ComunicazioniDettagli.RemoveRange(comunicazioni.Dettagli);
+                }
+
+                // Elimina la comunicazione
                 _context.Comunicazionis.Remove(comunicazioni);
                 await _context.SaveChangesAsync();
             }
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -200,8 +197,8 @@ namespace AppComunicazioni.Controllers
                                           .Cast<ServizioType>()
                                           .Select(s => new SelectListItem
                                           {
-                                              Value = s.ToString(), // Utilizziamo il nome effettivo dell'enum per il valore
-                                              Text = s.GetDisplayName() // Ottieni il nome visualizzato con DisplayAttribute
+                                              Value = s.ToString(),
+                                              Text = s.GetDisplayName()
                                           }).ToList();
         }
 

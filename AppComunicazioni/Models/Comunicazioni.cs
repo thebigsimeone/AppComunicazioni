@@ -44,4 +44,5 @@ public partial class Comunicazioni
     [Column("notificato")]
     [Display(Name = "Notificato")]
     public bool? Notificato { get; set; }
+    public ICollection<ComunicazioniDettaglio>? Dettagli { get; set; }
 }
