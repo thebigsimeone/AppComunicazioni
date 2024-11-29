@@ -1,5 +1,6 @@
 ﻿using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace AppComunicazioni.Service
 {
@@ -23,10 +24,16 @@ namespace AppComunicazioni.Service
             _session.Remove("sortOrder");
         }
 
-        public async Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(IQueryable<Comunicazioni> query, string tenant,
-                                                                              string searchTerm, DateTime? startDate,
-                                                                              DateTime? endDate, string codCor,
-                                                                              DateTime? monthYear, string sortField, string sortOrder)
+        public async Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(
+            IQueryable<Comunicazioni> query,
+            string tenant,
+            string searchTerm,
+            DateTime? startDate,
+            DateTime? endDate,
+            string codCor,
+            DateTime? monthYear,
+            string sortField,
+            string sortOrder)
         {
             // Recupera i valori dei filtri dalla sessione se non forniti dall'utente
             searchTerm ??= _session.GetString("searchTerm");
@@ -48,12 +55,19 @@ namespace AppComunicazioni.Service
             _session.SetString("sortField", sortField);
             _session.SetString("sortOrder", sortOrder);
 
+            // Carica i dettagli delle comunicazioni correlati
+            query = query.Include(c => c.Dettagli);
+
             // Aggiunge un filtro per selezionare solo le comunicazioni in base al tenant
             query = query.Where(x => x.FileName.Contains(tenant));
 
+            // Filtro sul termine di ricerca - includiamo anche la ricerca nei dettagli
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                query = query.Where(x => x.FileName.Contains(searchTerm));
+                query = query.Where(x =>
+                    x.FileName.Contains(searchTerm) ||
+                    x.Dettagli.Any(d => d.Protocollo.Contains(searchTerm))
+                );
             }
 
             if (startDate.HasValue)
@@ -94,7 +108,6 @@ namespace AppComunicazioni.Service
                 }
             }
 
-
             // Filtro basato sul mese e anno
             if (monthYear.HasValue)
             {
@@ -131,11 +144,11 @@ namespace AppComunicazioni.Service
         }
     }
 
-    public static class SessionExtensions
-    {
-        public static DateTime? ParseNullableDate(this string dateString)
+        public static class SessionExtensions
         {
-            return DateTime.TryParse(dateString, out DateTime date) ? date : (DateTime?)null;
+            public static DateTime? ParseNullableDate(this string dateString)
+            {
+                return DateTime.TryParse(dateString, out DateTime date) ? date : (DateTime?)null;
+            }
         }
-    }
 }

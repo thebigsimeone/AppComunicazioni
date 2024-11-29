@@ -26,9 +26,7 @@ namespace AppComunicazioni.Models.DTO_s
         public string? Note { get; set; }
 
         [Required(ErrorMessage = "Il campo Servizio è obbligatorio.")]
-        public ServizioType Servizio { get; set; }
-
-        public string ServizioVisualizzato => Servizio == ServizioType.S035 ? "035" : Servizio.ToString();
+        public ServizioType? Servizio { get; set; }
 
         // Nuova proprietà per i dettagli
         public List<ComunicazioniDettaglioDTO>? Dettagli { get; set; }

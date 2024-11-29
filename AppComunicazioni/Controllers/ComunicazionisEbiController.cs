@@ -197,8 +197,8 @@ namespace AppComunicazioni.Controllers
                                           .Cast<ServizioType>()
                                           .Select(s => new SelectListItem
                                           {
-                                              Value = s.ToString(), // Utilizziamo il nome effettivo dell'enum per il valore
-                                              Text = s.GetDisplayName() // Ottieni il nome visualizzato con DisplayAttribute
+                                              Value = s.ToString(),
+                                              Text = s.GetDisplayName()
                                           }).ToList();
         }
 

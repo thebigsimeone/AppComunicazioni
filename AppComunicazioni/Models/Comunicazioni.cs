@@ -45,4 +45,5 @@ public partial class Comunicazioni
     [Display(Name = "Notificato")]
     public bool? Notificato { get; set; }
     public ICollection<ComunicazioniDettaglio>? Dettagli { get; set; }
+
 }

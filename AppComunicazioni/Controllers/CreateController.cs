@@ -87,8 +87,9 @@ public class CreateController : Controller
                                       .Cast<ServizioType>()
                                       .Select(s => new SelectListItem
                                       {
-                                          Value = s == ServizioType.S035 ? "035" : s.ToString(),
-                                          Text = s == ServizioType.S035 ? "035" : s.ToString(),
+                                          Value = s.ToString(),
+                                          Text = s.GetDisplayName()
                                       }).ToList();
     }
+
 }
