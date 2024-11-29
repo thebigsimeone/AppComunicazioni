@@ -25,15 +25,15 @@ namespace AppComunicazioni.Service
         }
 
         public async Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(
-            IQueryable<Comunicazioni> query,
-            string tenant,
-            string searchTerm,
-            DateTime? startDate,
-            DateTime? endDate,
-            string codCor,
-            DateTime? monthYear,
-            string sortField,
-            string sortOrder)
+                                                                            IQueryable<Comunicazioni> query,
+                                                                            string tenant,
+                                                                            string searchTerm,
+                                                                            DateTime? startDate,
+                                                                            DateTime? endDate,
+                                                                            string codCor,
+                                                                            DateTime? monthYear,
+                                                                            string sortField,
+                                                                            string sortOrder)
         {
             // Recupera i valori dei filtri dalla sessione se non forniti dall'utente
             searchTerm ??= _session.GetString("searchTerm");

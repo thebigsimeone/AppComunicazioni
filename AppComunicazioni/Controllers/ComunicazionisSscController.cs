@@ -40,6 +40,13 @@ namespace AppComunicazioni.Controllers
         {
             SetViewBagOptions(codCor);
 
+            // Salva i valori dei filtri nel ViewData per mantenerli nella vista
+            ViewData["SearchTerm"] = searchTerm;
+            ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
+            ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
+            ViewData["CodCor"] = codCor;
+            ViewData["MonthYear"] = monthYear?.ToString("yyyy-MM");
+
             int pageSize = 10;
             var query = _context.Comunicazionis.AsQueryable();
 
@@ -100,6 +107,9 @@ namespace AppComunicazioni.Controllers
         {
             if (id != comunicazioniDTO.Id) return NotFound();
 
+            // Rimuovi la convalida di excelFile
+            ModelState.Remove("excelFile");
+
             if (!ModelState.IsValid)
             {
                 SetViewBagOptions();
@@ -114,6 +124,7 @@ namespace AppComunicazioni.Controllers
 
             try
             {
+                // Salva le modifiche nel database per i dettagli della comunicazione aggiornati dall'utente
                 await _context.SaveChangesAsync();
 
                 // Se un nuovo file Excel è stato caricato, processarlo e salvare i dettagli
