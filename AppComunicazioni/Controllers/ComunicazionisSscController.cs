@@ -1,11 +1,10 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
-using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
-using AppComunicazioni.Service;
+using AppComunicazioni.Models;
 using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AppComunicazioni.Controllers
@@ -21,7 +20,7 @@ namespace AppComunicazioni.Controllers
         private readonly ISendMailService _sendMailService;
         private readonly ILogger<ComunicazionisSscController> _logger;
 
-        public ComunicazionisSscController(ComDbContext context, IMapper mapper, IEmailService emailService, IMonitoringService monitoringService,IFiltroComunicazioniService filtroComunicazioniService, IExcelService excelService, ISendMailService sendMailService, ILogger<ComunicazionisSscController> logger)
+        public ComunicazionisSscController(ComDbContext context, IMapper mapper, IEmailService emailService, IMonitoringService monitoringService, IFiltroComunicazioniService filtroComunicazioniService, IExcelService excelService, ISendMailService sendMailService, ILogger<ComunicazionisSscController> logger)
         {
             _context = context;
             _mapper = mapper;
@@ -103,7 +102,7 @@ namespace AppComunicazioni.Controllers
         // POST: ComunicazionisSsc/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note")] ComunicazioniDTO comunicazioniDTO, IFormFile excelFile)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note,Ritornato")] ComunicazioniDTO comunicazioniDTO, IFormFile excelFile)
         {
             if (id != comunicazioniDTO.Id) return NotFound();
 
@@ -126,6 +125,12 @@ namespace AppComunicazioni.Controllers
             {
                 // Salva le modifiche nel database per i dettagli della comunicazione aggiornati dall'utente
                 await _context.SaveChangesAsync();
+
+                // Se il valore di "Ritornato" è true, interrompe il monitoraggio
+                if (comunicazioniDTO.Ritornato == true || comunicazioniDTO.DateF.HasValue)
+                {
+                    await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
+                }
 
                 // Se un nuovo file Excel è stato caricato, processarlo e salvare i dettagli
                 if (excelFile != null && excelFile.Length > 0)

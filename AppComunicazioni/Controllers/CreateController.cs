@@ -44,8 +44,9 @@ public class CreateController : Controller
             // Imposta il valore di "Servizio" per la logica del DB (S035 se utente ha selezionato "035")
             comunicazioni.Servizio = comunicazioniDTO.Servizio == ServizioType.S035 ? "S035" : comunicazioniDTO.Servizio.ToString();
 
-            // Imposta il valore di Notificato a false di default
+            // Imposta il valore di Notificato e Ritornato a false di default
             comunicazioni.Notificato = false;
+            comunicazioni.Ritornato = false;
 
             _context.Add(comunicazioni);
             await _context.SaveChangesAsync();
