@@ -12,131 +12,149 @@
     });
 }
 
-<h1 class="mb-4">Comunicazioni SSC</h1>
+<div class="container-fluid px-4">
+    <h1 class="mb-4 text-center" style="font-size: 1.5rem;">Comunicazioni SSC</h1>
 
-<form asp-action="Index" method="get" class="p-3 border rounded bg-light">
-    <div class="row gy-2 align-items-center">
-        <div class="col-md-4 col-lg-2">
-            <label for="searchTerm" class="form-label">Cerca File o Protocollo:</label>
-            <input type="text" name="searchTerm" class="form-control" placeholder="Nome file o Protocollo" value="@(ViewData["SearchTerm"] ?? "")">
-        </div>
-        <div class="col-md-4 col-lg-2">
-            <label for="startDate" class="form-label">Da:</label>
-            <input type="date" name="startDate" class="form-control" value="@(ViewData["StartDate"] ?? "")">
-        </div>
-        <div class="col-md-4 col-lg-2">
-            <label for="endDate" class="form-label">A:</label>
-            <input type="date" name="endDate" class="form-control" value="@(ViewData["EndDate"] ?? "")">
-        </div>
-        <div class="col-md-4 col-lg-2">
-            <label for="monthYear" class="form-label">Mese/Anno:</label>
-            <input type="month" name="monthYear" class="form-control" value="@(ViewData["MonthYear"] ?? "")">
-        </div>
-        <div class="col-md-4 col-lg-2">
-            <label for="codCor" class="form-label">Codice Correlato (CodCor):</label>
-            <select name="codCor" class="form-select" asp-items="ViewBag.CodCorOptions">
-                <option value="">-- Seleziona Codice Correlato --</option>
-            </select>
-        </div>
-        <div class="col-auto">
-            <div class="form-check">
-                <input type="checkbox" name="soloRigheNonRestituite" class="form-check-input" id="soloRigheNonRestituite" value="true" @(ViewData["SoloRigheNonRestituite"]?.ToString() == "True" ? "checked" : "")>
-                <label class="form-check-label" for="soloRigheNonRestituite">Mostra solo righe non restituite</label>
+    <form asp-action="Index" method="get" class="p-3 border rounded bg-light mb-4" style="font-size: 0.9rem;">
+        <div class="row g-2 align-items-center">
+            <div class="col-lg-3 col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="searchTerm" class="form-control" placeholder="Nome file o Protocollo" value="@(ViewData["SearchTerm"] ?? "")">
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                    <input type="date" name="startDate" class="form-control" value="@(ViewData["StartDate"] ?? "")">
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                    <input type="date" name="endDate" class="form-control" value="@(ViewData["EndDate"] ?? "")">
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar2-month"></i></span>
+                    <input type="month" name="monthYear" class="form-control" value="@(ViewData["MonthYear"] ?? "")">
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-list-task"></i></span>
+                    <select name="codCor" class="form-select" asp-items="ViewBag.CodCorOptions">
+                        <option value="">-- Seleziona Codice Correlato --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-auto d-flex align-items-center">
+                <div class="form-check">
+                    <input type="checkbox" name="soloRigheNonRestituite" class="form-check-input" id="soloRigheNonRestituite" value="true" @(ViewData["SoloRigheNonRestituite"]?.ToString() == "True" ? "checked" : "")>
+                    <label class="form-check-label" for="soloRigheNonRestituite">Solo righe non restituite</label>
+                </div>
+            </div>
+            <div class="col-auto d-flex align-items-center">
+                <button type="submit" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-funnel-fill"></i>
+                </button>
+                <button type="submit" formaction="@Url.Action("ResetFiltri")" formmethod="post" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
             </div>
         </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filtra</button>
-            <button type="submit" formaction="@Url.Action("ResetFiltri")" formmethod="post" class="btn btn-secondary ms-2"><i class="bi bi-arrow-repeat"></i> Reset Filtri</button>
-        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered text-center w-100">
+            <thead class="table-info">
+                <tr>
+                    <th style="width: 14%;">
+                        <a asp-action="Index" asp-route-sortField="FileName" asp-route-sortOrder="@(Model.SortField == "FileName" && Model.SortOrder == "asc" ? "desc" : "asc")">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <i class="@sortIcon("FileName", Model.SortOrder)"></i>
+                        </a>
+                    </th>
+                    <th style="width: 14%;">
+                        <a asp-action="Index" asp-route-sortField="DateA" asp-route-sortOrder="@(Model.SortField == "DateA" && Model.SortOrder == "asc" ? "desc" : "asc")">
+                            <i class="bi bi-calendar-plus"></i>
+                            <i class="@sortIcon("DateA", Model.SortOrder)"></i>
+                        </a>
+                    </th>
+                    <th style="width: 14%;">
+                        <a asp-action="Index" asp-route-sortField="DateF" asp-route-sortOrder="@(Model.SortField == "DateF" && Model.SortOrder == "asc" ? "desc" : "asc")">
+                            <i class="bi bi-calendar-check"></i>
+                            <i class="@sortIcon("DateF", Model.SortOrder)"></i>
+                        </a>
+                    </th>
+                    <th style="width: 14%;">
+                        <a asp-action="Index" asp-route-sortField="NProtocol" asp-route-sortOrder="@(Model.SortField == "NProtocol" && Model.SortOrder == "asc" ? "desc" : "asc")">
+                            <i class="bi bi-hash"></i>
+                            <i class="@sortIcon("NProtocol", Model.SortOrder)"></i>
+                        </a>
+                    </th>
+                    <th style="width: 14%;">
+                        <a asp-action="Index" asp-route-sortField="NsProtocol" asp-route-sortOrder="@(Model.SortField == "NsProtocol" && Model.SortOrder == "asc" ? "desc" : "asc")">
+                            <i class="bi bi-exclamation-circle"></i>
+                            <i class="@sortIcon("NsProtocol", Model.SortOrder)"></i>
+                        </a>
+                    </th>
+                    <th style="width: 14%;">
+                        <a asp-action="Index" asp-route-sortField="Servizio" asp-route-sortOrder="@(Model.SortField == "Servizio" && Model.SortOrder == "asc" ? "desc" : "asc")">
+                            <i class="bi bi-gear-fill"></i>
+                            <i class="@sortIcon("Servizio", Model.SortOrder)"></i>
+                        </a>
+                    </th>
+                    <th style="width: 16%;"><i class="bi bi-tools"></i></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Comunicazioni)
+                {
+                    <tr class="@(item.DateF == null ? "table-danger" : "table-light")">
+                        <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <a class="text-decoration-none fw-bold text-primary" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
+                        </td>
+                        <td>@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
+                        <td>@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>
+                        <td><span class="badge bg-info">@item.NProtocol</span></td>
+                        <td><span class="badge bg-warning text-dark">@item.NsProtocol</span></td>
+                        <td>@item.Servizio</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger ms-2">
+                                <i class="bi bi-trash-fill"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
-</form>
 
-<table class="table table-hover table-bordered mt-4">
-    <thead class="table-info">
-        <tr>
-            <th>
-                <a asp-action="Index" asp-route-sortField="FileName" asp-route-sortOrder="@(Model.SortField == "FileName" && Model.SortOrder == "asc" ? "desc" : "asc")">
-                    @Html.DisplayNameFor(m => m.Comunicazioni.First().FileName)
-                    <i class="@sortIcon("FileName", Model.SortOrder)"></i>
-                </a>
-            </th>
-            <th>
-                <a asp-action="Index" asp-route-sortField="DateA" asp-route-sortOrder="@(Model.SortField == "DateA" && Model.SortOrder == "asc" ? "desc" : "asc")">
-                    @Html.DisplayNameFor(m => m.Comunicazioni.First().DateA)
-                    <i class="@sortIcon("DateA", Model.SortOrder)"></i>
-                </a>
-            </th>
-            <th>
-                <a asp-action="Index" asp-route-sortField="DateF" asp-route-sortOrder="@(Model.SortField == "DateF" && Model.SortOrder == "asc" ? "desc" : "asc")">
-                    @Html.DisplayNameFor(m => m.Comunicazioni.First().DateF)
-                    <i class="@sortIcon("DateF", Model.SortOrder)"></i>
-                </a>
-            </th>
-            <th>
-                <a asp-action="Index" asp-route-sortField="NProtocol" asp-route-sortOrder="@(Model.SortField == "NProtocol" && Model.SortOrder == "asc" ? "desc" : "asc")">
-                    @Html.DisplayNameFor(m => m.Comunicazioni.First().NProtocol)
-                    <i class="@sortIcon("NProtocol", Model.SortOrder)"></i>
-                </a>
-            </th>
-            <th>
-                <a asp-action="Index" asp-route-sortField="NsProtocol" asp-route-sortOrder="@(Model.SortField == "NsProtocol" && Model.SortOrder == "asc" ? "desc" : "asc")">
-                    @Html.DisplayNameFor(m => m.Comunicazioni.First().NsProtocol)
-                    <i class="@sortIcon("NsProtocol", Model.SortOrder)"></i>
-                </a>
-            </th>
-            <th>
-                <a asp-action="Index" asp-route-sortField="Servizio" asp-route-sortOrder="@(Model.SortField == "Servizio" && Model.SortOrder == "asc" ? "desc" : "asc")">
-                    @Html.DisplayNameFor(m => m.Comunicazioni.First().Servizio)
-                    <i class="@sortIcon("Servizio", Model.SortOrder)"></i>
-                </a>
-            </th>
-            <th>Azioni</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Comunicazioni)
-        {
-            <tr class="@(item.DateF == null ? "table-danger" : "table-success")">
-                <td>
-                    <a class="btn btn-link" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
-                </td>
-                <td>@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
-                <td>@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>
-                <td><span class="badge bg-info">@item.NProtocol</span></td>
-                <td><span class="badge bg-warning text-dark">@item.NsProtocol</span></td>
-                <td>@item.Servizio</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-pencil-square"></i> Modifica
-                    </a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger ms-1">
-                        <i class="bi bi-trash-fill"></i> Elimina
-                    </a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-<nav class="d-flex justify-content-center mt-4">
-    <ul class="pagination">
-        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
-            <a class="page-link" asp-action="Index" asp-route-pageNumber="1" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">Prima</a>
-        </li>
-        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
-            <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.CurrentPage - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">&laquo;</a>
-        </li>
-        @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.CurrentPage + 2, Model.TotalPages); i++)
-        {
-            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">@i</a>
+    <nav class="d-flex justify-content-center mt-4">
+        <ul class="pagination">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-pageNumber="1" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">Prima</a>
             </li>
-        }
-        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
-            <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.CurrentPage + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">&raquo;</a>
-        </li>
-        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
-            <a class="page-link" asp-action="Index" asp-route-pageNumber="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">Ultima</a>
-        </li>
-    </ul>
-</nav>
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.CurrentPage - 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">&laquo;</a>
+            </li>
+            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.CurrentPage + 2, Model.TotalPages); i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.CurrentPage + 1)" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">&raquo;</a>
+            </li>
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-pageNumber="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" asp-route-codCor="@Model.CodCor" asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")" asp-route-sortField="@Model.SortField" asp-route-sortOrder="@Model.SortOrder">Ultima</a>
+            </li>
+        </ul>
+    </nav>
+</div>
