@@ -22,18 +22,20 @@ namespace AppComunicazioni.Service
             _session.Remove("monthYear");
             _session.Remove("sortField");
             _session.Remove("sortOrder");
+            _session.Remove("soloRigheNonRestituite");
         }
 
         public async Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(
-                                                                            IQueryable<Comunicazioni> query,
-                                                                            string tenant,
-                                                                            string searchTerm,
-                                                                            DateTime? startDate,
-                                                                            DateTime? endDate,
-                                                                            string codCor,
-                                                                            DateTime? monthYear,
-                                                                            string sortField,
-                                                                            string sortOrder)
+            IQueryable<Comunicazioni> query,
+            string tenant,
+            string searchTerm,
+            DateTime? startDate,
+            DateTime? endDate,
+            string codCor,
+            DateTime? monthYear,
+            string sortField,
+            string sortOrder,
+            bool soloRigheNonRestituite)
         {
             // Recupera i valori dei filtri dalla sessione se non forniti dall'utente
             searchTerm ??= _session.GetString("searchTerm");
@@ -45,6 +47,8 @@ namespace AppComunicazioni.Service
             monthYear ??= _session.GetString("monthYear")?.ParseNullableDate();
             sortField ??= _session.GetString("sortField") ?? "DateA";
             sortOrder ??= _session.GetString("sortOrder") ?? "default";
+            if (!_session.TryGetValue("soloRigheNonRestituite", out _))
+                soloRigheNonRestituite = bool.TryParse(_session.GetString("soloRigheNonRestituite"), out bool result) ? result : soloRigheNonRestituite;
 
             // Salva i valori dei filtri nella sessione
             _session.SetString("searchTerm", searchTerm ?? "");
@@ -54,6 +58,7 @@ namespace AppComunicazioni.Service
             _session.SetString("monthYear", monthYear?.ToString("yyyy-MM") ?? "");
             _session.SetString("sortField", sortField);
             _session.SetString("sortOrder", sortOrder);
+            _session.SetString("soloRigheNonRestituite", soloRigheNonRestituite.ToString());
 
             // Carica i dettagli delle comunicazioni correlati
             query = query.Include(c => c.Dettagli);
@@ -116,6 +121,12 @@ namespace AppComunicazioni.Service
                 query = query.Where(x => x.DateA >= firstDayOfMonth && x.DateA <= lastDayOfMonth);
             }
 
+            // Filtro per DateF == NULL se richiesto
+            if (soloRigheNonRestituite)
+            {
+                query = query.Where(x => x.DateF == null);
+            }
+
             // Ordina i risultati
             query = sortOrder switch
             {
@@ -144,11 +155,11 @@ namespace AppComunicazioni.Service
         }
     }
 
-        public static class SessionExtensions
+    public static class SessionExtensions
+    {
+        public static DateTime? ParseNullableDate(this string dateString)
         {
-            public static DateTime? ParseNullableDate(this string dateString)
-            {
-                return DateTime.TryParse(dateString, out DateTime date) ? date : (DateTime?)null;
-            }
+            return DateTime.TryParse(dateString, out DateTime date) ? date : (DateTime?)null;
         }
+    }
 }

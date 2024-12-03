@@ -8,10 +8,10 @@ public class ComunicazioniViewModel
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public string? SearchTerm { get; set; }
-    public string? CodCor { get; set; } // CodCor per il filtro specifico
-    public DateTime? MonthYear { get; set; } // MonthYear per il filtro del mese e anno
+    public string? CodCor { get; set; }
+    public DateTime? MonthYear { get; set; }
     public string? SortField { get; set; }
     public string? SortOrder { get; set; }
+    public bool SoloRigheNonRestituite { get; set; } // Nuovo campo
     public int PageSize { get; set; } = 10;
-
 }

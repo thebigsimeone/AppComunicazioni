@@ -35,10 +35,16 @@ namespace AppComunicazioni.Controllers
 
         // GET: ComunicazionisEbi
         public async Task<IActionResult> Index(string searchTerm, DateTime? startDate, DateTime? endDate,
-                                               string codCor, DateTime? monthYear, int pageNumber = 1,
-                                               string sortField = "DateA", string sortOrder = "default")
+                                       string codCor, DateTime? monthYear, bool? soloRigheNonRestituite = null,
+                                       int pageNumber = 1, string sortField = "DateA", string sortOrder = "default")
         {
             SetViewBagOptions(codCor);
+
+            // Recupera il valore di soloRigheNonRestituite dalla sessione se non fornito
+            if (!soloRigheNonRestituite.HasValue)
+            {
+                soloRigheNonRestituite = bool.TryParse(HttpContext.Session.GetString("soloRigheNonRestituite"), out bool result) ? result : false;
+            }
 
             // Salva i valori dei filtri nel ViewData per mantenerli nella vista
             ViewData["SearchTerm"] = searchTerm;
@@ -46,12 +52,13 @@ namespace AppComunicazioni.Controllers
             ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
             ViewData["CodCor"] = codCor;
             ViewData["MonthYear"] = monthYear?.ToString("yyyy-MM");
+            ViewData["SoloRigheNonRestituite"] = soloRigheNonRestituite;
 
             int pageSize = 10;
             var query = _context.Comunicazionis.AsQueryable();
 
             // Utilizza il servizio per applicare i filtri
-            query = await _filtroService.FiltraComunicazioniAsync(query, "EBI", searchTerm, startDate, endDate, codCor, monthYear, sortField, sortOrder);
+            query = await _filtroService.FiltraComunicazioniAsync(query, "EBI", searchTerm, startDate, endDate, codCor, monthYear, sortField, sortOrder, soloRigheNonRestituite.Value);
 
             var totalItems = await query.CountAsync();
             var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
@@ -67,7 +74,8 @@ namespace AppComunicazioni.Controllers
                 MonthYear = monthYear,
                 SortField = sortField,
                 SortOrder = sortOrder,
-                SearchTerm = searchTerm
+                SearchTerm = searchTerm,
+                SoloRigheNonRestituite = soloRigheNonRestituite.Value
             };
 
             return View(model);

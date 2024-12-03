@@ -26,9 +26,6 @@ namespace AppComunicazioni.Models.DTO_s
 
         [Required(ErrorMessage = "Il campo Servizio è obbligatorio.")]
         public ServizioType? Servizio { get; set; }
-
-        [StringLength(1)]
-
         public bool Ritornato { get; set; }
 
         // Nuova proprietà per i dettagli
