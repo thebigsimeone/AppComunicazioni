@@ -135,9 +135,17 @@ namespace AppComunicazioni.Controllers
                 await _context.SaveChangesAsync();
 
                 // Se il valore di "Ritornato" è true, interrompe il monitoraggio
-                if (comunicazioniDTO.Ritornato == true || comunicazioniDTO.DateF.HasValue)
+                if (comunicazioniDTO.Ritornato == true)
                 {
                     await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
+                }
+                else if (comunicazioniDTO.DateF.HasValue)
+                {
+                    // Interrompi il monitoraggio se la data di fine è stata impostata (smarco completato)
+                    await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
+
+                    // Invia email di smarco solo se "Ritornato" è false
+                    await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                 }
 
                 // Se un nuovo file Excel è stato caricato, processarlo e salvare i dettagli
@@ -157,8 +165,6 @@ namespace AppComunicazioni.Controllers
                     }
                 }
 
-                // Gestisci eventuali azioni dopo la modifica
-                await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateConcurrencyException)
