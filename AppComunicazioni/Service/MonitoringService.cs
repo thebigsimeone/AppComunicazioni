@@ -12,9 +12,9 @@ public class MonitoringService : IMonitoringService
 
     public MonitoringService(ComDbContext context, IEmailService emailService, ILogger<MonitoringService> logger)
     {
-        _context = context;
-        _emailService = emailService;
-        _logger = logger;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task CheckAndSendNotificationsAsync(List<int>? destinatariIds = null)
@@ -29,52 +29,48 @@ public class MonitoringService : IMonitoringService
                 .Where(x => !x.DateF.HasValue && (x.Notificato == false || x.Notificato == null))
                 .ToListAsync();
 
+            if (comunicazioniList == null)
+            {
+                _logger.LogWarning("Nessuna comunicazione trovata.");
+                return;
+            }
+
             _logger.LogInformation($"Trovate {comunicazioniList.Count} comunicazioni senza DateF e non notificate.");
 
             var notifications = new List<ComunicazioniWithDaysModel>();
 
             foreach (var comunicazione in comunicazioniList)
             {
+                if (comunicazione == null)
+                {
+                    _logger.LogWarning("Comunicazione null trovata nella lista.");
+                    continue;
+                }
+
                 var nomeServizio = comunicazione.Servizio?.ToUpper() ?? "";
 
                 _logger.LogInformation($"Comunicazione ID: {comunicazione.Id}, Nome File: {comunicazione.FileName}, Servizio: {nomeServizio}, DateA (letto dal DB): {comunicazione.DateA}");
 
-                int giorniDaAggiungere;
-                switch (nomeServizio)
+                if (!comunicazione.DateA.HasValue)
                 {
-                    case "S035":
-                        giorniDaAggiungere = 3;
-                        break;
-                    case "PDL":
-                    case "DIM":
-                    case "MA7":
-                    case "MIM":
-                    case "VL1":
-                    case "VLA":
-                    case "VL3":
-                    case "VSA":
-                    case "VPP":
-                    case "VSS":
-                        giorniDaAggiungere = 5;
-                        break;
-                    case "ERE":
-                        giorniDaAggiungere = 7;
-                        break;
-                    case "APP":
-                        giorniDaAggiungere = 8;
-                        break;
-                    default:
-                        giorniDaAggiungere = 0;
-                        break;
+                    _logger.LogWarning($"Comunicazione '{comunicazione.FileName}' non ha una data di invio valida.");
+                    continue;
                 }
 
-                var invioPrevisto = comunicazione.DateA.HasValue
-                    ? CalcolaDataInvio(comunicazione.DateA.Value, giorniDaAggiungere)
-                    : (DateTimeOffset?)null;
+                int giorniDaAggiungere = nomeServizio switch
+                {
+                    "S035" => 3,
+                    "PDL" or "DIM" or "MA7" or "MIM" or "VL1" or "VLA" or "VL3" or "VSA" or "VPP" or "VSS" => 5,
+                    "ERE" => 7,
+                    "APP" => 8,
+                    _ => 0,
+                };
+
+                var invioPrevisto = CalcolaDataInvio(comunicazione.DateA.Value, giorniDaAggiungere);
 
                 _logger.LogInformation($"Giorno previsto per la comunicazione '{comunicazione.FileName}': {invioPrevisto}");
 
-                if (invioPrevisto.HasValue && currentTime >= invioPrevisto)
+                if (currentTime >= invioPrevisto)
                 {
                     var totalDays = CalcolaGiorniLavorativi(comunicazione.DateA.Value, (currentTime - comunicazione.DateA.Value).Days);
 
@@ -108,6 +104,12 @@ public class MonitoringService : IMonitoringService
             {
                 var comunicazione = notification.Comunicazioni;
 
+                if (comunicazione == null)
+                {
+                    _logger.LogWarning("Comunicazione null nel modello di notifica.");
+                    continue;
+                }
+
                 var subject = $"Notifica ritardo: {comunicazione.FileName}";
                 var message = new StringBuilder();
                 message.AppendLine("<p>Attenzione, il seguente file necessita di verifica:<br>");
@@ -130,15 +132,22 @@ public class MonitoringService : IMonitoringService
 
                     foreach (var destinatario in destinatari)
                     {
-                        try
+                        if (!string.IsNullOrEmpty(destinatario?.Destinatario))
                         {
-                            _logger.LogInformation($"Invio email a: {destinatario.Destinatario}");
-                            await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message.ToString());
-                            _logger.LogInformation($"Email inviata a: {destinatario.Destinatario}");
+                            try
+                            {
+                                _logger.LogInformation($"Invio email a: {destinatario.Destinatario}");
+                                await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message.ToString());
+                                _logger.LogInformation($"Email inviata a: {destinatario.Destinatario}");
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError($"Errore durante l'invio dell'email a {destinatario.Destinatario}: {ex.Message}");
+                            }
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            _logger.LogError($"Errore durante l'invio dell'email a {destinatario.Destinatario}: {ex.Message}");
+                            _logger.LogWarning("Destinatario con indirizzo email nullo o vuoto.");
                         }
                     }
 
@@ -217,6 +226,10 @@ public class MonitoringService : IMonitoringService
                 comunicazione.DateF = DateTime.Now;
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Il monitoraggio per la comunicazione con ID {comunicazioneId} è stato interrotto.");
+            }
+            else
+            {
+                _logger.LogWarning($"Nessuna comunicazione trovata con ID {comunicazioneId}.");
             }
         }
         catch (Exception ex)

@@ -34,7 +34,7 @@ namespace AppComunicazioni.Controllers
 
         // GET: ComunicazionisSsc
         public async Task<IActionResult> Index(string searchTerm, DateTime? startDate, DateTime? endDate,
-                                       string codCor, DateTime? monthYear, bool? soloRigheNonRestituite = null,
+                                       string codCor, string servizio, DateTime? monthYear, bool? soloRigheNonRestituite = null,
                                        int pageNumber = 1, string sortField = "DateA", string sortOrder = "default")
         {
             SetViewBagOptions(codCor);
@@ -50,6 +50,7 @@ namespace AppComunicazioni.Controllers
             ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
             ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
             ViewData["CodCor"] = codCor;
+            ViewData["Servizio"] = servizio;
             ViewData["MonthYear"] = monthYear?.ToString("yyyy-MM");
             ViewData["SoloRigheNonRestituite"] = soloRigheNonRestituite;
 
@@ -57,7 +58,7 @@ namespace AppComunicazioni.Controllers
             var query = _context.Comunicazionis.AsQueryable();
 
             // Utilizza il servizio per applicare i filtri
-            query = await _filtroService.FiltraComunicazioniAsync(query, "SSC", searchTerm, startDate, endDate, codCor, monthYear, sortField, sortOrder, soloRigheNonRestituite.Value);
+            query = await _filtroService.FiltraComunicazioniAsync(query, "SSC", searchTerm, startDate, endDate, codCor, servizio, monthYear, sortField, sortOrder, soloRigheNonRestituite.Value);
 
             var totalItems = await query.CountAsync();
             var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
@@ -70,6 +71,7 @@ namespace AppComunicazioni.Controllers
                 StartDate = startDate,
                 EndDate = endDate,
                 CodCor = codCor,
+                Servizio = servizio,
                 MonthYear = monthYear,
                 SortField = sortField,
                 SortOrder = sortOrder,
@@ -215,21 +217,30 @@ namespace AppComunicazioni.Controllers
         private void SetViewBagOptions(string? codCor = null)
         {
             ViewBag.CodCorOptions = Enum.GetValues(typeof(CodCorType))
-                                        .Cast<CodCorType>()
-                                        .Select(c => new SelectListItem
-                                        {
-                                            Value = c.ToString(),
-                                            Text = c.GetDisplayName(),
-                                            Selected = codCor != null && codCor.Equals(c.ToString(), StringComparison.OrdinalIgnoreCase)
-                                        }).ToList();
+                                         .Cast<CodCorType>()
+                                         .Select(c => new SelectListItem
+                                         {
+                                             Value = c.ToString(),
+                                             Text = c.GetDisplayName(),
+                                             Selected = codCor != null && codCor.Equals(c.ToString(), StringComparison.OrdinalIgnoreCase)
+                                         }).ToList();
 
-            ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
-                                          .Cast<ServizioType>()
-                                          .Select(s => new SelectListItem
-                                          {
-                                              Value = s.ToString(),
-                                              Text = s.GetDisplayName()
-                                          }).ToList();
+            // Set dynamic Servizio options based on CodCor
+            var servizioOptions = codCor switch
+            {
+                nameof(CodCorType.CESSIONI) => new List<ServizioType> { ServizioType.BA2, ServizioType.BAN, ServizioType.CEP },
+                nameof(CodCorType.DATAVIZ) => new List<ServizioType> { ServizioType.APP, ServizioType.DIM, ServizioType.DV, ServizioType.ERE, ServizioType.MA7, ServizioType.MIM, ServizioType.PDL, ServizioType.S035, ServizioType.VL1, ServizioType.VLA, ServizioType.VL3, ServizioType.VPP, ServizioType.VSA, ServizioType.VSS },
+                nameof(CodCorType.FORZA) => new List<ServizioType> { ServizioType.DP1, ServizioType.VED },
+                _ => new List<ServizioType>()
+            };
+
+            ViewBag.ServizioOptions = servizioOptions
+                                                    .Select(s => new SelectListItem
+                                                    {
+                                                        Value = s.ToString(),
+                                                        Text = s.GetDisplayName(),
+                                                        Selected = ViewData["Servizio"]?.ToString() == s.ToString()
+                                                    }).ToList();
         }
 
         [HttpPost]

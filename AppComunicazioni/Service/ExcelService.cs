@@ -22,12 +22,17 @@ namespace AppComunicazioni.Service
                     var worksheet = package.Workbook.Worksheets.FirstOrDefault();
                     if (worksheet == null)
                     {
-                        return null;
+                        return dettagliList; // Restituisce una lista vuota invece di null
                     }
 
                     // Trova gli indici di colonna per le intestazioni "Protocollo" e "Codice Fiscale"
-                    int rowCount = worksheet.Dimension.Rows;
-                    int colCount = worksheet.Dimension.Columns;
+                    int rowCount = worksheet.Dimension?.Rows ?? 0;
+                    int colCount = worksheet.Dimension?.Columns ?? 0;
+
+                    if (rowCount == 0 || colCount == 0)
+                    {
+                        return dettagliList; // Restituisce una lista vuota se non ci sono righe o colonne
+                    }
 
                     int colProtocollo = -1;
                     int colCodiceFiscale = -1;
@@ -45,10 +50,10 @@ namespace AppComunicazioni.Service
                         }
                     }
 
-                    // Se non vengono trovate entrambe le colonne necessarie, restituisce null
+                    // Se non vengono trovate entrambe le colonne necessarie, restituisce una lista vuota
                     if (colProtocollo == -1 || colCodiceFiscale == -1)
                     {
-                        return null;
+                        return dettagliList; // Restituisce una lista vuota invece di null
                     }
 
                     // Legge i dati dalla seconda riga in poi
@@ -76,7 +81,7 @@ namespace AppComunicazioni.Service
                 }
             }
 
-            return dettagliList;
+            return dettagliList; // Restituisce la lista, anche se vuota
         }
     }
 }

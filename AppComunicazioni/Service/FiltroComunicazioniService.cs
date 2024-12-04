@@ -21,6 +21,7 @@ namespace AppComunicazioni.Service
                 _session.Remove("startDate");
                 _session.Remove("endDate");
                 _session.Remove("codCor");
+                _session.Remove("servizio");
                 _session.Remove("monthYear");
                 _session.Remove("sortField");
                 _session.Remove("sortOrder");
@@ -30,14 +31,15 @@ namespace AppComunicazioni.Service
 
         public async Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(
             IQueryable<Comunicazioni> query,
-            string tenant,
-            string searchTerm,
+            string? tenant,
+            string? searchTerm,
             DateTime? startDate,
             DateTime? endDate,
-            string codCor,
+            string? codCor,
+            string? servizio,
             DateTime? monthYear,
-            string sortField,
-            string sortOrder,
+            string? sortField,
+            string? sortOrder,
             bool soloRigheNonRestituite)
         {
             if (_session != null)
@@ -49,6 +51,7 @@ namespace AppComunicazioni.Service
                 if (!_session.TryGetValue("endDate", out _))
                     endDate = endDate ?? _session.GetString("endDate")?.ParseNullableDate();
                 codCor ??= _session.GetString("codCor");
+                servizio ??= _session.GetString("servizio");
                 monthYear ??= _session.GetString("monthYear")?.ParseNullableDate();
                 sortField ??= _session.GetString("sortField") ?? "DateA";
                 sortOrder ??= _session.GetString("sortOrder") ?? "default";
@@ -60,6 +63,7 @@ namespace AppComunicazioni.Service
                 _session.SetString("startDate", startDate?.ToString("yyyy-MM-dd") ?? "");
                 _session.SetString("endDate", endDate?.ToString("yyyy-MM-dd") ?? "");
                 _session.SetString("codCor", codCor ?? "");
+                _session.SetString("servizio", servizio ?? "");
                 _session.SetString("monthYear", monthYear?.ToString("yyyy-MM") ?? "");
                 _session.SetString("sortField", sortField);
                 _session.SetString("sortOrder", sortOrder);
@@ -70,25 +74,28 @@ namespace AppComunicazioni.Service
             query = query.Include(c => c.Dettagli);
 
             // Aggiunge un filtro per selezionare solo le comunicazioni in base al tenant
-            query = query.Where(x => x.FileName.Contains(tenant));
+            if (!string.IsNullOrEmpty(tenant))
+            {
+                query = query.Where(x => x.FileName != null && x.FileName.Contains(tenant));
+            }
 
             // Filtro sul termine di ricerca - includiamo anche la ricerca nei dettagli
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 query = query.Where(x =>
-                    x.FileName.Contains(searchTerm) ||
-                    x.Dettagli.Any(d => d.Protocollo.Contains(searchTerm))
+                    (x.FileName != null && x.FileName.Contains(searchTerm)) ||
+                    (x.Dettagli != null && x.Dettagli.Any(d => d.Protocollo != null && d.Protocollo.Contains(searchTerm)))
                 );
             }
 
             if (startDate.HasValue)
             {
-                query = query.Where(x => x.DateA >= startDate.Value);
+                query = query.Where(x => x.DateA.HasValue && x.DateA.Value >= startDate.Value);
             }
 
             if (endDate.HasValue)
             {
-                query = query.Where(x => x.DateF <= endDate.Value);
+                query = query.Where(x => x.DateF.HasValue && x.DateF.Value <= endDate.Value);
             }
 
             // Applica il filtro per CodCor se fornito
@@ -98,25 +105,31 @@ namespace AppComunicazioni.Service
                 {
                     case nameof(CodCorType.CESSIONI):
                         query = query.Where(x =>
-                            x.FileName.StartsWith("001-1990") ||
-                            x.FileName.StartsWith("001-1989") ||
-                            x.FileName.StartsWith("001-8027") ||
-                            x.FileName.StartsWith("001-1988"));
+                            x.FileName != null &&
+                            (x.FileName.StartsWith("001-1990") ||
+                             x.FileName.StartsWith("001-1989") ||
+                             x.FileName.StartsWith("001-8027") ||
+                             x.FileName.StartsWith("001-1988")));
                         break;
 
                     case nameof(CodCorType.FORZA):
-                        query = query.Where(x => x.FileName.StartsWith("001-8096"));
+                        query = query.Where(x => x.FileName != null && x.FileName.StartsWith("001-8096"));
                         break;
 
                     case nameof(CodCorType.DATAVIZ):
-                        query = query.Where(x => x.FileName.StartsWith("001-8033"));
+                        query = query.Where(x => x.FileName != null && x.FileName.StartsWith("001-8033"));
                         break;
 
                     default:
                         // Filtro per un singolo codice specificato
-                        query = query.Where(x => x.FileName.Contains(codCor));
+                        query = query.Where(x => x.FileName != null && x.FileName.Contains(codCor));
                         break;
                 }
+            }
+
+            if (!string.IsNullOrEmpty(servizio))
+            {
+                query = query.Where(x => x.Servizio != null && x.Servizio == servizio);
             }
 
             // Filtro basato sul mese e anno
@@ -124,13 +137,13 @@ namespace AppComunicazioni.Service
             {
                 var firstDayOfMonth = new DateTime(monthYear.Value.Year, monthYear.Value.Month, 1);
                 var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
-                query = query.Where(x => x.DateA >= firstDayOfMonth && x.DateA <= lastDayOfMonth);
+                query = query.Where(x => x.DateA.HasValue && x.DateA.Value >= firstDayOfMonth && x.DateA.Value <= lastDayOfMonth);
             }
 
             // Filtro per DateF == NULL se richiesto
             if (soloRigheNonRestituite)
             {
-                query = query.Where(x => x.DateF == null);
+                query = query.Where(x => !x.DateF.HasValue);
             }
 
             // Ordina i risultati
@@ -157,7 +170,7 @@ namespace AppComunicazioni.Service
                 _ => query.OrderBy(x => x.DateA),
             };
 
-            return query;
+            return await Task.FromResult(query);
         }
     }
 

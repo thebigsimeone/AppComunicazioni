@@ -9,6 +9,7 @@ public class ComunicazioniViewModel
     public DateTime? EndDate { get; set; }
     public string? SearchTerm { get; set; }
     public string? CodCor { get; set; }
+    public string? Servizio { get; set; }
     public DateTime? MonthYear { get; set; }
     public string? SortField { get; set; }
     public string? SortOrder { get; set; }

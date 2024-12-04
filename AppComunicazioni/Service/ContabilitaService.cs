@@ -24,7 +24,7 @@ namespace AppComunicazioni.Service
                 var firstDayOfMonth = new DateTime(meseAnno.Value.Year, meseAnno.Value.Month, 1);
                 var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
 
-                query = query.Where(x => x.DateF >= firstDayOfMonth && x.DateF <= lastDayOfMonth);
+                query = query.Where(x => x.DateF.HasValue && x.DateF.Value >= firstDayOfMonth && x.DateF.Value <= lastDayOfMonth);
             }
 
             // Applica il filtro per CodCor se fornito
@@ -34,23 +34,24 @@ namespace AppComunicazioni.Service
                 {
                     case nameof(CodCorType.CESSIONI):
                         query = query.Where(x =>
-                            x.FileName.StartsWith("001-1990") ||
-                            x.FileName.StartsWith("001-1989") ||
-                            x.FileName.StartsWith("001-8027") ||
-                            x.FileName.StartsWith("001-1988"));
+                            x.FileName != null &&
+                            (x.FileName.StartsWith("001-1990") ||
+                             x.FileName.StartsWith("001-1989") ||
+                             x.FileName.StartsWith("001-8027") ||
+                             x.FileName.StartsWith("001-1988")));
                         break;
 
                     case nameof(CodCorType.FORZA):
-                        query = query.Where(x => x.FileName.StartsWith("001-8096"));
+                        query = query.Where(x => x.FileName != null && x.FileName.StartsWith("001-8096"));
                         break;
 
                     case nameof(CodCorType.DATAVIZ):
-                        query = query.Where(x => x.FileName.StartsWith("001-8033"));
+                        query = query.Where(x => x.FileName != null && x.FileName.StartsWith("001-8033"));
                         break;
 
                     default:
                         // Filtro per un singolo codice specificato
-                        query = query.Where(x => x.FileName.Contains(codCor));
+                        query = query.Where(x => x.FileName != null && x.FileName.Contains(codCor));
                         break;
                 }
             }
@@ -58,19 +59,19 @@ namespace AppComunicazioni.Service
             // Applica il filtro per tipoAccertamento (EBI o SSC) se fornito
             if (!string.IsNullOrEmpty(tipoAccertamento))
             {
-                query = query.Where(x => x.FileName.Contains(tipoAccertamento));
+                query = query.Where(x => x.FileName != null && x.FileName.Contains(tipoAccertamento));
             }
 
             var accertamenti = await query
-                .GroupBy(x => x.Servizio)
-                .Select(g => new ContabilitaAccertamentiViewModel
-                {
-                    Servizio = g.Key.ToString(),
-                    TotaleAccertamenti = (int)g.Sum(x => x.DateA != null ? x.NProtocol : 0),
-                    TotaleAccertamentiRitornati = (int)g.Sum(x => x.DateF != null ? x.NProtocol : 0),
-                    TotaleAccertamentiMancanti = (int)g.Sum(x => x.DateF == null ? x.NProtocol : 0)
-                })
-                .ToListAsync();
+                                        .GroupBy(x => x.Servizio)
+                                        .Select(g => new ContabilitaAccertamentiViewModel
+                                        {
+                                            Servizio = g.Key != null ? g.Key.ToString() : "N/A",
+                                            TotaleAccertamenti = (int)g.Sum(x => x.DateA.HasValue ? x.NProtocol ?? 0 : 0),
+                                            TotaleAccertamentiRitornati = (int)g.Sum(x => x.DateF.HasValue ? x.NProtocol ?? 0 : 0),
+                                            TotaleAccertamentiMancanti = (int)g.Sum(x => !x.DateF.HasValue ? x.NProtocol ?? 0 : 0)
+                                        })
+                                        .ToListAsync();
 
             return accertamenti;
         }
