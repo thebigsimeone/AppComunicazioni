@@ -14,7 +14,7 @@ namespace AppComunicazioni.Service
             _context = context;
         }
 
-        public async Task<List<ContabilitaAccertamentiViewModel>> GetTotaleAccertamentiAsync(DateTime? meseAnno = null, string codCor = null, string tipoAccertamento = null)
+        public async Task<List<ContabilitaAccertamentiViewModel>> GetTotaleAccertamentiAsync(DateTime? meseAnno = null, string? codCor = null, string? tipoAccertamento = null)
         {
             var query = _context.Comunicazionis.AsQueryable();
 
@@ -54,7 +54,6 @@ namespace AppComunicazioni.Service
                         break;
                 }
             }
-
 
             // Applica il filtro per tipoAccertamento (EBI o SSC) se fornito
             if (!string.IsNullOrEmpty(tipoAccertamento))

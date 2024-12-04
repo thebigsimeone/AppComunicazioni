@@ -40,7 +40,10 @@ public class SendMailService : ISendMailService
         else
         {
             string subject = $"SMARCO ACCERTAMENTI DEL FILE: {comunicazioni.FileName}";
-            string formattedNote = _emailService.FormatNote(comunicazioni.Note);
+            string formattedNote = !string.IsNullOrEmpty(comunicazioni.Note)
+                ? _emailService.FormatNote(comunicazioni.Note)
+                : "Nessuna nota disponibile.";
+
             string message = $"<p>Il seguente file è stato smarcato: {comunicazioni.FileName}<br>" +
                              $"con il numero protocolli: {comunicazioni.NProtocol}<br><br>" +
                              $"Questi sono i protocolli da controllare: {comunicazioni.NsProtocol}<br><br>" +
@@ -49,19 +52,27 @@ public class SendMailService : ISendMailService
 
             foreach (var destinatario in destinatari)
             {
-                try
+                if (!string.IsNullOrEmpty(destinatario.Destinatario))
                 {
-                    await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
+                    try
+                    {
+                        await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
+                        emailSuccess = false;
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
+                    _logger.LogWarning("Il destinatario non è valido (null o vuoto). Email non inviata.");
                     emailSuccess = false;
                 }
             }
         }
 
-        // Puoi utilizzare TempData in un controller, ma non in un servizio, quindi potrebbe essere necessario un modo alternativo per fornire feedback all'utente
+        // Logga l'esito dell'invio delle email
         if (emailSuccess)
         {
             _logger.LogInformation("Comunicazione modificata e email inviate con successo.");

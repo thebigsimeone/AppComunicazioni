@@ -2,18 +2,23 @@
 using System.Collections.Generic;
 using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace AppComunicazioni.Data;
 
 public partial class ComDbContext : DbContext
 {
-    public ComDbContext()
+    private readonly IConfiguration _configuration;
+
+    public ComDbContext(IConfiguration configuration)
     {
+        _configuration = configuration;
     }
 
-    public ComDbContext(DbContextOptions<ComDbContext> options)
+    public ComDbContext(DbContextOptions<ComDbContext> options, IConfiguration configuration)
         : base(options)
     {
+        _configuration = configuration;
     }
 
     public virtual DbSet<Comunicazioni> Comunicazionis { get; set; }
@@ -21,18 +26,16 @@ public partial class ComDbContext : DbContext
     public virtual DbSet<ComunicazioniDettaglio> ComunicazioniDettagli { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("SERVER=10.10.20.21;DATABASE=testadc;User Id=sa;Pwd=K5jWUyAg;TrustServerCertificate=True;");
-
-    /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-=> optionsBuilder.UseSqlServer("Server=PC-FLAVIO\\SQLEXPRESS;Database=db_comunicazioni;Trusted_Connection=True;TrustServerCertificate=True;");*/
-
-    //UFFICIO
-
-    /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-    => optionsBuilder.UseSqlServer("Server=NA-23\\SQLEXPRESS;Database=db_comunicazioni;Trusted_Connection=True;TrustServerCertificate=True;");*/
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            // Usa la stringa di connessione dal file di configurazione
+            var connectionString = _configuration.GetConnectionString("ComDbContext");
+           //var connectionString = _configuration.GetConnectionString("ComDbContext_old_ufficio");
+           //var connectionString = _configuration.GetConnectionString("ComDbContext_old_flavio");
+            optionsBuilder.UseSqlServer(connectionString);
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

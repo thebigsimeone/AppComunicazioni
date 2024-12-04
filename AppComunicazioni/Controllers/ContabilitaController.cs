@@ -14,7 +14,7 @@ namespace AppComunicazioni.Controllers
         }
 
         // GET: Contabilita
-        public async Task<IActionResult> Index(DateTime? meseAnno = null, string codCor = null, string tipoAccertamento = null)
+        public async Task<IActionResult> Index(DateTime? meseAnno = null, string? codCor = null, string? tipoAccertamento = null)
         {
             // Configurazione del ViewBag per la select del CodCor
             ViewBag.CodCorOptions = Enum.GetValues(typeof(CodCorType))
@@ -40,6 +40,5 @@ namespace AppComunicazioni.Controllers
             var model = await _contabilitaService.GetTotaleAccertamentiAsync(meseAnno, codCor, tipoAccertamento);
             return View(model);
         }
-
     }
 }

@@ -6,23 +6,26 @@ namespace AppComunicazioni.Service
 {
     public class FiltroComunicazioniService : IFiltroComunicazioniService
     {
-        private readonly ISession _session;
+        private readonly ISession? _session;
 
         public FiltroComunicazioniService(IHttpContextAccessor httpContextAccessor)
         {
-            _session = httpContextAccessor.HttpContext.Session;
+            _session = httpContextAccessor.HttpContext?.Session;
         }
 
         public void ResetFiltri()
         {
-            _session.Remove("searchTerm");
-            _session.Remove("startDate");
-            _session.Remove("endDate");
-            _session.Remove("codCor");
-            _session.Remove("monthYear");
-            _session.Remove("sortField");
-            _session.Remove("sortOrder");
-            _session.Remove("soloRigheNonRestituite");
+            if (_session != null)
+            {
+                _session.Remove("searchTerm");
+                _session.Remove("startDate");
+                _session.Remove("endDate");
+                _session.Remove("codCor");
+                _session.Remove("monthYear");
+                _session.Remove("sortField");
+                _session.Remove("sortOrder");
+                _session.Remove("soloRigheNonRestituite");
+            }
         }
 
         public async Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(
@@ -37,28 +40,31 @@ namespace AppComunicazioni.Service
             string sortOrder,
             bool soloRigheNonRestituite)
         {
-            // Recupera i valori dei filtri dalla sessione se non forniti dall'utente
-            searchTerm ??= _session.GetString("searchTerm");
-            if (!_session.TryGetValue("startDate", out _))
-                startDate = startDate ?? _session.GetString("startDate")?.ParseNullableDate();
-            if (!_session.TryGetValue("endDate", out _))
-                endDate = endDate ?? _session.GetString("endDate")?.ParseNullableDate();
-            codCor ??= _session.GetString("codCor");
-            monthYear ??= _session.GetString("monthYear")?.ParseNullableDate();
-            sortField ??= _session.GetString("sortField") ?? "DateA";
-            sortOrder ??= _session.GetString("sortOrder") ?? "default";
-            if (!_session.TryGetValue("soloRigheNonRestituite", out _))
-                soloRigheNonRestituite = bool.TryParse(_session.GetString("soloRigheNonRestituite"), out bool result) ? result : soloRigheNonRestituite;
+            if (_session != null)
+            {
+                // Recupera i valori dei filtri dalla sessione se non forniti dall'utente
+                searchTerm ??= _session.GetString("searchTerm");
+                if (!_session.TryGetValue("startDate", out _))
+                    startDate = startDate ?? _session.GetString("startDate")?.ParseNullableDate();
+                if (!_session.TryGetValue("endDate", out _))
+                    endDate = endDate ?? _session.GetString("endDate")?.ParseNullableDate();
+                codCor ??= _session.GetString("codCor");
+                monthYear ??= _session.GetString("monthYear")?.ParseNullableDate();
+                sortField ??= _session.GetString("sortField") ?? "DateA";
+                sortOrder ??= _session.GetString("sortOrder") ?? "default";
+                if (!_session.TryGetValue("soloRigheNonRestituite", out _))
+                    soloRigheNonRestituite = bool.TryParse(_session.GetString("soloRigheNonRestituite"), out bool result) ? result : soloRigheNonRestituite;
 
-            // Salva i valori dei filtri nella sessione
-            _session.SetString("searchTerm", searchTerm ?? "");
-            _session.SetString("startDate", startDate?.ToString("yyyy-MM-dd") ?? "");
-            _session.SetString("endDate", endDate?.ToString("yyyy-MM-dd") ?? "");
-            _session.SetString("codCor", codCor ?? "");
-            _session.SetString("monthYear", monthYear?.ToString("yyyy-MM") ?? "");
-            _session.SetString("sortField", sortField);
-            _session.SetString("sortOrder", sortOrder);
-            _session.SetString("soloRigheNonRestituite", soloRigheNonRestituite.ToString());
+                // Salva i valori dei filtri nella sessione
+                _session.SetString("searchTerm", searchTerm ?? "");
+                _session.SetString("startDate", startDate?.ToString("yyyy-MM-dd") ?? "");
+                _session.SetString("endDate", endDate?.ToString("yyyy-MM-dd") ?? "");
+                _session.SetString("codCor", codCor ?? "");
+                _session.SetString("monthYear", monthYear?.ToString("yyyy-MM") ?? "");
+                _session.SetString("sortField", sortField);
+                _session.SetString("sortOrder", sortOrder);
+                _session.SetString("soloRigheNonRestituite", soloRigheNonRestituite.ToString());
+            }
 
             // Carica i dettagli delle comunicazioni correlati
             query = query.Include(c => c.Dettagli);

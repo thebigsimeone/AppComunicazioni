@@ -17,7 +17,7 @@ public class MonitoringService : IMonitoringService
         _logger = logger;
     }
 
-    public async Task CheckAndSendNotificationsAsync(List<int> destinatariIds = null)
+    public async Task CheckAndSendNotificationsAsync(List<int>? destinatariIds = null)
     {
         try
         {
