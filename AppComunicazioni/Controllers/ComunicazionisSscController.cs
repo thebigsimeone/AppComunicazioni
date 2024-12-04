@@ -241,6 +241,14 @@ namespace AppComunicazioni.Controllers
                                                         Text = s.GetDisplayName(),
                                                         Selected = ViewData["Servizio"]?.ToString() == s.ToString()
                                                     }).ToList();
+
+            ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
+                                      .Cast<ServizioType>()
+                                      .Select(s => new SelectListItem
+                                      {
+                                          Value = s.ToString(),
+                                          Text = s.GetDisplayName()
+                                      }).ToList();
         }
 
         [HttpPost]
