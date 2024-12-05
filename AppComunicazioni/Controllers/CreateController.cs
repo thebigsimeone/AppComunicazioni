@@ -15,8 +15,11 @@ public class CreateController : Controller
     private readonly ILogger<CreateController> _logger;
     private readonly IMonitoringService _monitoringService;
     private readonly IExcelService _excelService;
+    private readonly IViewBagService _viewBagService;
 
-    public CreateController(ComDbContext context, IMapper mapper, IEmailService emailService, ILogger<CreateController> logger, IMonitoringService monitoringService, IExcelService excelService)
+    public CreateController(ComDbContext context, IMapper mapper, IEmailService emailService,
+                            ILogger<CreateController> logger, IMonitoringService monitoringService,
+                            IExcelService excelService, IViewBagService viewBagService)
     {
         _context = context;
         _mapper = mapper;
@@ -24,6 +27,7 @@ public class CreateController : Controller
         _logger = logger;
         _monitoringService = monitoringService;
         _excelService = excelService;
+        _viewBagService = viewBagService;
     }
 
     public IActionResult Index()
@@ -93,13 +97,6 @@ public class CreateController : Controller
 
     private void SetViewBagOptions()
     {
-        ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
-                                      .Cast<ServizioType>()
-                                      .Select(s => new SelectListItem
-                                      {
-                                          Value = s.ToString(),
-                                          Text = s.GetDisplayName()
-                                      }).ToList();
+        ViewBag.ServizioOptions = _viewBagService.GetServizioOptions();
     }
-
 }

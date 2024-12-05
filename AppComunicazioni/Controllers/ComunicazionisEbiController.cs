@@ -19,9 +19,13 @@ namespace AppComunicazioni.Controllers
         private readonly IFiltroComunicazioniService _filtroService;
         private readonly IExcelService _excelService;
         private readonly ISendMailService _sendMailService;
+        private readonly IViewBagService _viewBagService;
         private readonly ILogger<ComunicazionisSscController> _logger;
 
-        public ComunicazionisEbiController(ComDbContext context, IMapper mapper, IEmailService emailService, IMonitoringService monitoringService, IFiltroComunicazioniService filtroComunicazioniService, IExcelService excelService, ISendMailService sendMailService, ILogger<ComunicazionisSscController> logger)
+        public ComunicazionisEbiController(ComDbContext context, IMapper mapper, IEmailService emailService,
+                                           IMonitoringService monitoringService, IFiltroComunicazioniService filtroComunicazioniService,
+                                           IExcelService excelService, ISendMailService sendMailService,
+                                           ILogger<ComunicazionisSscController> logger, IViewBagService viewBagService)
         {
             _context = context;
             _mapper = mapper;
@@ -31,6 +35,7 @@ namespace AppComunicazioni.Controllers
             _monitoringService = monitoringService;
             _logger = logger;
             _sendMailService = sendMailService;
+            _viewBagService = viewBagService;
         }
 
         // GET: ComunicazionisEbi
@@ -83,6 +88,12 @@ namespace AppComunicazioni.Controllers
             return View(model);
         }
 
+        private void SetViewBagOptions(string? codCor = null)
+        {
+            ViewBag.CodCorOptions = _viewBagService.GetCodCorOptions(codCor);
+            ViewBag.ServizioOptions = _viewBagService.GetServizioOptions(codCor);
+        }
+
         // GET: ComunicazionisEbi/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -132,6 +143,12 @@ namespace AppComunicazioni.Controllers
             // Mappa i valori aggiornati dal DTO al modello esistente
             _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
 
+            // Imposta Ritornato a true se DateF è stato impostato
+            if (comunicazioniDTO.DateF.HasValue)
+            {
+                comunicazioniToUpdate.Ritornato = true;
+            }
+
             try
             {
                 // Salva le modifiche nel database per i dettagli della comunicazione aggiornati dall'utente
@@ -142,12 +159,10 @@ namespace AppComunicazioni.Controllers
                 {
                     await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
                 }
-                else if (comunicazioniDTO.DateF.HasValue)
-                {
-                    // Interrompi il monitoraggio se la data di fine è stata impostata (smarco completato)
-                    await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
 
-                    // Invia email di smarco solo se "Ritornato" è false
+                // Se la data di fine è stata impostata (smarco completato), invia email di smarco
+                if (comunicazioniDTO.DateF.HasValue)
+                {
                     await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                 }
 
@@ -214,43 +229,6 @@ namespace AppComunicazioni.Controllers
         }
 
         private bool ComunicazioniExists(int id) => _context.Comunicazionis.Any(e => e.Id == id);
-
-        private void SetViewBagOptions(string? codCor = null)
-        {
-            ViewBag.CodCorOptions = Enum.GetValues(typeof(CodCorType))
-                                         .Cast<CodCorType>()
-                                         .Select(c => new SelectListItem
-                                         {
-                                             Value = c.ToString(),
-                                             Text = c.GetDisplayName(),
-                                             Selected = codCor != null && codCor.Equals(c.ToString(), StringComparison.OrdinalIgnoreCase)
-                                         }).ToList();
-
-            // Set dynamic Servizio options based on CodCor
-            var servizioOptions = codCor switch
-            {
-                nameof(CodCorType.CESSIONI) => new List<ServizioType> { ServizioType.BA2, ServizioType.BAN, ServizioType.CEP },
-                nameof(CodCorType.DATAVIZ) => new List<ServizioType> { ServizioType.APP, ServizioType.DIM, ServizioType.DV, ServizioType.ERE, ServizioType.MA7, ServizioType.MIM, ServizioType.PDL, ServizioType.S035, ServizioType.VL1, ServizioType.VLA, ServizioType.VL3, ServizioType.VPP, ServizioType.VSA, ServizioType.VSS },
-                nameof(CodCorType.FORZA) => new List<ServizioType> { ServizioType.DP1, ServizioType.VED },
-                _ => new List<ServizioType>()
-            };
-
-            ViewBag.ServizioOptions = servizioOptions
-                                                    .Select(s => new SelectListItem
-                                                    {
-                                                        Value = s.ToString(),
-                                                        Text = s.GetDisplayName(),
-                                                        Selected = ViewData["Servizio"]?.ToString() == s.ToString()
-                                                    }).ToList();
-
-            ViewBag.ServizioOptions = Enum.GetValues(typeof(ServizioType))
-                                      .Cast<ServizioType>()
-                                      .Select(s => new SelectListItem
-                                      {
-                                          Value = s.ToString(),
-                                          Text = s.GetDisplayName()
-                                      }).ToList();
-        }
 
         [HttpPost]
         public IActionResult ResetFiltri()
