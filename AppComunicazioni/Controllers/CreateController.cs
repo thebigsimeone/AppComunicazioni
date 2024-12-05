@@ -5,7 +5,7 @@ using AppComunicazioni.Models.DTO_s;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using OfficeOpenXml;
+using Microsoft.EntityFrameworkCore;
 
 public class CreateController : Controller
 {
@@ -16,10 +16,12 @@ public class CreateController : Controller
     private readonly IMonitoringService _monitoringService;
     private readonly IExcelService _excelService;
     private readonly IViewBagService _viewBagService;
+    private readonly IRetryService _retryService;
 
     public CreateController(ComDbContext context, IMapper mapper, IEmailService emailService,
                             ILogger<CreateController> logger, IMonitoringService monitoringService,
-                            IExcelService excelService, IViewBagService viewBagService)
+                            IExcelService excelService, IViewBagService viewBagService,
+                            IRetryService retryService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -28,6 +30,7 @@ public class CreateController : Controller
         _monitoringService = monitoringService ?? throw new ArgumentNullException(nameof(monitoringService));
         _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
         _viewBagService = viewBagService ?? throw new ArgumentNullException(nameof(viewBagService));
+        _retryService = retryService ?? throw new ArgumentNullException(nameof(retryService));
     }
 
     public IActionResult Index()
@@ -42,57 +45,68 @@ public class CreateController : Controller
     {
         if (ModelState.IsValid)
         {
-            try
+            if (comunicazioniDTO == null)
             {
-                if (comunicazioniDTO == null)
+                throw new ArgumentNullException(nameof(comunicazioniDTO));
+            }
+
+            return await _retryService.ExecuteWithRetry(async () =>
+            {
+                using (var transaction = await _context.Database.BeginTransactionAsync())
                 {
-                    throw new ArgumentNullException(nameof(comunicazioniDTO));
-                }
-
-                // Mappatura da DTO a Entity
-                var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
-
-                // Imposta il valore di "Servizio" per la logica del DB (S035 se utente ha selezionato "035")
-                comunicazioni.Servizio = comunicazioniDTO.Servizio == ServizioType.S035 ? "S035" : comunicazioniDTO.Servizio.ToString();
-
-                // Imposta il valore di Notificato e Ritornato a false di default
-                comunicazioni.Notificato = false;
-                comunicazioni.Ritornato = false;
-
-                _context.Add(comunicazioni);
-                await _context.SaveChangesAsync();
-
-                // Se l'utente ha caricato un file Excel, procedi con l'elaborazione
-                if (excelFile != null && excelFile.Length > 0)
-                {
-                    var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioni.Id);
-                    if (dettagli != null)
+                    try
                     {
-                        _context.ComunicazioniDettagli.AddRange(dettagli);
+                        // Mappatura da DTO a Entity
+                        var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
+
+                        // Imposta il valore di "Servizio" per la logica del DB (S035 se utente ha selezionato "035")
+                        comunicazioni.Servizio = comunicazioniDTO.Servizio == ServizioType.S035 ? "S035" : comunicazioniDTO.Servizio.ToString();
+
+                        // Imposta il valore di Notificato e Ritornato a false di default
+                        comunicazioni.Notificato = false;
+                        comunicazioni.Ritornato = false;
+
+                        // Aggiungi la comunicazione al contesto
+                        _context.Add(comunicazioni);
                         await _context.SaveChangesAsync();
+
+                        // Se l'utente ha caricato un file Excel, procedi con l'elaborazione
+                        if (excelFile != null && excelFile.Length > 0)
+                        {
+                            var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioni.Id);
+                            if (dettagli != null)
+                            {
+                                _context.ComunicazioniDettagli.AddRange(dettagli);
+                                await _context.SaveChangesAsync();
+                            }
+                        }
+
+                        // Completa la transazione se tutte le operazioni sono andate a buon fine
+                        await transaction.CommitAsync();
+
+                        _logger.LogInformation($"Comunicazione con ID {comunicazioni.Id} è stata creata e salvata correttamente.");
+
+                        // Avvia il monitoraggio
+                        try
+                        {
+                            await Task.Delay(1000);
+                            await _monitoringService.CheckAndSendNotificationsAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Errore durante l'avvio del monitoraggio dopo la creazione: {ex.Message}");
+                        }
+
+                        TempData["Message"] = "Comunicazione creata con successo. Il monitoraggio è stato avviato.";
+                        return RedirectToAction(nameof(Index));
+                    }
+                    catch
+                    {
+                        await transaction.RollbackAsync();  // Annulla la transazione in caso di errore
+                        throw;
                     }
                 }
-
-                _logger.LogInformation($"Comunicazione con ID {comunicazioni.Id} è stata creata e salvata correttamente.");
-
-                try
-                {
-                    await Task.Delay(1000);
-                    await _monitoringService.CheckAndSendNotificationsAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Errore durante l'avvio del monitoraggio dopo la creazione: {ex.Message}");
-                }
-
-                TempData["Message"] = "Comunicazione creata con successo. Il monitoraggio è stato avviato.";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Errore durante la creazione della comunicazione: {ex.Message}");
-                ModelState.AddModelError("", "Si è verificato un errore durante la creazione della comunicazione. Riprova.");
-            }
+            }, _logger, this);
         }
 
         // Se il modello non è valido, ripopola le opzioni del ViewBag e ritorna alla vista Index
@@ -105,4 +119,3 @@ public class CreateController : Controller
         ViewBag.ServizioOptions = _viewBagService.GetServizioOptions() ?? new List<SelectListItem>();
     }
 }
-

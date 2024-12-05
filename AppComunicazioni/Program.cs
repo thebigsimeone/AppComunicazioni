@@ -6,6 +6,7 @@ using AppComunicazioni.Service;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using OfficeOpenXml;
+using AppComunicazioni.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +37,7 @@ builder.Services.AddScoped<CleanupService>(); // Servizio pulizia dati vecchi
 builder.Services.AddScoped<IExcelService, ExcelService>(); // Servizio legato alla logica file excel
 builder.Services.AddScoped<ISendMailService, SendMailService>(); // Servizio all'invio email di smarco
 builder.Services.AddScoped<IViewBagService, ViewBagService>(); // Servizio di ViewBag per la view dei Servizi nelle select
+builder.Services.AddScoped<IRetryService, RetryService>();
 
 // Registrazione AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
