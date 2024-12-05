@@ -35,7 +35,7 @@ builder.Services.AddScoped<IContabilitaService, ContabilitaService>(); // Serviz
 builder.Services.AddScoped<CleanupService>(); // Servizio pulizia dati vecchi
 builder.Services.AddScoped<IExcelService, ExcelService>(); // Servizio legato alla logica file excel
 builder.Services.AddScoped<ISendMailService, SendMailService>(); // Servizio all'invio email di smarco
-builder.Services.AddScoped<IViewBagService, ViewBagService>();
+builder.Services.AddScoped<IViewBagService, ViewBagService>(); // Servizio di ViewBag per la view dei Servizi nelle select
 
 // Registrazione AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
