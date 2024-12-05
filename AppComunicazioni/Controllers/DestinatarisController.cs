@@ -14,30 +14,35 @@ namespace AppComunicazioni.Controllers
 
         public DestinatarisController(ComDbContext context, IMapper mapper)
         {
-            _context = context;
-            _mapper = mapper;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         // GET: Destinataris
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Destinataris.ToListAsync());
+            var destinatariList = await _context.Destinataris.ToListAsync();
+            if (destinatariList == null)
+            {
+                return NotFound();
+            }
+            return View(destinatariList);
         }
 
         // GET: Destinataris/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
+            if (!id.HasValue)
             {
                 return NotFound();
             }
 
-            var destinatari = await _context.Destinataris
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var destinatari = await _context.Destinataris.FirstOrDefaultAsync(m => m.Id == id);
             if (destinatari == null)
             {
                 return NotFound();
             }
+
             var destinatariDTO = _mapper.Map<DestinatariDTO>(destinatari);
             return View(destinatariDTO);
         }
@@ -59,18 +64,17 @@ namespace AppComunicazioni.Controllers
                 destinatariDTO.Attivo = Request.Form["Attivo"].Contains("true") ? "S" : "N";
 
                 var destinatari = _mapper.Map<Destinatari>(destinatariDTO);
-                _context.Add(destinatari);
+                await _context.Destinataris.AddAsync(destinatari);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(destinatariDTO);
         }
 
-
         // GET: Destinataris/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
+            if (!id.HasValue)
             {
                 return NotFound();
             }
@@ -80,6 +84,7 @@ namespace AppComunicazioni.Controllers
             {
                 return NotFound();
             }
+
             var destinatariDTO = _mapper.Map<DestinatariDTO>(destinatari);
             return View(destinatariDTO);
         }
@@ -96,7 +101,6 @@ namespace AppComunicazioni.Controllers
 
             if (ModelState.IsValid)
             {
-                // Se Monitor o Attivo non sono inviati, significa che la checkbox non è selezionata.
                 destinatariDTO.Monitor = Request.Form.ContainsKey("Monitor") ? "S" : "N";
                 destinatariDTO.Attivo = Request.Form.ContainsKey("Attivo") ? "S" : "N";
 
@@ -125,13 +129,12 @@ namespace AppComunicazioni.Controllers
         // GET: Destinataris/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
+            if (!id.HasValue)
             {
                 return NotFound();
             }
 
-            var destinatari = await _context.Destinataris
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var destinatari = await _context.Destinataris.FirstOrDefaultAsync(m => m.Id == id);
             if (destinatari == null)
             {
                 return NotFound();
@@ -149,9 +152,13 @@ namespace AppComunicazioni.Controllers
             if (destinatari != null)
             {
                 _context.Destinataris.Remove(destinatari);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                return NotFound();
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 

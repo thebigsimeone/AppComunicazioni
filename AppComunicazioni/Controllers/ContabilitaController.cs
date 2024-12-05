@@ -10,7 +10,7 @@ namespace AppComunicazioni.Controllers
 
         public ContabilitaController(IContabilitaService contabilitaService)
         {
-            _contabilitaService = contabilitaService;
+            _contabilitaService = contabilitaService ?? throw new ArgumentNullException(nameof(contabilitaService));
         }
 
         // GET: Contabilita
@@ -23,7 +23,7 @@ namespace AppComunicazioni.Controllers
                                         {
                                             Value = c.ToString(), // Usa il nome esatto dell'enum come valore per la logica di filtraggio
                                             Text = c.GetDisplayName(), // Mostra il testo definito nel DisplayAttribute per una migliore UX
-                                            Selected = codCor != null && codCor.Equals(c.ToString(), StringComparison.OrdinalIgnoreCase)
+                                            Selected = !string.IsNullOrEmpty(codCor) && codCor.Equals(c.ToString(), StringComparison.OrdinalIgnoreCase)
                                         }).ToList();
 
             // Configurazione del ViewBag per la select del TipoAccertamento (EBI o SSC)
@@ -37,8 +37,14 @@ namespace AppComunicazioni.Controllers
             ViewData["CodCor"] = codCor;
             ViewData["TipoAccertamento"] = tipoAccertamento;
 
+            if (_contabilitaService == null)
+            {
+                return NotFound("Servizio di contabilità non disponibile.");
+            }
+
             var model = await _contabilitaService.GetTotaleAccertamentiAsync(meseAnno, codCor, tipoAccertamento);
             return View(model);
         }
     }
 }
+

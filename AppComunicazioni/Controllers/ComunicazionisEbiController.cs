@@ -1,11 +1,8 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
-using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
-using AppComunicazioni.Service;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace AppComunicazioni.Controllers
@@ -64,7 +61,7 @@ namespace AppComunicazioni.Controllers
             var query = _context.Comunicazionis.AsQueryable();
 
             // Utilizza il servizio per applicare i filtri
-            query = await _filtroService.FiltraComunicazioniAsync(query, "EBI", searchTerm, startDate, endDate, codCor, servizio, monthYear, sortField, sortOrder, soloRigheNonRestituite.Value);
+            query = await _filtroService.FiltraComunicazioniAsync(query, "EBI", searchTerm, startDate, endDate, codCor, servizio, monthYear, sortField, sortOrder, soloRigheNonRestituite.GetValueOrDefault());
 
             var totalItems = await query.CountAsync();
             var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
@@ -82,7 +79,7 @@ namespace AppComunicazioni.Controllers
                 SortField = sortField,
                 SortOrder = sortOrder,
                 SearchTerm = searchTerm,
-                SoloRigheNonRestituite = soloRigheNonRestituite.Value
+                SoloRigheNonRestituite = soloRigheNonRestituite.GetValueOrDefault()
             };
 
             return View(model);
@@ -97,12 +94,15 @@ namespace AppComunicazioni.Controllers
         // GET: ComunicazionisEbi/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null) return NotFound();
+            if (!id.HasValue) return NotFound();
 
+            // Utilizza il caricamento lazy per caricare i dettagli solo quando necessario
             var comunicazioni = await _context.Comunicazionis
-                                              .Include(c => c.Dettagli)  // Include i dettagli della comunicazione
-                                              .FirstOrDefaultAsync(c => c.Id == id);
+                                              .FirstOrDefaultAsync(c => c.Id == id.Value);
             if (comunicazioni == null) return NotFound();
+
+            // Carica i dettagli solo se necessario
+            await _context.Entry(comunicazioni).Collection(c => c.Dettagli).LoadAsync();
 
             var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
             return View(comunicazioniDTO);
@@ -111,9 +111,9 @@ namespace AppComunicazioni.Controllers
         // GET: ComunicazionisEbi/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null) return NotFound();
+            if (!id.HasValue) return NotFound();
 
-            var comunicazioni = await _context.Comunicazionis.FindAsync(id);
+            var comunicazioni = await _context.Comunicazionis.FindAsync(id.Value);
             if (comunicazioni == null) return NotFound();
 
             SetViewBagOptions();
@@ -155,7 +155,7 @@ namespace AppComunicazioni.Controllers
                 await _context.SaveChangesAsync();
 
                 // Se il valore di "Ritornato" è true, interrompe il monitoraggio
-                if (comunicazioniDTO.Ritornato == true)
+                if (comunicazioniToUpdate.Ritornato == true)
                 {
                     await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
                 }
@@ -195,9 +195,9 @@ namespace AppComunicazioni.Controllers
         // GET: ComunicazionisEbi/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null) return NotFound();
+            if (!id.HasValue) return NotFound();
 
-            var comunicazioni = await _context.Comunicazionis.FirstOrDefaultAsync(m => m.Id == id);
+            var comunicazioni = await _context.Comunicazionis.FirstOrDefaultAsync(m => m.Id == id.Value);
             if (comunicazioni == null) return NotFound();
 
             return View(comunicazioni);
@@ -209,11 +209,13 @@ namespace AppComunicazioni.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var comunicazioni = await _context.Comunicazionis
-                .Include(c => c.Dettagli) // Includi i dettagli collegati
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (comunicazioni != null)
             {
+                // Carica i dettagli solo se necessario per la cancellazione
+                await _context.Entry(comunicazioni).Collection(c => c.Dettagli).LoadAsync();
+
                 // Elimina tutti i dettagli associati a questa comunicazione
                 if (comunicazioni.Dettagli != null && comunicazioni.Dettagli.Any())
                 {
@@ -238,3 +240,4 @@ namespace AppComunicazioni.Controllers
         }
     }
 }
+

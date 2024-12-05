@@ -21,13 +21,13 @@ public class CreateController : Controller
                             ILogger<CreateController> logger, IMonitoringService monitoringService,
                             IExcelService excelService, IViewBagService viewBagService)
     {
-        _context = context;
-        _mapper = mapper;
-        _emailService = emailService;
-        _logger = logger;
-        _monitoringService = monitoringService;
-        _excelService = excelService;
-        _viewBagService = viewBagService;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _monitoringService = monitoringService ?? throw new ArgumentNullException(nameof(monitoringService));
+        _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
+        _viewBagService = viewBagService ?? throw new ArgumentNullException(nameof(viewBagService));
     }
 
     public IActionResult Index()
@@ -44,6 +44,11 @@ public class CreateController : Controller
         {
             try
             {
+                if (comunicazioniDTO == null)
+                {
+                    throw new ArgumentNullException(nameof(comunicazioniDTO));
+                }
+
                 // Mappatura da DTO a Entity
                 var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
 
@@ -97,6 +102,7 @@ public class CreateController : Controller
 
     private void SetViewBagOptions()
     {
-        ViewBag.ServizioOptions = _viewBagService.GetServizioOptions();
+        ViewBag.ServizioOptions = _viewBagService.GetServizioOptions() ?? new List<SelectListItem>();
     }
 }
+
