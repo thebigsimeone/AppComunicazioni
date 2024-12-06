@@ -14,7 +14,7 @@ namespace AppComunicazioni.Controllers
         private readonly IFiltroComunicazioniService _filtroService;
         private readonly ILogger<ContabilitàController> _logger;
 
-        public ContabilitàController(IContabilitàService contabilitaService, ComDbContext context, IRetryService retryService, IViewBagService viewBagService,IFiltroComunicazioniService filtroService, ILogger<ContabilitàController> logger)
+        public ContabilitàController(IContabilitàService contabilitaService, ComDbContext context, IRetryService retryService, IViewBagService viewBagService, IFiltroComunicazioniService filtroService, ILogger<ContabilitàController> logger)
         {
             _contabilitaService = contabilitaService ?? throw new ArgumentNullException(nameof(contabilitaService));
             _context = context ?? throw new ArgumentNullException(nameof(context));

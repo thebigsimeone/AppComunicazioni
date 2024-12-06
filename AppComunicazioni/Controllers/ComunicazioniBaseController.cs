@@ -45,8 +45,8 @@ namespace AppComunicazioni.Controllers
             ViewBag.ServizioOptions = _viewBagService.GetServizioOptions(codCor) ?? new List<SelectListItem>();
         }
 
-        protected async Task<IActionResult> BaseIndex(string searchTerm, DateTime? startDate, DateTime? endDate,
-                                                      string codCor, string servizio, DateTime? monthYear, bool? soloRigheNonRestituite,
+        protected async Task<IActionResult> BaseIndex(string? searchTerm, DateTime? startDate, DateTime? endDate,
+                                                      string? codCor, string? servizio, DateTime? monthYear, bool? soloRigheNonRestituite,
                                                       int pageNumber, string sortField, string sortOrder, string tipoAccertamento)
         {
             return await _retryService.ExecuteWithRetry(async () =>
@@ -59,21 +59,33 @@ namespace AppComunicazioni.Controllers
 
                         if (!soloRigheNonRestituite.HasValue)
                         {
-                            soloRigheNonRestituite = bool.TryParse(HttpContext.Session.GetString("soloRigheNonRestituite"), out bool result) ? result : false;
+                            soloRigheNonRestituite = bool.TryParse(HttpContext.Session?.GetString("soloRigheNonRestituite"), out bool result) ? result : false;
                         }
 
-                        ViewData["SearchTerm"] = searchTerm;
+                        ViewData["SearchTerm"] = searchTerm ?? string.Empty;
                         ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
                         ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
-                        ViewData["CodCor"] = codCor;
-                        ViewData["Servizio"] = servizio;
+                        ViewData["CodCor"] = codCor ?? string.Empty;
+                        ViewData["Servizio"] = servizio ?? string.Empty;
                         ViewData["MonthYear"] = monthYear?.ToString("yyyy-MM");
                         ViewData["SoloRigheNonRestituite"] = soloRigheNonRestituite;
 
                         int pageSize = 10;
                         var query = _context.Comunicazionis.AsQueryable();
 
-                        query = await _filtroService.FiltraComunicazioniAsync(query, tipoAccertamento, searchTerm, startDate, endDate, codCor, servizio, monthYear, sortField, sortOrder, soloRigheNonRestituite.GetValueOrDefault());
+                        query = await _filtroService.FiltraComunicazioniAsync(
+                            query,
+                            tipoAccertamento ?? string.Empty,
+                            searchTerm ?? string.Empty,
+                            startDate,
+                            endDate,
+                            codCor ?? string.Empty,
+                            servizio ?? string.Empty,
+                            monthYear,
+                            sortField,
+                            sortOrder,
+                            soloRigheNonRestituite.GetValueOrDefault()
+                        );
 
                         var totalItems = await query.CountAsync();
                         var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
@@ -119,7 +131,7 @@ namespace AppComunicazioni.Controllers
                         var comunicazioni = await _context.Comunicazionis.FirstOrDefaultAsync(c => c.Id == id.Value);
                         if (comunicazioni == null) return NotFound();
 
-                        await _context.Entry(comunicazioni).Collection(c => c.Dettagli).LoadAsync();
+                        await _context.Entry(comunicazioni).Collection(c => c.Dettagli!).LoadAsync();
                         var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
 
                         await transaction.CommitAsync();
@@ -162,7 +174,7 @@ namespace AppComunicazioni.Controllers
             }, _logger, this);
         }
 
-        protected async Task<IActionResult> BaseEditPost(int id, ComunicazioniDTO comunicazioniDTO, IFormFile excelFile)
+        protected async Task<IActionResult> BaseEditPost(int id, ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
         {
             return await _retryService.ExecuteWithRetry(async () =>
             {
@@ -192,7 +204,7 @@ namespace AppComunicazioni.Controllers
 
                         await _context.SaveChangesAsync();
 
-                        if ((bool)comunicazioniToUpdate.Ritornato)
+                        if (comunicazioniToUpdate.Ritornato.HasValue && comunicazioniToUpdate.Ritornato.Value)
                         {
                             await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
                         }
@@ -265,7 +277,7 @@ namespace AppComunicazioni.Controllers
 
                         if (comunicazioni != null)
                         {
-                            await _context.Entry(comunicazioni).Collection(c => c.Dettagli).LoadAsync();
+                            await _context.Entry(comunicazioni).Collection(c => c.Dettagli!).LoadAsync();
 
                             if (comunicazioni.Dettagli != null && comunicazioni.Dettagli.Any())
                             {
