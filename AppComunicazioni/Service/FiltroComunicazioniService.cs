@@ -17,15 +17,16 @@ namespace AppComunicazioni.Service
         {
             if (_session != null)
             {
-                _session.Remove("searchTerm");
-                _session.Remove("startDate");
-                _session.Remove("endDate");
-                _session.Remove("codCor");
-                _session.Remove("servizio");
-                _session.Remove("monthYear");
-                _session.Remove("sortField");
-                _session.Remove("sortOrder");
-                _session.Remove("soloRigheNonRestituite");
+                var filtri = new[]
+                {
+                    "searchTerm", "startDate", "endDate", "codCor", "servizio",
+                    "monthYear", "sortField", "sortOrder", "soloRigheNonRestituite"
+                };
+
+                foreach (var filtro in filtri)
+                {
+                    _session.Remove(filtro);
+                }
             }
         }
 
@@ -42,70 +43,69 @@ namespace AppComunicazioni.Service
             string? sortOrder,
             bool soloRigheNonRestituite)
         {
-            if (_session != null)
-            {
-                // Recupera i valori dei filtri dalla sessione se non forniti dall'utente
-                searchTerm ??= _session.GetString("searchTerm");
-                if (!_session.TryGetValue("startDate", out _))
-                    startDate = startDate ?? _session.GetString("startDate")?.ParseNullableDate();
-                if (!_session.TryGetValue("endDate", out _))
-                    endDate = endDate ?? _session.GetString("endDate")?.ParseNullableDate();
-                codCor ??= _session.GetString("codCor");
-                servizio ??= _session.GetString("servizio");
-                monthYear ??= _session.GetString("monthYear")?.ParseNullableDate();
-                sortField ??= _session.GetString("sortField") ?? "DateA";
-                sortOrder ??= _session.GetString("sortOrder") ?? "default";
-                if (!_session.TryGetValue("soloRigheNonRestituite", out _))
-                    soloRigheNonRestituite = bool.TryParse(_session.GetString("soloRigheNonRestituite"), out bool result) ? result : soloRigheNonRestituite;
+            RecuperaFiltriDaSessione(ref searchTerm, ref startDate, ref endDate, ref codCor, ref servizio, ref monthYear, ref sortField, ref sortOrder, ref soloRigheNonRestituite);
+            SalvaFiltriInSessione(searchTerm, startDate, endDate, codCor, servizio, monthYear, sortField, sortOrder, soloRigheNonRestituite);
 
-                // Salva i valori dei filtri nella sessione
-                _session.SetString("searchTerm", searchTerm ?? "");
-                _session.SetString("startDate", startDate?.ToString("yyyy-MM-dd") ?? "");
-                _session.SetString("endDate", endDate?.ToString("yyyy-MM-dd") ?? "");
-                _session.SetString("codCor", codCor ?? "");
-                _session.SetString("servizio", servizio ?? "");
-                _session.SetString("monthYear", monthYear?.ToString("yyyy-MM") ?? "");
-                _session.SetString("sortField", sortField);
-                _session.SetString("sortOrder", sortOrder);
-                _session.SetString("soloRigheNonRestituite", soloRigheNonRestituite.ToString());
-            }
-
-            // Carica i dettagli delle comunicazioni correlati
             query = query.Include(c => c.Dettagli);
 
-            // Aggiunge un filtro per selezionare solo le comunicazioni in base al tenant
+            query = FiltraPerTenant(query, tenant);
+            query = FiltraPerTermineRicerca(query, searchTerm);
+            query = FiltraPerDate(query, startDate, endDate);
+            query = FiltraPerCodCor(query, codCor);
+            query = FiltraPerServizio(query, servizio);
+            query = FiltraPerMeseAnno(query, monthYear);
+            query = FiltraPerRigheNonRestituite(query, soloRigheNonRestituite);
+            query = OrdinaQuery(query, sortField, sortOrder);
+
+            return await Task.FromResult(query);
+        }
+
+        #region Metodi di Filtraggio
+        private IQueryable<Comunicazioni> FiltraPerTenant(IQueryable<Comunicazioni> query, string? tenant)
+        {
             if (!string.IsNullOrEmpty(tenant))
             {
                 query = query.Where(x => x.FileName != null && x.FileName.Contains(tenant));
             }
+            return query;
+        }
 
-            // Filtro sul termine di ricerca - includiamo anche la ricerca nei dettagli
-            if (!string.IsNullOrEmpty(searchTerm))
+        private IQueryable<Comunicazioni> FiltraPerTermineRicerca(IQueryable<Comunicazioni> query, string? searchTerm)
+        {
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
+                string trimmedSearchTerm = searchTerm.Trim();
+
                 query = query.Where(x =>
-                    (x.FileName != null && x.FileName.Contains(searchTerm)) ||
-                    (x.Dettagli != null && x.Dettagli.Any(d => d.Protocollo != null && d.Protocollo.Contains(searchTerm)))
+                    (x.FileName != null && x.FileName.Contains(trimmedSearchTerm)) ||
+                    (x.Dettagli != null && x.Dettagli.Any(d => d.Protocollo != null && d.Protocollo.Contains(trimmedSearchTerm)))
                 );
             }
+            return query;
+        }
 
+
+        private IQueryable<Comunicazioni> FiltraPerDate(IQueryable<Comunicazioni> query, DateTime? startDate, DateTime? endDate)
+        {
             if (startDate.HasValue)
             {
                 query = query.Where(x => x.DateA.HasValue && x.DateA.Value >= startDate.Value);
             }
-
             if (endDate.HasValue)
             {
                 query = query.Where(x => x.DateF.HasValue && x.DateF.Value <= endDate.Value);
             }
+            return query;
+        }
 
-            // Applica il filtro per CodCor se fornito
+        private IQueryable<Comunicazioni> FiltraPerCodCor(IQueryable<Comunicazioni> query, string? codCor)
+        {
             if (!string.IsNullOrEmpty(codCor))
             {
                 switch (codCor)
                 {
                     case nameof(CodCorType.CESSIONI):
-                        query = query.Where(x =>
-                            x.FileName != null &&
+                        query = query.Where(x => x.FileName != null &&
                             (x.FileName.StartsWith("001-1990") ||
                              x.FileName.StartsWith("001-1989") ||
                              x.FileName.StartsWith("001-8027") ||
@@ -121,33 +121,45 @@ namespace AppComunicazioni.Service
                         break;
 
                     default:
-                        // Filtro per un singolo codice specificato
                         query = query.Where(x => x.FileName != null && x.FileName.Contains(codCor));
                         break;
                 }
             }
+            return query;
+        }
 
+        private IQueryable<Comunicazioni> FiltraPerServizio(IQueryable<Comunicazioni> query, string? servizio)
+        {
             if (!string.IsNullOrEmpty(servizio))
             {
                 query = query.Where(x => x.Servizio != null && x.Servizio == servizio);
             }
+            return query;
+        }
 
-            // Filtro basato sul mese e anno
+        private IQueryable<Comunicazioni> FiltraPerMeseAnno(IQueryable<Comunicazioni> query, DateTime? monthYear)
+        {
             if (monthYear.HasValue)
             {
                 var firstDayOfMonth = new DateTime(monthYear.Value.Year, monthYear.Value.Month, 1);
                 var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
                 query = query.Where(x => x.DateA.HasValue && x.DateA.Value >= firstDayOfMonth && x.DateA.Value <= lastDayOfMonth);
             }
+            return query;
+        }
 
-            // Filtro per DateF == NULL se richiesto
+        private IQueryable<Comunicazioni> FiltraPerRigheNonRestituite(IQueryable<Comunicazioni> query, bool soloRigheNonRestituite)
+        {
             if (soloRigheNonRestituite)
             {
                 query = query.Where(x => !x.DateF.HasValue);
             }
+            return query;
+        }
 
-            // Ordina i risultati
-            query = sortOrder switch
+        private IQueryable<Comunicazioni> OrdinaQuery(IQueryable<Comunicazioni> query, string? sortField, string? sortOrder)
+        {
+            return sortOrder switch
             {
                 "asc" => sortField switch
                 {
@@ -169,9 +181,42 @@ namespace AppComunicazioni.Service
                 },
                 _ => query.OrderBy(x => x.DateA),
             };
-
-            return await Task.FromResult(query);
         }
+        #endregion
+
+        #region Gestione Sessione
+        private void RecuperaFiltriDaSessione(ref string? searchTerm, ref DateTime? startDate, ref DateTime? endDate, ref string? codCor, ref string? servizio, ref DateTime? monthYear, ref string? sortField, ref string? sortOrder, ref bool soloRigheNonRestituite)
+        {
+            if (_session != null)
+            {
+                searchTerm ??= _session.GetString("searchTerm");
+                startDate ??= _session.GetString("startDate")?.ParseNullableDate();
+                endDate ??= _session.GetString("endDate")?.ParseNullableDate();
+                codCor ??= _session.GetString("codCor");
+                servizio ??= _session.GetString("servizio");
+                monthYear ??= _session.GetString("monthYear")?.ParseNullableDate();
+                sortField ??= _session.GetString("sortField") ?? "DateA";
+                sortOrder ??= _session.GetString("sortOrder") ?? "default";
+                soloRigheNonRestituite = bool.TryParse(_session.GetString("soloRigheNonRestituite"), out bool result) ? result : soloRigheNonRestituite;
+            }
+        }
+
+        private void SalvaFiltriInSessione(string? searchTerm, DateTime? startDate, DateTime? endDate, string? codCor, string? servizio, DateTime? monthYear, string? sortField, string? sortOrder, bool soloRigheNonRestituite)
+        {
+            if (_session != null)
+            {
+                _session.SetString("searchTerm", searchTerm ?? "");
+                _session.SetString("startDate", startDate?.ToString("yyyy-MM-dd") ?? "");
+                _session.SetString("endDate", endDate?.ToString("yyyy-MM-dd") ?? "");
+                _session.SetString("codCor", codCor ?? "");
+                _session.SetString("servizio", servizio ?? "");
+                _session.SetString("monthYear", monthYear?.ToString("yyyy-MM") ?? "");
+                _session.SetString("sortField", sortField ?? "DateA");
+                _session.SetString("sortOrder", sortOrder ?? "default");
+                _session.SetString("soloRigheNonRestituite", soloRigheNonRestituite.ToString());
+            }
+        }
+        #endregion
     }
 
     public static class SessionExtensions

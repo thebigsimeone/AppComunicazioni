@@ -36,5 +36,7 @@ namespace AppComunicazioni.Service
                 Selected = servizio != null && servizio.Equals(s.ToString(), StringComparison.OrdinalIgnoreCase)
             }).ToList();
         }
+
+
     }
 }

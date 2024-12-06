@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using OfficeOpenXml;
 using AppComunicazioni.Services;
+using System.IO.Compression;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,12 +33,13 @@ builder.Services.AddHostedService<NotificationBackgroundService>();
 builder.Services.AddScoped<IEmailService, EmailService>(); // Servizio legato alla logica email
 builder.Services.AddScoped<IMonitoringService, MonitoringService>(); // Monitoraggio
 builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>(); // Filtro comunicazioni
-builder.Services.AddScoped<IContabilitaService, ContabilitaService>(); // Servizio contabilità
-builder.Services.AddScoped<CleanupService>(); // Servizio pulizia dati vecchi
+builder.Services.AddScoped<IContabilitàService, ContabilitàService>(); // Servizio contabilità
 builder.Services.AddScoped<IExcelService, ExcelService>(); // Servizio legato alla logica file excel
 builder.Services.AddScoped<ISendMailService, SendMailService>(); // Servizio all'invio email di smarco
 builder.Services.AddScoped<IViewBagService, ViewBagService>(); // Servizio di ViewBag per la view dei Servizi nelle select
 builder.Services.AddScoped<IRetryService, RetryService>();
+
+builder.Services.AddScoped<CleanupService>(); // Servizio pulizia dati vecchi
 
 // Registrazione AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
@@ -65,6 +67,18 @@ else
 {
     app.UseDeveloperExceptionPage();
 }
+
+// Aggiungi middleware di compressione
+app.Use(async (context, next) =>
+{
+    if (!context.Request.Headers.ContainsKey("Accept-Encoding"))
+    {
+        context.Request.Headers["Accept-Encoding"] = "gzip, br";
+    }
+    await next.Invoke();
+});
+
+app.UseStaticFiles();
 
 // Uso della sessione
 app.UseSession();
