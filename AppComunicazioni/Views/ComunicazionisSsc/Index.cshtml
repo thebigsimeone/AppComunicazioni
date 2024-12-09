@@ -86,7 +86,8 @@
             <!-- Checkbox Solo Righe Non Restituite -->
             <div class="col-auto d-flex align-items-center">
                 <div class="form-check">
-                    <input type="checkbox" name="soloRigheNonRestituite" class="form-check-input" id="soloRigheNonRestituite" value="true" @(Model.SoloRigheNonRestituite ? "checked" : "")>
+                    <input type="checkbox" name="soloRigheNonRestituite" class="form-check-input" id="soloRigheNonRestituite"
+                           value="true" @(Model.SoloRigheNonRestituite ? "checked" : "")>
                     <label class="form-check-label" for="soloRigheNonRestituite">Solo righe non restituite</label>
                 </div>
             </div>
@@ -171,26 +172,85 @@
             </tbody>
         </table>
     </div>
-
     <nav class="d-flex justify-content-center mt-4">
         <ul class="pagination">
             <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-pageNumber="1" asp-route-sortField="@sortField" asp-route-sortOrder="@sortOrder">Prima</a>
+                <a class="page-link" asp-action="Index"
+                   asp-route-pageNumber="1"
+                   asp-route-searchTerm="@Model.SearchTerm"
+                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                   asp-route-codCor="@Model.CodCor"
+                   asp-route-servizio="@Model.Servizio"
+                   asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")"
+                   asp-route-sortField="@Model.SortField"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-soloRigheNonRestituite="@Model.SoloRigheNonRestituite">
+                    Prima
+                </a>
             </li>
             <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-pageNumber="@(currentPage - 1)" asp-route-sortField="@sortField" asp-route-sortOrder="@sortOrder">&laquo;</a>
+                <a class="page-link" asp-action="Index"
+                   asp-route-pageNumber="@(currentPage - 1)"
+                   asp-route-searchTerm="@Model.SearchTerm"
+                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                   asp-route-codCor="@Model.CodCor"
+                   asp-route-servizio="@Model.Servizio"
+                   asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")"
+                   asp-route-sortField="@Model.SortField"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-soloRigheNonRestituite="@Model.SoloRigheNonRestituite">
+                    &laquo;
+                </a>
             </li>
             @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(currentPage + 2, totalPages); i++)
             {
                 <li class="page-item @(i == currentPage ? "active" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-sortField="@sortField" asp-route-sortOrder="@sortOrder">@i</a>
+                    <a class="page-link" asp-action="Index"
+                       asp-route-pageNumber="@i"
+                       asp-route-searchTerm="@Model.SearchTerm"
+                       asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                       asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                       asp-route-codCor="@Model.CodCor"
+                       asp-route-servizio="@Model.Servizio"
+                       asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")"
+                       asp-route-sortField="@Model.SortField"
+                       asp-route-sortOrder="@Model.SortOrder"
+                       asp-route-soloRigheNonRestituite="@Model.SoloRigheNonRestituite">
+                        @i
+                    </a>
                 </li>
             }
             <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-pageNumber="@(currentPage + 1)" asp-route-sortField="@sortField" asp-route-sortOrder="@sortOrder">&raquo;</a>
+                <a class="page-link" asp-action="Index"
+                   asp-route-pageNumber="@(currentPage + 1)"
+                   asp-route-searchTerm="@Model.SearchTerm"
+                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                   asp-route-codCor="@Model.CodCor"
+                   asp-route-servizio="@Model.Servizio"
+                   asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")"
+                   asp-route-sortField="@Model.SortField"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-soloRigheNonRestituite="@Model.SoloRigheNonRestituite">
+                    &raquo;
+                </a>
             </li>
             <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-pageNumber="@totalPages" asp-route-sortField="@sortField" asp-route-sortOrder="@sortOrder">Ultima</a>
+                <a class="page-link" asp-action="Index"
+                   asp-route-pageNumber="@totalPages"
+                   asp-route-searchTerm="@Model.SearchTerm"
+                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                   asp-route-codCor="@Model.CodCor"
+                   asp-route-servizio="@Model.Servizio"
+                   asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")"
+                   asp-route-sortField="@Model.SortField"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-soloRigheNonRestituite="@Model.SoloRigheNonRestituite">
+                    Ultima
+                </a>
             </li>
         </ul>
     </nav>

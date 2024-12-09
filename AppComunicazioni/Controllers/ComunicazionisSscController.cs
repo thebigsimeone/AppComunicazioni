@@ -17,12 +17,18 @@ public class ComunicazionisEbiController : ComunicazioniBaseController<Comunicaz
     }
 
     // Utilizzare i metodi dal controller base
-    public async Task<IActionResult> Index(string searchTerm, DateTime? startDate, DateTime? endDate,
-                                           string codCor, string servizio, DateTime? monthYear, bool? soloRigheNonRestituite = null,
-                                           int pageNumber = 1, string sortField = "DateA", string sortOrder = "default")
+    [HttpGet]
+    public async Task<IActionResult> Index([FromQuery] ComunicazioniViewModel filtri)
     {
-        return await BaseIndex(searchTerm, startDate, endDate, codCor, servizio, monthYear, soloRigheNonRestituite, pageNumber, sortField, sortOrder, "EBI");
+        // Reimposta i filtri se necessario (opzionale)
+        if (filtri.PageNumber < 1)
+        {
+            filtri.PageNumber = 1;
+        }
+
+        return await BaseIndex(filtri, "EBI");
     }
+
 
     public async Task<IActionResult> Details(int? id)
     {

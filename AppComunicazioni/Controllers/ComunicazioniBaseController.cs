@@ -45,9 +45,7 @@ namespace AppComunicazioni.Controllers
             ViewBag.ServizioOptions = _viewBagService.GetServizioOptions(codCor) ?? new List<SelectListItem>();
         }
 
-        protected async Task<IActionResult> BaseIndex(string? searchTerm, DateTime? startDate, DateTime? endDate,
-                                                      string? codCor, string? servizio, DateTime? monthYear, bool? soloRigheNonRestituite,
-                                                      int pageNumber, string sortField, string sortOrder, string tipoAccertamento)
+        protected async Task<IActionResult> BaseIndex(ComunicazioniViewModel filtri, string tipoAccertamento)
         {
             return await _retryService.ExecuteWithRetry(async () =>
             {
@@ -55,55 +53,46 @@ namespace AppComunicazioni.Controllers
                 {
                     try
                     {
-                        SetViewBagOptions(codCor);
+                        SetViewBagOptions(filtri.CodCor);
 
-                        if (!soloRigheNonRestituite.HasValue)
-                        {
-                            soloRigheNonRestituite = bool.TryParse(HttpContext.Session?.GetString("soloRigheNonRestituite"), out bool result) ? result : false;
-                        }
-
-                        ViewData["SearchTerm"] = searchTerm ?? string.Empty;
-                        ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
-                        ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
-                        ViewData["CodCor"] = codCor ?? string.Empty;
-                        ViewData["Servizio"] = servizio ?? string.Empty;
-                        ViewData["MonthYear"] = monthYear?.ToString("yyyy-MM");
-                        ViewData["SoloRigheNonRestituite"] = soloRigheNonRestituite;
-
-                        int pageSize = 10;
+                        // Applicazione dei filtri tramite il servizio
                         var query = _context.Comunicazionis.AsQueryable();
-
                         query = await _filtroService.FiltraComunicazioniAsync(
                             query,
-                            tipoAccertamento ?? string.Empty,
-                            searchTerm ?? string.Empty,
-                            startDate,
-                            endDate,
-                            codCor ?? string.Empty,
-                            servizio ?? string.Empty,
-                            monthYear,
-                            sortField,
-                            sortOrder,
-                            soloRigheNonRestituite.GetValueOrDefault()
+                            tipoAccertamento,
+                            filtri.SearchTerm,
+                            filtri.StartDate,
+                            filtri.EndDate,
+                            filtri.CodCor,
+                            filtri.Servizio,
+                            filtri.MonthYear,
+                            filtri.SortField,
+                            filtri.SortOrder,
+                            filtri.SoloRigheNonRestituite
                         );
 
+                        // Paginazione
                         var totalItems = await query.CountAsync();
-                        var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+                        var items = await query
+                            .Skip((filtri.PageNumber - 1) * filtri.PageSize)
+                            .Take(filtri.PageSize)
+                            .ToListAsync();
 
+                        // Creazione del ViewModel
                         var model = new ComunicazioniViewModel
                         {
                             Comunicazioni = items,
-                            CurrentPage = pageNumber,
-                            TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
-                            StartDate = startDate,
-                            EndDate = endDate,
-                            CodCor = codCor,
-                            Servizio = servizio,
-                            MonthYear = monthYear,
-                            SortField = sortField,
-                            SortOrder = sortOrder,
-                            SearchTerm = searchTerm,
-                            SoloRigheNonRestituite = soloRigheNonRestituite.GetValueOrDefault()
+                            CurrentPage = filtri.PageNumber,
+                            TotalPages = (int)Math.Ceiling(totalItems / (double)filtri.PageSize),
+                            StartDate = filtri.StartDate,
+                            EndDate = filtri.EndDate,
+                            CodCor = filtri.CodCor,
+                            Servizio = filtri.Servizio,
+                            MonthYear = filtri.MonthYear,
+                            SortField = filtri.SortField,
+                            SortOrder = filtri.SortOrder,
+                            SearchTerm = filtri.SearchTerm,
+                            SoloRigheNonRestituite = filtri.SoloRigheNonRestituite
                         };
 
                         await transaction.CommitAsync();

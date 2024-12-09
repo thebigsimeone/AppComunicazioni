@@ -50,5 +50,4 @@ public partial class Comunicazioni
     public bool? Ritornato { get; set; }
 
     public ICollection<ComunicazioniDettaglio>? Dettagli { get; set; }
-
 }

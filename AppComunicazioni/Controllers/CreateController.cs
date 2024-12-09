@@ -65,6 +65,7 @@ public class CreateController : Controller
                         // Imposta il valore di Notificato e Ritornato a false di default
                         comunicazioni.Notificato = false;
                         comunicazioni.Ritornato = false;
+                        comunicazioni.NsProtocol = 0;
 
                         // Aggiungi la comunicazione al contesto
                         _context.Add(comunicazioni);

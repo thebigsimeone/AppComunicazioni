@@ -15,4 +15,5 @@ public class ComunicazioniViewModel
     public string? SortOrder { get; set; }
     public bool SoloRigheNonRestituite { get; set; } // Nuovo campo
     public int PageSize { get; set; } = 10;
+    public int PageNumber { get; set; } = 1;
 }

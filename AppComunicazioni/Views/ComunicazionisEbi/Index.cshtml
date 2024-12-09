@@ -25,57 +25,79 @@
 
     <form asp-action="Index" method="get" class="p-3 border rounded bg-light mb-4" style="font-size: 0.9rem;">
         <div class="row g-2 align-items-center">
+            <!-- Search Term -->
             <div class="col-lg-3 col-md-4">
                 <div class="input-group">
+                    <label for="searchTerm" class="visually-hidden">Cerca per nome file o protocollo</label>
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" name="searchTerm" class="form-control" placeholder="Nome file o Protocollo" value="@(Model.SearchTerm ?? "")">
+                    <input type="text" name="searchTerm" id="searchTerm" class="form-control" placeholder="Nome file o Protocollo" value="@(Model.SearchTerm ?? "")">
                 </div>
             </div>
+
+            <!-- Start Date -->
             <div class="col-lg-2 col-md-4">
                 <div class="input-group">
+                    <label for="startDate" class="visually-hidden">Data Inizio</label>
                     <span class="input-group-text"><i class="bi bi-calendar"></i></span>
-                    <input type="date" name="startDate" class="form-control" value="@(Model.StartDate?.ToString("yyyy-MM-dd") ?? "")">
+                    <input type="date" name="startDate" id="startDate" class="form-control" value="@(Model.StartDate?.ToString("yyyy-MM-dd") ?? "")">
                 </div>
             </div>
+
+            <!-- End Date -->
             <div class="col-lg-2 col-md-4">
                 <div class="input-group">
+                    <label for="endDate" class="visually-hidden">Data Fine</label>
                     <span class="input-group-text"><i class="bi bi-calendar"></i></span>
-                    <input type="date" name="endDate" class="form-control" value="@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "")">
+                    <input type="date" name="endDate" id="endDate" class="form-control" value="@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "")">
                 </div>
             </div>
+
+            <!-- Month Year -->
             <div class="col-lg-2 col-md-4">
                 <div class="input-group">
+                    <label for="monthYear" class="visually-hidden">Mese e Anno</label>
                     <span class="input-group-text"><i class="bi bi-calendar2-month"></i></span>
-                    <input type="month" name="monthYear" class="form-control" value="@(Model.MonthYear?.ToString("yyyy-MM") ?? "")">
+                    <input type="month" name="monthYear" id="monthYear" class="form-control" value="@(Model.MonthYear?.ToString("yyyy-MM") ?? "")">
                 </div>
             </div>
+
+            <!-- CodCor Select -->
             <div class="col-lg-2 col-md-4">
                 <div class="input-group">
+                    <label for="codCorSelect" class="visually-hidden">Seleziona Codice Correlato</label>
                     <span class="input-group-text"><i class="bi bi-list-task"></i></span>
                     <select id="codCorSelect" name="codCor" class="form-select" asp-items="ViewBag.CodCorOptions" onchange="updateServizioOptions()">
                         <option value="">-- Seleziona Codice Correlato --</option>
                     </select>
                 </div>
             </div>
+
+            <!-- Servizio Select -->
             <div class="col-lg-2 col-md-4">
                 <div class="input-group">
+                    <label for="servizioSelect" class="visually-hidden">Seleziona Servizio</label>
                     <span class="input-group-text"><i class="bi bi-list-task"></i></span>
                     <select id="servizioSelect" name="servizio" class="form-select" asp-items="ViewBag.ServizioOptions">
                         <option value="">-- Seleziona Servizio --</option>
                     </select>
                 </div>
             </div>
+
+            <!-- Checkbox Solo Righe Non Restituite -->
             <div class="col-auto d-flex align-items-center">
                 <div class="form-check">
-                    <input type="checkbox" name="soloRigheNonRestituite" class="form-check-input" id="soloRigheNonRestituite" value="true" @(Model.SoloRigheNonRestituite ? "checked" : "")>
+                    <input type="checkbox" name="soloRigheNonRestituite" class="form-check-input" id="soloRigheNonRestituite"
+                           value="true" @(Model.SoloRigheNonRestituite ? "checked" : "")>
                     <label class="form-check-label" for="soloRigheNonRestituite">Solo righe non restituite</label>
                 </div>
             </div>
+
+            <!-- Buttons for Filter and Reset -->
             <div class="col-auto d-flex align-items-center">
-                <button type="submit" class="btn btn-outline-primary me-2">
+                <button type="submit" class="btn btn-outline-primary me-2" aria-label="Filtra risultati">
                     <i class="bi bi-funnel-fill"></i>
                 </button>
-                <button type="submit" formaction="@Url.Action("ResetFiltri")" formmethod="post" class="btn btn-outline-secondary">
+                <button type="submit" formaction="@Url.Action("ResetFiltri")" formmethod="post" class="btn btn-outline-secondary" aria-label="Reimposta filtri">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
             </div>
@@ -154,22 +176,82 @@
     <nav class="d-flex justify-content-center mt-4">
         <ul class="pagination">
             <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-pageNumber="1" asp-route-sortField="@sortField" asp-route-sortOrder="@sortOrder">Prima</a>
+                <a class="page-link" asp-action="Index"
+                   asp-route-pageNumber="1"
+                   asp-route-searchTerm="@Model.SearchTerm"
+                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                   asp-route-codCor="@Model.CodCor"
+                   asp-route-servizio="@Model.Servizio"
+                   asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")"
+                   asp-route-sortField="@Model.SortField"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-soloRigheNonRestituite="@Model.SoloRigheNonRestituite">
+                    Prima
+                </a>
             </li>
             <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-pageNumber="@(currentPage - 1)" asp-route-sortField="@sortField" asp-route-sortOrder="@sortOrder">&laquo;</a>
+                <a class="page-link" asp-action="Index"
+                   asp-route-pageNumber="@(currentPage - 1)"
+                   asp-route-searchTerm="@Model.SearchTerm"
+                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                   asp-route-codCor="@Model.CodCor"
+                   asp-route-servizio="@Model.Servizio"
+                   asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")"
+                   asp-route-sortField="@Model.SortField"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-soloRigheNonRestituite="@Model.SoloRigheNonRestituite">
+                    &laquo;
+                </a>
             </li>
             @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(currentPage + 2, totalPages); i++)
             {
                 <li class="page-item @(i == currentPage ? "active" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-sortField="@sortField" asp-route-sortOrder="@sortOrder">@i</a>
+                    <a class="page-link" asp-action="Index"
+                       asp-route-pageNumber="@i"
+                       asp-route-searchTerm="@Model.SearchTerm"
+                       asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                       asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                       asp-route-codCor="@Model.CodCor"
+                       asp-route-servizio="@Model.Servizio"
+                       asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")"
+                       asp-route-sortField="@Model.SortField"
+                       asp-route-sortOrder="@Model.SortOrder"
+                       asp-route-soloRigheNonRestituite="@Model.SoloRigheNonRestituite">
+                        @i
+                    </a>
                 </li>
             }
             <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-pageNumber="@(currentPage + 1)" asp-route-sortField="@sortField" asp-route-sortOrder="@sortOrder">&raquo;</a>
+                <a class="page-link" asp-action="Index"
+                   asp-route-pageNumber="@(currentPage + 1)"
+                   asp-route-searchTerm="@Model.SearchTerm"
+                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                   asp-route-codCor="@Model.CodCor"
+                   asp-route-servizio="@Model.Servizio"
+                   asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")"
+                   asp-route-sortField="@Model.SortField"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-soloRigheNonRestituite="@Model.SoloRigheNonRestituite">
+                    &raquo;
+                </a>
             </li>
             <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-route-pageNumber="@totalPages" asp-route-sortField="@sortField" asp-route-sortOrder="@sortOrder">Ultima</a>
+                <a class="page-link" asp-action="Index"
+                   asp-route-pageNumber="@totalPages"
+                   asp-route-searchTerm="@Model.SearchTerm"
+                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                   asp-route-codCor="@Model.CodCor"
+                   asp-route-servizio="@Model.Servizio"
+                   asp-route-monthYear="@Model.MonthYear?.ToString("yyyy-MM")"
+                   asp-route-sortField="@Model.SortField"
+                   asp-route-sortOrder="@Model.SortOrder"
+                   asp-route-soloRigheNonRestituite="@Model.SoloRigheNonRestituite">
+                    Ultima
+                </a>
             </li>
         </ul>
     </nav>
