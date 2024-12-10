@@ -3,13 +3,27 @@ using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
 using AppComunicazioni.Properties;
 using AppComunicazioni.Service;
-using Microsoft.EntityFrameworkCore;
-using System.Globalization;
-using OfficeOpenXml;
 using AppComunicazioni.Services;
-using System.IO.Compression;
+using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5185); // Ascolta su tutte le interfacce alla porta 5185
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
@@ -50,6 +64,8 @@ builder.Services.AddMvc(); // AddMvc è più flessibile per l'uso di API e Views i
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
+
+app.UseCors("AllowAll");
 
 // Configurazione della cultura - Impostata prima per garantire coerenza durante tutte le richieste
 var cultureInfo = new CultureInfo("it-IT");
