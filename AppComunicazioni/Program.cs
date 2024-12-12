@@ -25,6 +25,12 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.MimeTypes = new[] { "text/javascript", "text/css", "application/json" };
+});
+
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 // Configurazione del contesto del database - Scoped è corretto per evitare problemi di concorrenza
@@ -66,6 +72,7 @@ builder.Services.AddEndpointsApiExplorer();
 var app = builder.Build();
 
 app.UseCors("AllowAll");
+app.UseResponseCompression();
 
 // Configurazione della cultura - Impostata prima per garantire coerenza durante tutte le richieste
 var cultureInfo = new CultureInfo("it-IT");
@@ -94,7 +101,21 @@ app.Use(async (context, next) =>
     await next.Invoke();
 });
 
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        // Proteggi file specifici, ad esempio site.js
+        var path = ctx.File.PhysicalPath;
+        if (path.EndsWith("site.js"))
+        {
+            // Imposta cache e header per protezione
+            ctx.Context.Response.Headers.Append("Cache-Control", "no-store");
+            ctx.Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+        }
+    }
+});
+
 
 // Uso della sessione
 app.UseSession();

@@ -161,10 +161,10 @@
                         <td>@item.Servizio</td>
                         <td>
                             <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil-square"></i>
+                                <i class="bi bi-pencil-square" title="Modifica"></i>
                             </a>
                             <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger ms-2">
-                                <i class="bi bi-trash-fill"></i>
+                                <i class="bi bi-trash-fill" title="Elimina"></i>
                             </a>
                         </td>
                     </tr>
@@ -256,36 +256,3 @@
         </ul>
     </nav>
 </div>
-
-<script>
-    function updateServizioOptions() {
-        const codCor = document.getElementById("codCorSelect").value;
-        const servizioSelect = document.getElementById("servizioSelect");
-
-        // Pulisce le opzioni precedenti
-        servizioSelect.innerHTML = '<option value="">-- Seleziona Servizio --</option>';
-
-        // Aggiunge nuove opzioni in base al CodCor selezionato
-        let options = [];
-        switch (codCor) {
-            case "CESSIONI":
-                options = ["BA2", "BAN", "CEP"];
-                break;
-            case "DATAVIZ":
-                options = ["APP", "DIM", "DV", "ERE", "MA7", "MIM", "PDL", "S035", "VL1", "VLA", "VL3", "VPP", "VSA", "VSS"];
-                break;
-            case "FORZA":
-                options = ["DP1", "VED"];
-                break;
-            default:
-                options = [];
-        }
-
-        options.forEach(function(option) {
-            const opt = document.createElement("option");
-            opt.value = option;
-            opt.text = option;
-            servizioSelect.add(opt);
-        });
-    }
-</script>

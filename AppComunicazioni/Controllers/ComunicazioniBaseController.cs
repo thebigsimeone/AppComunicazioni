@@ -186,23 +186,25 @@ namespace AppComunicazioni.Controllers
 
                         _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
 
+                        // Logica per DateF e Ritornato
                         if (comunicazioniDTO.DateF.HasValue)
                         {
+                            // Se l'utente ha valorizzato DateF, imposta Ritornato a true, invia email e stoppa il monitoraggio
                             comunicazioniToUpdate.Ritornato = true;
+                            await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
+                            await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
+                        }
+                        else if (comunicazioniDTO.Ritornato)
+                        {
+                            // Se l'utente ha impostato solo Ritornato = true, non modifica DateF e stoppa il monitoraggio
+                            comunicazioniToUpdate.Ritornato = true;
+                            comunicazioniToUpdate.DateF = null; // Garantiamo che non venga valorizzato
+                            await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
                         }
 
                         await _context.SaveChangesAsync();
 
-                        if (comunicazioniToUpdate.Ritornato.HasValue && comunicazioniToUpdate.Ritornato.Value)
-                        {
-                            await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
-                        }
-
-                        if (comunicazioniDTO.DateF.HasValue)
-                        {
-                            await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
-                        }
-
+                        // Gestione del file Excel
                         if (excelFile != null && excelFile.Length > 0)
                         {
                             var existingDetails = _context.ComunicazioniDettagli.Where(d => d.ComunicazioneId == comunicazioniToUpdate.Id);

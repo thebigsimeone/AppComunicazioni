@@ -56,22 +56,52 @@ public class CreateController : Controller
                 {
                     try
                     {
+                        if (!string.IsNullOrEmpty(comunicazioniDTO.FileName))
+                        {
+                            var fileNameParts = comunicazioniDTO.FileName.Split('_');
+                            if (fileNameParts.Length > 3)
+                            {
+                                // Estrarre il servizio
+                                var servicePart = fileNameParts[^2]; // Penultima parte della stringa
+
+                                // Gestire caso particolare "035" -> "S035"
+                                if (servicePart == "35")
+                                {
+                                    servicePart = "S035";
+                                }
+
+                                // Validare il servizio rispetto all'enum
+                                if (Enum.TryParse<ServizioType>(servicePart, true, out var servizioParsed))
+                                {
+                                    comunicazioniDTO.Servizio = servizioParsed;
+                                }
+                                else
+                                {
+                                    _logger.LogWarning($"Il servizio '{servicePart}' non è valido per il file {comunicazioniDTO.FileName}.");
+                                }
+
+                                // Estrarre il numero di protocollo
+                                var lastPart = fileNameParts.LastOrDefault();
+                                if (int.TryParse(lastPart, out var protocolNumber))
+                                {
+                                    comunicazioniDTO.NProtocol = protocolNumber;
+                                }
+                            }
+                        }
+
                         // Mappatura da DTO a Entity
                         var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
 
-                        // Imposta il valore di "Servizio" per la logica del DB (S035 se utente ha selezionato "035")
-                        comunicazioni.Servizio = comunicazioniDTO.Servizio == ServizioType.S035 ? "S035" : comunicazioniDTO.Servizio.ToString();
-
-                        // Imposta il valore di Notificato e Ritornato a false di default
+                        // Impostare valori di default
                         comunicazioni.Notificato = false;
                         comunicazioni.Ritornato = false;
                         comunicazioni.NsProtocol = 0;
 
-                        // Aggiungi la comunicazione al contesto
+                        // Aggiungere la comunicazione al contesto
                         _context.Add(comunicazioni);
                         await _context.SaveChangesAsync();
 
-                        // Se l'utente ha caricato un file Excel, procedi con l'elaborazione
+                        // Elaborare il file Excel
                         if (excelFile != null && excelFile.Length > 0)
                         {
                             var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioni.Id);
@@ -82,37 +112,22 @@ public class CreateController : Controller
                             }
                         }
 
-                        // Completa la transazione se tutte le operazioni sono andate a buon fine
+                        // Completa la transazione
                         await transaction.CommitAsync();
-
-                        _logger.LogInformation($"Comunicazione con ID {comunicazioni.Id} è stata creata e salvata correttamente.");
-
-                        // Avvia il monitoraggio
-                        try
-                        {
-                            await Task.Delay(1000);
-                            await _monitoringService.CheckAndSendNotificationsAsync();
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError($"Errore durante l'avvio del monitoraggio dopo la creazione: {ex.Message}");
-                        }
-
-                        TempData["Message"] = "Comunicazione creata con successo. Il monitoraggio è stato avviato.";
+                        TempData["Message"] = "Comunicazione creata con successo.";
                         return RedirectToAction(nameof(Index));
                     }
                     catch
                     {
-                        await transaction.RollbackAsync();  // Annulla la transazione in caso di errore
+                        await transaction.RollbackAsync();
                         throw;
                     }
                 }
             }, _logger, this);
         }
 
-        // Se il modello non è valido, ripopola le opzioni del ViewBag e ritorna alla vista Index
         SetViewBagOptions();
-        return View("Index", comunicazioniDTO);
+        return View(comunicazioniDTO);
     }
 
     private void SetViewBagOptions()
