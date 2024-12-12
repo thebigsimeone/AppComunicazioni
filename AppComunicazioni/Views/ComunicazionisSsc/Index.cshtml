@@ -29,7 +29,7 @@
             <div class="col-lg-3 col-md-4">
                 <div class="input-group">
                     <label for="searchTerm" class="visually-hidden">Cerca per nome file o protocollo</label>
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <span class="input-group-text"><i class="bi bi-search" title="Cerca"></i></span>
                     <input type="text" name="searchTerm" id="searchTerm" class="form-control" placeholder="Nome file o Protocollo" value="@(Model.SearchTerm ?? "")">
                 </div>
             </div>
@@ -38,7 +38,7 @@
             <div class="col-lg-2 col-md-4">
                 <div class="input-group">
                     <label for="startDate" class="visually-hidden">Data Inizio</label>
-                    <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                    <span class="input-group-text"><i class="bi bi-calendar" title="Data di invio"></i></span>
                     <input type="date" name="startDate" id="startDate" class="form-control" value="@(Model.StartDate?.ToString("yyyy-MM-dd") ?? "")">
                 </div>
             </div>
@@ -47,7 +47,7 @@
             <div class="col-lg-2 col-md-4">
                 <div class="input-group">
                     <label for="endDate" class="visually-hidden">Data Fine</label>
-                    <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                    <span class="input-group-text"><i class="bi bi-calendar" title="Data di arrivo"></i></span>
                     <input type="date" name="endDate" id="endDate" class="form-control" value="@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "")">
                 </div>
             </div>
@@ -56,7 +56,7 @@
             <div class="col-lg-2 col-md-4">
                 <div class="input-group">
                     <label for="monthYear" class="visually-hidden">Mese e Anno</label>
-                    <span class="input-group-text"><i class="bi bi-calendar2-month"></i></span>
+                    <span class="input-group-text"><i class="bi bi-calendar2-month" title="Filtra per anno/mese"></i></span>
                     <input type="month" name="monthYear" id="monthYear" class="form-control" value="@(Model.MonthYear?.ToString("yyyy-MM") ?? "")">
                 </div>
             </div>
@@ -65,7 +65,7 @@
             <div class="col-lg-2 col-md-4">
                 <div class="input-group">
                     <label for="codCorSelect" class="visually-hidden">Seleziona Codice Correlato</label>
-                    <span class="input-group-text"><i class="bi bi-list-task"></i></span>
+                    <span class="input-group-text"><i class="bi bi-list-task" title="Fornitore"></i></span>
                     <select id="codCorSelect" name="codCor" class="form-select" asp-items="ViewBag.CodCorOptions" onchange="updateServizioOptions()">
                         <option value="">-- Seleziona Codice Correlato --</option>
                     </select>
@@ -76,7 +76,7 @@
             <div class="col-lg-2 col-md-4">
                 <div class="input-group">
                     <label for="servizioSelect" class="visually-hidden">Seleziona Servizio</label>
-                    <span class="input-group-text"><i class="bi bi-list-task"></i></span>
+                    <span class="input-group-text"><i class="bi bi-list-task" title="Servizio"></i></span>
                     <select id="servizioSelect" name="servizio" class="form-select" asp-items="ViewBag.ServizioOptions">
                         <option value="">-- Seleziona Servizio --</option>
                     </select>
@@ -88,16 +88,16 @@
                 <div class="form-check">
                     <input type="checkbox" name="soloRigheNonRestituite" class="form-check-input" id="soloRigheNonRestituite"
                            value="true" @(Model.SoloRigheNonRestituite ? "checked" : "")>
-                    <label class="form-check-label" for="soloRigheNonRestituite">Solo righe non restituite</label>
+                    <label class="form-check-label" for="soloRigheNonRestituite">Solo file non evasi</label>
                 </div>
             </div>
 
             <!-- Buttons for Filter and Reset -->
             <div class="col-auto d-flex align-items-center">
-                <button type="submit" class="btn btn-outline-primary me-2" aria-label="Filtra risultati">
+                <button type="submit" class="btn btn-outline-primary me-2" aria-label="Filtra risultati" title="Filtra">
                     <i class="bi bi-funnel-fill"></i>
                 </button>
-                <button type="submit" formaction="@Url.Action("ResetFiltri")" formmethod="post" class="btn btn-outline-secondary" aria-label="Reimposta filtri">
+                <button type="submit" formaction="@Url.Action("ResetFiltri")" formmethod="post" class="btn btn-outline-secondary" aria-label="Reimposta filtri" title="Reset Filtro">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
             </div>
@@ -109,37 +109,37 @@
             <thead class="table-info">
                 <tr>
                     <th style="width: 14%;">
-                        <a asp-action="Index" asp-route-sortField="FileName" asp-route-sortOrder="@(sortField == "FileName" && sortOrder == "asc" ? "desc" : "asc")">
+                        <a asp-action="Index" asp-route-sortField="FileName" asp-route-sortOrder="@(sortField == "FileName" && sortOrder == "asc" ? "desc" : "asc")" title="Nome File">
                             <i class="bi bi-file-earmark-text"></i>
                             <i class="@sortIcon("FileName", sortOrder)"></i>
                         </a>
                     </th>
                     <th style="width: 14%;">
-                        <a asp-action="Index" asp-route-sortField="DateA" asp-route-sortOrder="@(sortField == "DateA" && sortOrder == "asc" ? "desc" : "asc")">
+                        <a asp-action="Index" asp-route-sortField="DateA" asp-route-sortOrder="@(sortField == "DateA" && sortOrder == "asc" ? "desc" : "asc")" title="Data di invio">
                             <i class="bi bi-calendar-plus"></i>
                             <i class="@sortIcon("DateA", sortOrder)"></i>
                         </a>
                     </th>
                     <th style="width: 14%;">
-                        <a asp-action="Index" asp-route-sortField="DateF" asp-route-sortOrder="@(sortField == "DateF" && sortOrder == "asc" ? "desc" : "asc")">
+                        <a asp-action="Index" asp-route-sortField="DateF" asp-route-sortOrder="@(sortField == "DateF" && sortOrder == "asc" ? "desc" : "asc")" title="Data di arrivo">
                             <i class="bi bi-calendar-check"></i>
                             <i class="@sortIcon("DateF", sortOrder)"></i>
                         </a>
                     </th>
                     <th style="width: 14%;">
-                        <a asp-action="Index" asp-route-sortField="NProtocol" asp-route-sortOrder="@(sortField == "NProtocol" && sortOrder == "asc" ? "desc" : "asc")">
+                        <a asp-action="Index" asp-route-sortField="NProtocol" asp-route-sortOrder="@(sortField == "NProtocol" && sortOrder == "asc" ? "desc" : "asc")" title="Totale protocolli">
                             <i class="bi bi-hash"></i>
                             <i class="@sortIcon("NProtocol", sortOrder)"></i>
                         </a>
                     </th>
                     <th style="width: 14%;">
-                        <a asp-action="Index" asp-route-sortField="NsProtocol" asp-route-sortOrder="@(sortField == "NsProtocol" && sortOrder == "asc" ? "desc" : "asc")">
+                        <a asp-action="Index" asp-route-sortField="NsProtocol" asp-route-sortOrder="@(sortField == "NsProtocol" && sortOrder == "asc" ? "desc" : "asc")" title="Protocolli da controllare">
                             <i class="bi bi-exclamation-circle"></i>
                             <i class="@sortIcon("NsProtocol", sortOrder)"></i>
                         </a>
                     </th>
                     <th style="width: 14%;">
-                        <a asp-action="Index" asp-route-sortField="Servizio" asp-route-sortOrder="@(sortField == "Servizio" && sortOrder == "asc" ? "desc" : "asc")">
+                        <a asp-action="Index" asp-route-sortField="Servizio" asp-route-sortOrder="@(sortField == "Servizio" && sortOrder == "asc" ? "desc" : "asc")" title="Servizio">
                             <i class="bi bi-gear-fill"></i>
                             <i class="@sortIcon("Servizio", sortOrder)"></i>
                         </a>
