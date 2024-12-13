@@ -63,7 +63,7 @@ namespace AppComunicazioni.Service
 
         private DateTimeOffset GetNextRunTime(DateTimeOffset now)
         {
-            // Imposta la prossima esecuzione alle 9:00 del mattino
+            // Imposta la prossima esecuzione alle 10:00 del mattino
             var nextRun = new DateTimeOffset(now.Year, now.Month, now.Day, 10, 00, 0, now.Offset);
 
             // Se sono passate le 9:00 di oggi, sposta la prossima esecuzione a domani
