@@ -56,7 +56,7 @@ function updateServizioOptions() {
             options = ["BA2", "BAN", "CEP"];
             break;
         case "DATAVIZ":
-            options = ["APP", "DIM", "DV", "ERE", "MA7", "MIM", "PDL", "S035", "VL1", "VLA", "VL3", "VPP", "VSA", "VSS"];
+            options = ["APP", "ATP", "DIM", "DV", "ERE", "MA7", "MIM", "PDL", "S035", "VL1", "VLA", "VL3", "VPP", "VSA", "VSS"];
             break;
         case "FORZA":
             options = ["DP1", "VED"];
