@@ -20,3 +20,33 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* Stile per dispositivi mobili */
+@media (max-width: 768px) {
+    .table-responsive table th,
+    .table-responsive table td {
+        font-size: 12px;
+        text-align: left;
+    }
+
+    .d-md-none {
+        display: table-cell !important;
+    }
+
+    .d-none.d-md-table-cell {
+        display: none !important;
+    }
+
+    /* Migliora spaziatura per bottoni */
+    .d-md-none .btn {
+        margin: 0 5px;
+    }
+
+    .table-responsive td div {
+        padding: 0.5rem;
+    }
+
+        .table-responsive td div span {
+            display: block;
+        }
+}

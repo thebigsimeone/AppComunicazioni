@@ -55,19 +55,26 @@ namespace AppComunicazioni.Controllers
                     {
                         SetViewBagOptions(filtri.CodCor);
 
+                        // Gestione dei possibili valori null
+                        var searchTerm = filtri.SearchTerm ?? string.Empty;
+                        var codCor = filtri.CodCor ?? string.Empty;
+                        var servizio = filtri.Servizio ?? string.Empty;
+                        var sortField = filtri.SortField ?? "DateA"; // Campo di ordinamento predefinito
+                        var sortOrder = filtri.SortOrder ?? "asc";   // Ordinamento predefinito
+
                         // Applicazione dei filtri tramite il servizio
                         var query = _context.Comunicazionis.AsQueryable();
                         query = await _filtroService.FiltraComunicazioniAsync(
                             query,
                             tipoAccertamento,
-                            filtri.SearchTerm,
+                            searchTerm,
                             filtri.StartDate,
                             filtri.EndDate,
-                            filtri.CodCor,
-                            filtri.Servizio,
+                            codCor,
+                            servizio,
                             filtri.MonthYear,
-                            filtri.SortField,
-                            filtri.SortOrder,
+                            sortField,
+                            sortOrder,
                             filtri.SoloRigheNonRestituite
                         );
 

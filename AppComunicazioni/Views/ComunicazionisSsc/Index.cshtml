@@ -108,58 +108,84 @@
         <table class="table table-hover table-bordered text-center w-100">
             <thead class="table-info">
                 <tr>
-                    <th style="width: 14%;">
+                    <!-- Intestazioni per dispositivi mobili -->
+                    <th class="d-md-none">
+                        <i class="bi bi-file-earmark-text" title="Dettagli"></i>
+                    </th>
+                    <th class="d-md-none">
+                        <i class="bi bi-tools" title="Azioni"></i>
+                    </th>
+
+                    <!-- Intestazioni per desktop -->
+                    <th class="d-none d-md-table-cell">
                         <a asp-action="Index" asp-route-sortField="FileName" asp-route-sortOrder="@(sortField == "FileName" && sortOrder == "asc" ? "desc" : "asc")" title="Nome File">
                             <i class="bi bi-file-earmark-text"></i>
                             <i class="@sortIcon("FileName", sortOrder)"></i>
                         </a>
                     </th>
-                    <th style="width: 14%;">
+                    <th class="d-none d-md-table-cell">
                         <a asp-action="Index" asp-route-sortField="DateA" asp-route-sortOrder="@(sortField == "DateA" && sortOrder == "asc" ? "desc" : "asc")" title="Data di invio">
                             <i class="bi bi-calendar-plus"></i>
                             <i class="@sortIcon("DateA", sortOrder)"></i>
                         </a>
                     </th>
-                    <th style="width: 14%;">
+                    <th class="d-none d-md-table-cell">
                         <a asp-action="Index" asp-route-sortField="DateF" asp-route-sortOrder="@(sortField == "DateF" && sortOrder == "asc" ? "desc" : "asc")" title="Data di arrivo">
                             <i class="bi bi-calendar-check"></i>
                             <i class="@sortIcon("DateF", sortOrder)"></i>
                         </a>
                     </th>
-                    <th style="width: 14%;">
+                    <th class="d-none d-md-table-cell">
                         <a asp-action="Index" asp-route-sortField="NProtocol" asp-route-sortOrder="@(sortField == "NProtocol" && sortOrder == "asc" ? "desc" : "asc")" title="Totale protocolli">
                             <i class="bi bi-hash"></i>
                             <i class="@sortIcon("NProtocol", sortOrder)"></i>
                         </a>
                     </th>
-                    <th style="width: 14%;">
-                        <a asp-action="Index" asp-route-sortField="NsProtocol" asp-route-sortOrder="@(sortField == "NsProtocol" && sortOrder == "asc" ? "desc" : "asc")" title="Protocolli da controllare">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <i class="@sortIcon("NsProtocol", sortOrder)"></i>
-                        </a>
-                    </th>
-                    <th style="width: 14%;">
+                    <th class="d-none d-md-table-cell">
                         <a asp-action="Index" asp-route-sortField="Servizio" asp-route-sortOrder="@(sortField == "Servizio" && sortOrder == "asc" ? "desc" : "asc")" title="Servizio">
                             <i class="bi bi-gear-fill"></i>
                             <i class="@sortIcon("Servizio", sortOrder)"></i>
                         </a>
                     </th>
-                    <th style="width: 16%;"><i class="bi bi-tools"></i></th>
+                    <th class="d-none d-md-table-cell">
+                        <i class="bi bi-tools"></i>
+                    </th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var item in comunicazioni)
                 {
                     <tr class="@(item.DateF == null ? "table-danger" : "table-light")">
-                        <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <!-- Riga combinata per dispositivi mobili -->
+                        <td class="d-md-none">
+                            <div class="d-flex flex-column align-items-start">
+                                <span><strong>File:</strong> @item.FileName</span>
+                                <span><strong>Data Invio:</strong> @item.DateA?.ToString("dd/MM/yyyy | HH:mm")</span>
+                                <span><strong>Data Arrivo:</strong> @item.DateF?.ToString("dd/MM/yyyy | HH:mm")</span>
+                                <span><strong>Totale Protocolli:</strong> @item.NProtocol</span>
+                                <span><strong>Servizio:</strong> @item.Servizio</span>
+                            </div>
+                        </td>
+                        <td class="d-md-none">
+                            <div class="d-flex justify-content-center">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary mx-1">
+                                    <i class="bi bi-pencil-square" title="Modifica"></i>
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger mx-1">
+                                    <i class="bi bi-trash-fill" title="Elimina"></i>
+                                </a>
+                            </div>
+                        </td>
+
+                        <!-- Colonne normali per desktop -->
+                        <td class="d-none d-md-table-cell">
                             <a class="text-decoration-none fw-bold text-primary" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
                         </td>
-                        <td>@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
-                        <td>@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>
-                        <td><span class="badge bg-info">@item.NProtocol</span></td>
-                        <td><span class="badge bg-warning text-dark">@item.NsProtocol</span></td>
-                        <td>@item.Servizio</td>
-                        <td>
+                        <td class="d-none d-md-table-cell">@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
+                        <td class="d-none d-md-table-cell">@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>
+                        <td class="d-none d-md-table-cell"><span class="badge bg-info">@item.NProtocol</span></td>
+                        <td class="d-none d-md-table-cell">@item.Servizio</td>
+                        <td class="d-none d-md-table-cell">
                             <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pencil-square" title="Modifica"></i>
                             </a>
@@ -172,6 +198,7 @@
             </tbody>
         </table>
     </div>
+
     <nav class="d-flex justify-content-center mt-4">
         <ul class="pagination">
             <li class="page-item @(currentPage == 1 ? "disabled" : "")">

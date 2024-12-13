@@ -35,7 +35,7 @@ ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 // Configurazione del contesto del database - Scoped è corretto per evitare problemi di concorrenza
 builder.Services.AddDbContext<ComDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext") ?? throw new InvalidOperationException("La stringa di connessione non può essere null.")));
 
 // Servizi di contesto HTTP e sessione
 builder.Services.AddHttpContextAccessor();
@@ -71,67 +71,74 @@ builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-app.UseCors("AllowAll");
-app.UseResponseCompression();
-
-// Configurazione della cultura - Impostata prima per garantire coerenza durante tutte le richieste
-var cultureInfo = new CultureInfo("it-IT");
-CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
-
-// Gestione degli errori e delle pagine di stato
-if (!app.Environment.IsDevelopment())
+// Verifica app.Environment per prevenire possibili null
+if (app.Environment != null)
 {
-    app.UseExceptionHandler("/Error");
-    app.UseStatusCodePagesWithReExecute("/error/{0}");
-    app.UseHsts();
+    app.UseCors("AllowAll");
+    app.UseResponseCompression();
+
+    // Configurazione della cultura - Impostata prima per garantire coerenza durante tutte le richieste
+    var cultureInfo = new CultureInfo("it-IT");
+    CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+    CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+    // Gestione degli errori e delle pagine di stato
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseExceptionHandler("/Error");
+        app.UseStatusCodePagesWithReExecute("/error/{0}");
+        app.UseHsts();
+    }
+    else
+    {
+        app.UseDeveloperExceptionPage();
+    }
+
+    // Aggiungi middleware di compressione
+    app.Use(async (context, next) =>
+    {
+        if (!context.Request.Headers.ContainsKey("Accept-Encoding"))
+        {
+            context.Request.Headers["Accept-Encoding"] = "gzip, br";
+        }
+        await next.Invoke();
+    });
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = ctx =>
+        {
+            // Proteggi file specifici, ad esempio site.js
+            var path = ctx.File.PhysicalPath;
+            if (path != null && path.EndsWith("site.js"))
+            {
+                // Imposta cache e header per protezione
+                ctx.Context.Response.Headers.Append("Cache-Control", "no-store");
+                ctx.Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+            }
+        }
+    });
+
+    // Uso della sessione
+    app.UseSession();
+
+    // Configurazione dei file statici
+    app.UseStaticFiles();
+
+    // Routing
+    app.UseRouting();
+
+    // Autorizzazione - Posizionato correttamente per proteggere le risorse dopo il routing
+    app.UseAuthorization();
+
+    // Mappatura delle route per il controller - Posizionata dopo UseRouting per assicurare che le route siano configurate correttamente
+    app.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+
+    app.Run();
 }
 else
 {
-    app.UseDeveloperExceptionPage();
+    throw new InvalidOperationException("La configurazione di 'app.Environment' è null. Verificare il contesto di esecuzione.");
 }
-
-// Aggiungi middleware di compressione
-app.Use(async (context, next) =>
-{
-    if (!context.Request.Headers.ContainsKey("Accept-Encoding"))
-    {
-        context.Request.Headers["Accept-Encoding"] = "gzip, br";
-    }
-    await next.Invoke();
-});
-
-app.UseStaticFiles(new StaticFileOptions
-{
-    OnPrepareResponse = ctx =>
-    {
-        // Proteggi file specifici, ad esempio site.js
-        var path = ctx.File.PhysicalPath;
-        if (path.EndsWith("site.js"))
-        {
-            // Imposta cache e header per protezione
-            ctx.Context.Response.Headers.Append("Cache-Control", "no-store");
-            ctx.Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
-        }
-    }
-});
-
-
-// Uso della sessione
-app.UseSession();
-
-// Configurazione dei file statici
-app.UseStaticFiles();
-
-// Routing
-app.UseRouting();
-
-// Autorizzazione - Posizionato correttamente per proteggere le risorse dopo il routing
-app.UseAuthorization();
-
-// Mappatura delle route per il controller - Posizionata dopo UseRouting per assicurare che le route siano configurate correttamente
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-
-app.Run();
