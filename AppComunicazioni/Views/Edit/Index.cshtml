@@ -1,0 +1,95 @@
+﻿@model AppComunicazioni.Models.DTO_s.ComunicazioniDTO
+
+@{
+    ViewData["Title"] = "Modifica";
+}
+
+<h1>Modifica</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Index" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="Id" />
+
+            <!-- Nome File -->
+            <div class="form-floating mb-3">
+                <input asp-for="FileName" class="form-control" placeholder="Nome file" />
+                <label asp-for="FileName">Nome file</label>
+            </div>
+
+            <!-- Data di Arrivo -->
+            <div class="mb-3 position-relative">
+                <div class="input-group">
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="document.getElementById('DateA').showPicker();" title="Seleziona data">
+                        <i class="bi bi-calendar"></i>
+                    </button>
+                    <div class="form-floating flex-grow-1">
+                        <input asp-for="DateA" type="datetime-local" class="form-control" id="DateA" placeholder="Data di arrivo">
+                        <label asp-for="DateA">Data di arrivo</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data di Fine Smarco -->
+            <div class="mb-3 position-relative">
+                <div class="input-group">
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="document.getElementById('DateF').showPicker();" title="Seleziona data">
+                        <i class="bi bi-calendar"></i>
+                    </button>
+                    <div class="form-floating flex-grow-1">
+                        <input asp-for="DateF" type="datetime-local" class="form-control" id="DateF" placeholder="Data di fine smarco">
+                        <label asp-for="DateF">Data di fine smarco</label>
+                    </div>
+                    <button type="button" class="btn btn-outline-danger" onclick="clearDateF();" title="Pulisci data">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Altri campi -->
+            <div class="form-floating mb-3">
+                <input asp-for="NProtocol" type="number" class="form-control" placeholder="Numero protocolli" min="0" />
+                <label asp-for="NProtocol">Numero di protocolli</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <select asp-for="Servizio" class="form-control" asp-items="ViewBag.ServizioOptions">
+                    <option value="">-- Seleziona Servizio --</option>
+                </select>
+                <label asp-for="Servizio">Servizio</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <textarea asp-for="Note" class="form-control" placeholder="Note" style="height: 100px;"></textarea>
+                <label asp-for="Note">Note</label>
+            </div>
+
+            <!-- Carica File -->
+            <div class="mb-3">
+                <label for="ExcelFile">Carica File Excel (opzionale):</label>
+                <input type="file" class="form-control" id="ExcelFile" name="ExcelFile" accept=".xlsx">
+            </div>
+
+            <!-- Checkbox -->
+            <div class="form-check mb-3">
+                <input asp-for="Ritornato" class="form-check-input" />
+                <label asp-for="Ritornato" class="form-check-label">Ritornato</label>
+            </div>
+
+            <!-- Bottoni -->
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary">Salva</button>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Indietro</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,6 +1,4 @@
-﻿// site.js
-
-// Abilita spinner al submit
+﻿// Abilita spinner al submit
 document.addEventListener('submit', function (e) {
     const form = e.target;
     if (form.tagName === 'FORM') {
@@ -71,4 +69,12 @@ function updateServizioOptions() {
         opt.text = option;
         servizioSelect.add(opt);
     });
+}
+
+// Logica per pulire l'input DateF
+function clearDateF() {
+    const dateFInput = document.getElementById("DateF");
+    if (dateFInput) {
+        dateFInput.value = '';
+    }
 }

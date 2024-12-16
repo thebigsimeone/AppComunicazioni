@@ -142,7 +142,7 @@ namespace AppComunicazioni.Controllers
             }, _logger, this);
         }
 
-        protected async Task<IActionResult> BaseEditGet(int? id)
+        /*protected async Task<IActionResult> BaseEditGet(int? id)
         {
             return await _retryService.ExecuteWithRetry(async () =>
             {
@@ -237,7 +237,7 @@ namespace AppComunicazioni.Controllers
                 }
             }, _logger, this);
         }
-
+*/
         protected async Task<IActionResult> BaseDelete(int? id)
         {
             return await _retryService.ExecuteWithRetry(async () =>
