@@ -48,6 +48,9 @@ public partial class Comunicazioni
     [Column("ritornato")]
     [Display(Name = "Ritornato")]
     public bool? Ritornato { get; set; }
+    [Column("email_inviata")]
+    [Display(Name = "Email_inviata")]
+    public bool? Email_inviata { get; set; }
 
     public ICollection<ComunicazioniDettaglio>? Dettagli { get; set; }
 }

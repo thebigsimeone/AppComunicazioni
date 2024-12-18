@@ -10,7 +10,7 @@
 <div class="row">
     <div class="col-md-6">
         <form asp-action="Index" method="post" enctype="multipart/form-data">
-            <input type="hidden" asp-for="Id" />
+            <input type="hidden" name="id" value="@ViewData["EncryptedId"]" />
 
             <!-- Nome File -->
             <div class="form-floating mb-3">
@@ -21,12 +21,8 @@
             <!-- Data di Arrivo -->
             <div class="mb-3 position-relative">
                 <div class="input-group">
-                    <button type="button" class="btn btn-outline-secondary"
-                            onclick="document.getElementById('DateA').showPicker();" title="Seleziona data">
-                        <i class="bi bi-calendar"></i>
-                    </button>
                     <div class="form-floating flex-grow-1">
-                        <input asp-for="DateA" type="datetime-local" class="form-control" id="DateA" placeholder="Data di arrivo">
+                        <input asp-for="DateA" type="datetime-local" class="form-control" placeholder="Data di arrivo">
                         <label asp-for="DateA">Data di arrivo</label>
                     </div>
                 </div>
@@ -34,27 +30,19 @@
 
             <!-- Data di Fine Smarco -->
             <div class="mb-3 position-relative">
-                <div class="input-group">
-                    <button type="button" class="btn btn-outline-secondary"
-                            onclick="document.getElementById('DateF').showPicker();" title="Seleziona data">
-                        <i class="bi bi-calendar"></i>
-                    </button>
-                    <div class="form-floating flex-grow-1">
-                        <input asp-for="DateF" type="datetime-local" class="form-control" id="DateF" placeholder="Data di fine smarco">
-                        <label asp-for="DateF">Data di fine smarco</label>
-                    </div>
-                    <button type="button" class="btn btn-outline-danger" onclick="clearDateF();" title="Pulisci data">
-                        <i class="bi bi-x-circle"></i>
-                    </button>
+                <div class="form-floating flex-grow-1">
+                    <input asp-for="DateF" type="datetime-local" class="form-control" placeholder="Data di fine smarco">
+                    <label asp-for="DateF">Data di fine smarco</label>
                 </div>
             </div>
 
-            <!-- Altri campi -->
+            <!-- Numero Protocolli -->
             <div class="form-floating mb-3">
                 <input asp-for="NProtocol" type="number" class="form-control" placeholder="Numero protocolli" min="0" />
                 <label asp-for="NProtocol">Numero di protocolli</label>
             </div>
 
+            <!-- Servizio -->
             <div class="form-floating mb-3">
                 <select asp-for="Servizio" class="form-control" asp-items="ViewBag.ServizioOptions">
                     <option value="">-- Seleziona Servizio --</option>
@@ -62,6 +50,7 @@
                 <label asp-for="Servizio">Servizio</label>
             </div>
 
+            <!-- Note -->
             <div class="form-floating mb-3">
                 <textarea asp-for="Note" class="form-control" placeholder="Note" style="height: 100px;"></textarea>
                 <label asp-for="Note">Note</label>

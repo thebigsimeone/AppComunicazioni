@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace AppComunicazioni.Controllers
 {
+    [Route("[controller]")]
     public class EditController : Controller
     {
         private readonly ComDbContext _context;
@@ -16,10 +17,12 @@ namespace AppComunicazioni.Controllers
         private readonly IMonitoringService _monitoringService;
         private readonly ISendMailService _sendMailService;
         private readonly IExcelService _excelService;
+        private readonly IEncryptionService _encryptionService;
 
         public EditController(ComDbContext context, IMapper mapper, IRetryService retryService,
                               IViewBagService viewBagService, IMonitoringService monitoringService,
-                              ISendMailService sendMailService, IExcelService excelService)
+                              ISendMailService sendMailService, IExcelService excelService,
+                              IEncryptionService encryptionService)
         {
             _context = context;
             _mapper = mapper;
@@ -28,45 +31,61 @@ namespace AppComunicazioni.Controllers
             _monitoringService = monitoringService;
             _sendMailService = sendMailService;
             _excelService = excelService;
+            _encryptionService = encryptionService;
         }
 
-        // GET: Edit
-        [HttpGet]
-        public async Task<IActionResult> Index(int? id)
+        // GET: Edit/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Index(string id)
         {
-            if (!id.HasValue) return NotFound();
+            if (string.IsNullOrEmpty(id)) return NotFound();
 
-            var comunicazioni = await _context.Comunicazionis.FindAsync(id);
+            int decryptedId = DecryptId(id);
+            if (decryptedId == -1) return BadRequest("ID non valido.");
+
+            var comunicazioni = await _context.Comunicazionis.FindAsync(decryptedId);
             if (comunicazioni == null) return NotFound();
 
             var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
+
+            ViewData["EncryptedId"] = id;
             SetViewBagOptions();
             return View(comunicazioniDTO);
         }
 
-        // POST: Edit
-        [HttpPost]
-        public async Task<IActionResult> Index(int id, ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
+        // POST: Edit/{id}
+        [HttpPost("{id}")]
+        public async Task<IActionResult> Index(string id, [Bind] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
         {
-            if (id != comunicazioniDTO.Id) return NotFound();
+            int decryptedId = DecryptId(id); // Decripta l'ID dalla route
+            if (decryptedId == -1) return BadRequest("ID non valido.");
+
+            // Assicurati che l'ID decriptato corrisponda al modello
+            comunicazioniDTO.Id = decryptedId;
+
+            ModelState.Clear(); // Puliamo il ModelState per rimuovere problemi di binding sull'ID
+            TryValidateModel(comunicazioniDTO); // Ricalcoliamo la validazione del modello
+
+            if (!ModelState.IsValid)
+            {
+                LogModelStateErrors();
+                ViewData["EncryptedId"] = id; // Reimposta l'ID crittografato
+                SetViewBagOptions();
+                return View(comunicazioniDTO);
+            }
 
             return await _retryService.ExecuteWithRetry(async () =>
             {
-                if (!ModelState.IsValid)
-                {
-                    SetViewBagOptions();
-                    return View(comunicazioniDTO);
-                }
-
-                var comunicazioniToUpdate = await _context.Comunicazionis.FindAsync(id);
+                var comunicazioniToUpdate = await _context.Comunicazionis.FindAsync(decryptedId);
                 if (comunicazioniToUpdate == null) return NotFound();
 
                 _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
 
-                // Gestione logica DateF e Ritornato
+                // Logica DateF e Ritornato
                 if (comunicazioniDTO.DateF.HasValue)
                 {
                     comunicazioniToUpdate.Ritornato = true;
+                    comunicazioniToUpdate.Email_inviata = false; // Assicura che l'email venga inviata
                     await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                     await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
                 }
@@ -74,6 +93,7 @@ namespace AppComunicazioni.Controllers
                 {
                     comunicazioniToUpdate.Ritornato = true;
                     comunicazioniToUpdate.DateF = null;
+                    comunicazioniToUpdate.Email_inviata = true; // Nessuna email inviata
                     await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
                 }
 
@@ -90,8 +110,43 @@ namespace AppComunicazioni.Controllers
                     }
                 }
 
+                // Reindirizza alla pagina corretta in base al FileName
+                if (comunicazioniDTO.FileName?.Contains("EBI") == true)
+                {
+                    return RedirectToAction("Index", "ComunicazionisEbi");
+                }
+                else if (comunicazioniDTO.FileName?.Contains("SSC") == true)
+                {
+                    return RedirectToAction("Index", "ComunicazionisSsc");
+                }
+
+                // Reindirizzamento predefinito
                 return RedirectToAction("Index", "Home");
             }, null, this);
+        }
+
+        private int DecryptId(string encryptedId)
+        {
+            try
+            {
+                return int.Parse(_encryptionService.Decrypt(encryptedId));
+            }
+            catch
+            {
+                return -1;
+            }
+        }
+
+        private void LogModelStateErrors()
+        {
+            foreach (var key in ModelState.Keys)
+            {
+                var errors = ModelState[key].Errors;
+                foreach (var error in errors)
+                {
+                    Console.WriteLine($"Chiave: {key}, Errore: {error.ErrorMessage}");
+                }
+            }
         }
 
         private void SetViewBagOptions(string? codCor = null)

@@ -5,6 +5,7 @@ namespace AppComunicazioni.Interface
     public interface ISendMailService
     {
         Task HandlePostEditActionsAsync(Comunicazioni comunicazioniToUpdate);
-        Task SendNotificationEmailsAsync(Comunicazioni comunicazioni);
+        Task SendMarkingEmailsAsync(Comunicazioni comunicazioni);
+        Task SendNotificationEmailAsync(List<ComunicazioniWithDaysModel> notifications);
     }
 }

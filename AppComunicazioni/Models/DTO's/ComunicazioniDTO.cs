@@ -27,6 +27,7 @@ namespace AppComunicazioni.Models.DTO_s
         [Required(ErrorMessage = "Il campo Servizio è obbligatorio.")]
         public ServizioType? Servizio { get; set; }
         public bool Ritornato { get; set; }
+        public bool Email_inviata { get; set; }
 
         // Nuova proprietà per i dettagli
         public List<ComunicazioniDettaglioDTO>? Dettagli { get; set; }

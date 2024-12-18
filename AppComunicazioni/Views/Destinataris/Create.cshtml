@@ -1,39 +1,40 @@
-﻿@model AppComunicazioni.Models.Destinatari
+﻿@model AppComunicazioni.Models.DTO_s.DestinatariDTO
 
 @{
     ViewData["Title"] = "Crea";
 }
 
 <h1>Crea</h1>
-
-<h4>Destinatario</h4>
 <hr />
+
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
+        <form asp-action="Create" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
+            <!-- Destinatario -->
             <div class="form-floating mb-3">
                 <input asp-for="Destinatario" class="form-control" id="destinatario" placeholder="Destinatario">
                 <label asp-for="Destinatario">Destinatario</label>
                 <span asp-validation-for="Destinatario" class="text-danger"></span>
             </div>
 
+            <!-- Checkbox Attivo -->
             <div class="form-check mb-3">
-                <input asp-for="Attivo" type="checkbox" class="form-check-input" id="attivo" value="S" />
+                <input type="checkbox" class="form-check-input" id="attivo" name="Attivo" value="S" />
                 <label class="form-check-label" for="attivo">Attivo</label>
-                <span asp-validation-for="Attivo" class="text-danger"></span>
             </div>
 
+            <!-- Checkbox Monitoraggio -->
             <div class="form-check mb-3">
-                <input asp-for="Monitor" type="checkbox" class="form-check-input" id="monitor" value="S" />
+                <input type="checkbox" class="form-check-input" id="monitor" name="Monitor" value="S" />
                 <label class="form-check-label" for="monitor">Monitoraggio</label>
-                <span asp-validation-for="Monitor" class="text-danger"></span>
             </div>
 
-            <div class="form-group d-flex justify-content-between align-items-end">
-                <button type="submit" class="btn btn-outline-primary">Crea</button>
-                <a class="btn btn-outline-secondary" asp-action="Index">Indietro</a>
+            <!-- Pulsanti -->
+            <div class="d-flex justify-content-between align-items-end">
+                <button type="submit" class="btn btn-primary">Crea</button>
+                <a class="btn btn-secondary" asp-action="Index">Indietro</a>
             </div>
         </form>
     </div>

@@ -20,12 +20,13 @@ namespace AppComunicazioni.Controllers
         protected readonly IViewBagService _viewBagService;
         protected readonly ILogger<TLogger> _logger;
         protected readonly IRetryService _retryService;
+        protected readonly IEncryptionService _encryptionService;
 
         public ComunicazioniBaseController(ComDbContext context, IMapper mapper, IEmailService emailService,
                                            IMonitoringService monitoringService, IFiltroComunicazioniService filtroService,
                                            IExcelService excelService, ISendMailService sendMailService,
                                            ILogger<TLogger> logger, IViewBagService viewBagService,
-                                           IRetryService retryService)
+                                           IRetryService retryService, IEncryptionService encryptionService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -37,6 +38,15 @@ namespace AppComunicazioni.Controllers
             _viewBagService = viewBagService ?? throw new ArgumentNullException(nameof(viewBagService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _retryService = retryService ?? throw new ArgumentNullException(nameof(retryService));
+            _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
+        }
+
+        protected string EncryptId(int id) => _encryptionService.Encrypt(id.ToString());
+
+        protected int DecryptId(string encryptedId)
+        {
+            var decrypted = _encryptionService.Decrypt(encryptedId);
+            return int.TryParse(decrypted, out var id) ? id : throw new ArgumentException("ID non valido.");
         }
 
         protected void SetViewBagOptions(string? codCor = null)
@@ -53,6 +63,7 @@ namespace AppComunicazioni.Controllers
                 {
                     try
                     {
+
                         SetViewBagOptions(filtri.CodCor);
 
                         // Gestione dei possibili valori null
@@ -114,7 +125,7 @@ namespace AppComunicazioni.Controllers
             }, _logger, this);
         }
 
-        protected async Task<IActionResult> BaseDetails(int? id)
+        protected async Task<IActionResult> BaseDetails(string encryptedId)
         {
             return await _retryService.ExecuteWithRetry(async () =>
             {
@@ -122,13 +133,13 @@ namespace AppComunicazioni.Controllers
                 {
                     try
                     {
-                        if (!id.HasValue) return NotFound();
+                        var id = DecryptId(encryptedId);
 
-                        var comunicazioni = await _context.Comunicazionis.FirstOrDefaultAsync(c => c.Id == id.Value);
-                        if (comunicazioni == null) return NotFound();
+                        var entity = await _context.Comunicazionis.FirstOrDefaultAsync(c => c.Id == id);
+                        if (entity == null) return NotFound();
 
-                        await _context.Entry(comunicazioni).Collection(c => c.Dettagli!).LoadAsync();
-                        var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
+                        await _context.Entry(entity).Collection(c => c.Dettagli!).LoadAsync();
+                        var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(entity);
 
                         await transaction.CommitAsync();
                         return View("Details", comunicazioniDTO);
@@ -142,7 +153,7 @@ namespace AppComunicazioni.Controllers
             }, _logger, this);
         }
 
-        /*protected async Task<IActionResult> BaseEditGet(int? id)
+        protected async Task<IActionResult> BaseDelete(string encryptedId)
         {
             return await _retryService.ExecuteWithRetry(async () =>
             {
@@ -150,109 +161,13 @@ namespace AppComunicazioni.Controllers
                 {
                     try
                     {
-                        if (!id.HasValue) return NotFound();
+                        var id = DecryptId(encryptedId);
 
-                        var comunicazioni = await _context.Comunicazionis.FindAsync(id);
-                        if (comunicazioni == null) return NotFound();
-
-                        SetViewBagOptions();
-                        var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
+                        var entity = await _context.Comunicazionis.FindAsync(id);
+                        if (entity   == null) return NotFound();
 
                         await transaction.CommitAsync();
-                        return View("Edit", comunicazioniDTO);
-                    }
-                    catch
-                    {
-                        await transaction.RollbackAsync();
-                        throw;
-                    }
-                }
-            }, _logger, this);
-        }
-
-        protected async Task<IActionResult> BaseEditPost(int id, ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
-        {
-            return await _retryService.ExecuteWithRetry(async () =>
-            {
-                using (var transaction = await _context.Database.BeginTransactionAsync())
-                {
-                    try
-                    {
-                        if (id != comunicazioniDTO.Id) return NotFound();
-
-                        ModelState.Remove("excelFile");
-
-                        if (!ModelState.IsValid)
-                        {
-                            SetViewBagOptions();
-                            return View("Edit", comunicazioniDTO);
-                        }
-
-                        var comunicazioniToUpdate = await _context.Comunicazionis.FindAsync(id);
-                        if (comunicazioniToUpdate == null) return NotFound();
-
-                        _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
-
-                        // Logica per DateF e Ritornato
-                        if (comunicazioniDTO.DateF.HasValue)
-                        {
-                            // Se l'utente ha valorizzato DateF, imposta Ritornato a true, invia email e stoppa il monitoraggio
-                            comunicazioniToUpdate.Ritornato = true;
-                            await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
-                            await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
-                        }
-                        else if (comunicazioniDTO.Ritornato)
-                        {
-                            // Se l'utente ha impostato solo Ritornato = true, non modifica DateF e stoppa il monitoraggio
-                            comunicazioniToUpdate.Ritornato = true;
-                            comunicazioniToUpdate.DateF = null; // Garantiamo che non venga valorizzato
-                            await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
-                        }
-
-                        await _context.SaveChangesAsync();
-
-                        // Gestione del file Excel
-                        if (excelFile != null && excelFile.Length > 0)
-                        {
-                            var existingDetails = _context.ComunicazioniDettagli.Where(d => d.ComunicazioneId == comunicazioniToUpdate.Id);
-                            _context.ComunicazioniDettagli.RemoveRange(existingDetails);
-                            await _context.SaveChangesAsync();
-
-                            var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioniToUpdate.Id);
-                            if (dettagli != null)
-                            {
-                                _context.ComunicazioniDettagli.AddRange(dettagli);
-                                await _context.SaveChangesAsync();
-                            }
-                        }
-
-                        await transaction.CommitAsync();
-                        return RedirectToAction("Index");
-                    }
-                    catch
-                    {
-                        await transaction.RollbackAsync();
-                        throw;
-                    }
-                }
-            }, _logger, this);
-        }
-*/
-        protected async Task<IActionResult> BaseDelete(int? id)
-        {
-            return await _retryService.ExecuteWithRetry(async () =>
-            {
-                using (var transaction = await _context.Database.BeginTransactionAsync())
-                {
-                    try
-                    {
-                        if (!id.HasValue) return NotFound();
-
-                        var comunicazioni = await _context.Comunicazionis.FirstOrDefaultAsync(m => m.Id == id.Value);
-                        if (comunicazioni == null) return NotFound();
-
-                        await transaction.CommitAsync();
-                        return View("Delete", comunicazioni);
+                        return View("Delete", entity);
                     }
                     catch
                     {

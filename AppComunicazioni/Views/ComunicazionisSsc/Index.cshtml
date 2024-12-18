@@ -1,5 +1,7 @@
 ﻿@model ComunicazioniViewModel
+@using AppComunicazioni.Interface
 @using AppComunicazioni.Models
+@using AppComunicazioni.Helpers
 
 @{
     ViewData["Title"] = "Comunicazioni";
@@ -168,10 +170,10 @@
                         </td>
                         <td class="d-md-none">
                             <div class="d-flex justify-content-center">
-                                <a asp-controller="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary mx-1">
+                                <a asp-controller="Edit" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-pencil-square" title="Modifica"></i>
                                 </a>
-                                <a asp-controller="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger mx-1">
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger mx-1">
                                     <i class="bi bi-trash-fill" title="Elimina"></i>
                                 </a>
                             </div>
@@ -179,18 +181,20 @@
 
                         <!-- Colonne normali per desktop -->
                         <td class="d-none d-md-table-cell">
-                            <a class="text-decoration-none fw-bold text-primary" asp-action="Details" asp-route-id="@item.Id">@item.FileName</a>
+                            <a class="text-decoration-none fw-bold text-primary" asp-action="Details" asp-route-id="@Html.EncryptId(item.Id.ToString())">
+                                @item.FileName
+                            </a>
                         </td>
                         <td class="d-none d-md-table-cell">@item.DateA?.ToString("dd/MM/yyyy | HH:mm")</td>
                         <td class="d-none d-md-table-cell">@item.DateF?.ToString("dd/MM/yyyy | HH:mm")</td>
                         <td class="d-none d-md-table-cell"><span class="badge bg-info">@item.NProtocol</span></td>
                         <td class="d-none d-md-table-cell">@item.Servizio</td>
                         <td class="d-none d-md-table-cell">
-                            <a asp-controller="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                            <a asp-controller="Edit" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pencil-square" title="Modifica"></i>
                             </a>
-                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger ms-2">
-                                <i class="bi bi-trash-fill" title="Elimina"></i>
+                            <a asp-action="Delete" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="btn btn-outline-danger">
+                                <i class="bi bi-trash" title="Elimina"></i>
                             </a>
                         </td>
                     </tr>
@@ -282,3 +286,11 @@
         </ul>
     </nav>
 </div>
+
+@functions {
+    public string EncryptId(int id)
+    {
+        var encryptionService = (IEncryptionService)ViewContext.HttpContext.RequestServices.GetService(typeof(IEncryptionService));
+        return encryptionService.Encrypt(id.ToString());
+    }
+}

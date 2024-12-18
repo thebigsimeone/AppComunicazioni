@@ -13,10 +13,10 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
                                        IMonitoringService monitoringService, IFiltroComunicazioniService filtroComunicazioniService,
                                        IExcelService excelService, ISendMailService sendMailService,
                                        ILogger<ComunicazionisSscController> logger, IViewBagService viewBagService,
-                                       IRetryService retryService)
-        : base(context, mapper, emailService, monitoringService, filtroComunicazioniService, excelService, sendMailService, logger, viewBagService, retryService)
+                                       IRetryService retryService, IEncryptionService encryptionService)
+        : base(context, mapper, emailService, monitoringService, filtroComunicazioniService, excelService, sendMailService, logger, viewBagService, retryService, encryptionService)
     {
-        _editController = new EditController(context, mapper, retryService, viewBagService, monitoringService, sendMailService, excelService);
+        _editController = new EditController(context, mapper, retryService, viewBagService, monitoringService, sendMailService, excelService, encryptionService);
     }
 
     [HttpGet]
@@ -29,25 +29,25 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
         return await BaseIndex(filtri, "SSC");
     }
 
-    public async Task<IActionResult> Details(int? id)
+    public async Task<IActionResult> Details(string id)
     {
         return await BaseDetails(id);
     }
 
     // Delego al controller EditController
-    public async Task<IActionResult> Edit(int? id)
+    public async Task<IActionResult> Edit(string id)
     {
         return await _editController.Index(id);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, ComunicazioniDTO comunicazioniDTO, IFormFile excelFile)
+    public async Task<IActionResult> Edit(string id, ComunicazioniDTO comunicazioniDTO, IFormFile excelFile)
     {
         return await _editController.Index(id, comunicazioniDTO, excelFile);
     }
 
-    public async Task<IActionResult> Delete(int? id)
+    public async Task<IActionResult> Delete(string id)
     {
         return await BaseDelete(id);
     }

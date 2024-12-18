@@ -2,18 +2,17 @@
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Text;
 
 public class MonitoringService : IMonitoringService
 {
     private readonly ComDbContext _context;
-    private readonly IEmailService _emailService;
+    private readonly ISendMailService _sendMailService;
     private readonly ILogger<MonitoringService> _logger;
 
-    public MonitoringService(ComDbContext context, IEmailService emailService, ILogger<MonitoringService> logger)
+    public MonitoringService(ComDbContext context, ISendMailService sendMailService, ILogger<MonitoringService> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+        _sendMailService = sendMailService ?? throw new ArgumentNullException(nameof(sendMailService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -24,14 +23,13 @@ public class MonitoringService : IMonitoringService
             var currentTime = DateTimeOffset.Now;
             _logger.LogInformation($"Valore di currentTime: {currentTime}");
 
-            _logger.LogInformation("Recupero tutte le comunicazioni senza DateF e non notificate...");
             var comunicazioniList = await _context.Comunicazionis
                 .Where(x => !x.DateF.HasValue && (x.Notificato == false || x.Notificato == null))
                 .ToListAsync();
 
-            if (comunicazioniList == null)
+            if (comunicazioniList == null || comunicazioniList.Count == 0)
             {
-                _logger.LogWarning("Nessuna comunicazione trovata.");
+                _logger.LogWarning("Nessuna comunicazione trovata da notificare.");
                 return;
             }
 
@@ -48,8 +46,7 @@ public class MonitoringService : IMonitoringService
                 }
 
                 var nomeServizio = comunicazione.Servizio?.ToUpper() ?? "";
-
-                _logger.LogInformation($"Comunicazione ID: {comunicazione.Id}, Nome File: {comunicazione.FileName}, Servizio: {nomeServizio}, DateA (letto dal DB): {comunicazione.DateA}");
+                _logger.LogInformation($"Elaborazione comunicazione ID: {comunicazione.Id}, Nome File: {comunicazione.FileName}, Servizio: {nomeServizio}");
 
                 if (!comunicazione.DateA.HasValue)
                 {
@@ -68,8 +65,6 @@ public class MonitoringService : IMonitoringService
 
                 var invioPrevisto = CalcolaDataInvio(comunicazione.DateA.Value, giorniDaAggiungere);
 
-                _logger.LogInformation($"Giorno previsto per la comunicazione '{comunicazione.FileName}': {invioPrevisto}");
-
                 if (currentTime >= invioPrevisto)
                 {
                     var totalDays = CalcolaGiorniLavorativi(comunicazione.DateA.Value, (currentTime - comunicazione.DateA.Value).Days);
@@ -82,6 +77,7 @@ public class MonitoringService : IMonitoringService
                         TotalDays = totalDays
                     };
 
+                    // Verifica se la comunicazione soddisfa i criteri di notifica
                     if (ControlloServizio(comunicazioneModel))
                     {
                         _logger.LogInformation($"Comunicazione '{comunicazione.FileName}' soddisfa i criteri di notifica.");
@@ -99,68 +95,7 @@ public class MonitoringService : IMonitoringService
             }
 
             _logger.LogInformation($"Trovate {notifications.Count} comunicazioni che necessitano di notifica.");
-
-            foreach (var notification in notifications)
-            {
-                var comunicazione = notification.Comunicazioni;
-
-                if (comunicazione == null)
-                {
-                    _logger.LogWarning("Comunicazione null nel modello di notifica.");
-                    continue;
-                }
-
-                var subject = $"Notifica ritardo: {comunicazione.FileName}";
-                var message = new StringBuilder();
-                message.AppendLine("<p>Attenzione, il seguente file necessita di verifica:<br>");
-                message.AppendLine($"Nome del file: {comunicazione.FileName}<br>");
-                message.AppendLine($"Data di invio: {comunicazione.DateA:dd/MM/yyyy HH:mm:ss}<br>");
-                message.AppendLine("<br>Il file non è stato ancora smarcato e il limite di tempo previsto è stato superato.<br>");
-                message.AppendLine("Cordiali saluti,<br><br>App Comunicazioni</p>");
-
-                try
-                {
-                    var destinatari = await _context.Destinataris
-                        .Where(d => d.Monitor == "S")
-                        .ToListAsync();
-
-                    if (destinatari == null || destinatari.Count == 0)
-                    {
-                        _logger.LogInformation("Nessun destinatario trovato per inviare le notifiche.");
-                        continue;
-                    }
-
-                    foreach (var destinatario in destinatari)
-                    {
-                        if (!string.IsNullOrEmpty(destinatario?.Destinatario))
-                        {
-                            try
-                            {
-                                _logger.LogInformation($"Invio email a: {destinatario.Destinatario}");
-                                await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message.ToString());
-                                _logger.LogInformation($"Email inviata a: {destinatario.Destinatario}");
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError($"Errore durante l'invio dell'email a {destinatario.Destinatario}: {ex.Message}");
-                            }
-                        }
-                        else
-                        {
-                            _logger.LogWarning("Destinatario con indirizzo email nullo o vuoto.");
-                        }
-                    }
-
-                    comunicazione.Notificato = true;
-                    _context.Comunicazionis.Update(comunicazione);
-                    await _context.SaveChangesAsync();
-                    _logger.LogInformation($"Comunicazione '{comunicazione.FileName}' è stata notificata.");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Errore durante il recupero dei destinatari: {ex.Message}");
-                }
-            }
+            await _sendMailService.SendNotificationEmailAsync(notifications);
         }
         catch (Exception ex)
         {

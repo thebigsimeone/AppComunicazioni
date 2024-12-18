@@ -10,11 +10,17 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Chiave di crittografia - 32 caratteri per AES
+var encryptionKey = "12345678901234567890123456789012";
+builder.Services.AddSingleton<IEncryptionService>(provider => new EncryptionService(encryptionKey));
+
+// Configurazione Kestrel
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(5185); // Ascolta su tutte le interfacce alla porta 5185
+    options.ListenAnyIP(5185);
 });
 
+// Configurazione CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -25,6 +31,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Abilita la compressione delle risposte
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
@@ -33,15 +40,16 @@ builder.Services.AddResponseCompression(options =>
 
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-// Configurazione del contesto del database - Scoped è corretto per evitare problemi di concorrenza
+// Configurazione del contesto del database
 builder.Services.AddDbContext<ComDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext") ?? throw new InvalidOperationException("La stringa di connessione non può essere null.")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext")
+    ?? throw new InvalidOperationException("La stringa di connessione non può essere null.")));
 
-// Servizi di contesto HTTP e sessione
+// Servizi HTTP e sessione
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Timeout della sessione
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
@@ -50,23 +58,22 @@ builder.Services.AddSession(options =>
 builder.Services.AddHostedService<CleanupBackgroundService>();
 builder.Services.AddHostedService<NotificationBackgroundService>();
 
-builder.Services.AddScoped<IEmailService, EmailService>(); // Servizio legato alla logica email
-builder.Services.AddScoped<IMonitoringService, MonitoringService>(); // Monitoraggio
-builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>(); // Filtro comunicazioni
-builder.Services.AddScoped<IContabilitàService, ContabilitàService>(); // Servizio contabilità
-builder.Services.AddScoped<IExcelService, ExcelService>(); // Servizio legato alla logica file excel
-builder.Services.AddScoped<ISendMailService, SendMailService>(); // Servizio all'invio email di smarco
-builder.Services.AddScoped<IViewBagService, ViewBagService>(); // Servizio di ViewBag per la view dei Servizi nelle select
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IMonitoringService, MonitoringService>();
+builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
+builder.Services.AddScoped<IContabilitàService, ContabilitàService>();
+builder.Services.AddScoped<IExcelService, ExcelService>();
+builder.Services.AddScoped<ISendMailService, SendMailService>();
+builder.Services.AddScoped < IViewBagService, ViewBagService>(); // Servizio per ViewBag
 builder.Services.AddScoped<IRetryService, RetryService>();
+builder.Services.AddScoped<CleanupService>();
 
-builder.Services.AddScoped<CleanupService>(); // Servizio pulizia dati vecchi
-
-// Registrazione AutoMapper
+// Registrazione di AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Aggiunta delle funzionalità per HTTP Client, MVC e API Explorer
 builder.Services.AddHttpClient();
-builder.Services.AddMvc(); // AddMvc è più flessibile per l'uso di API e Views insieme
+builder.Services.AddMvc();
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
@@ -76,13 +83,12 @@ if (app.Environment != null)
 {
     app.UseCors("AllowAll");
     app.UseResponseCompression();
-
-    // Configurazione della cultura - Impostata prima per garantire coerenza durante tutte le richieste
+    // Configurazione della cultura  
     var cultureInfo = new CultureInfo("it-IT");
     CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
     CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
-    // Gestione degli errori e delle pagine di stato
+    // Gestione degli errori  
     if (!app.Environment.IsDevelopment())
     {
         app.UseExceptionHandler("/Error");
@@ -94,7 +100,7 @@ if (app.Environment != null)
         app.UseDeveloperExceptionPage();
     }
 
-    // Aggiungi middleware di compressione
+    // Middleware di compressione  
     app.Use(async (context, next) =>
     {
         if (!context.Request.Headers.ContainsKey("Accept-Encoding"))
@@ -104,34 +110,11 @@ if (app.Environment != null)
         await next.Invoke();
     });
 
-    app.UseStaticFiles(new StaticFileOptions
-    {
-        OnPrepareResponse = ctx =>
-        {
-            // Proteggi file specifici, ad esempio site.js
-            var path = ctx.File.PhysicalPath;
-            if (path != null && path.EndsWith("site.js"))
-            {
-                // Imposta cache e header per protezione
-                ctx.Context.Response.Headers.Append("Cache-Control", "no-store");
-                ctx.Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
-            }
-        }
-    });
-
-    // Uso della sessione
-    app.UseSession();
-
-    // Configurazione dei file statici
     app.UseStaticFiles();
-
-    // Routing
+    app.UseSession();
     app.UseRouting();
-
-    // Autorizzazione - Posizionato correttamente per proteggere le risorse dopo il routing
     app.UseAuthorization();
 
-    // Mappatura delle route per il controller - Posizionata dopo UseRouting per assicurare che le route siano configurate correttamente
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}");
