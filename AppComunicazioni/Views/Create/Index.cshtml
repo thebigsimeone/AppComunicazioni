@@ -18,16 +18,32 @@
                 <span asp-validation-for="FileName" class="text-danger"></span>
             </div>
 
-            <div class="form-floating mb-3">
-                <input asp-for="DateA" type="datetime-local" class="form-control" id="DateA" placeholder="Data di invio">
-                <label asp-for="DateA">Data di arrivo</label>
-                <span asp-validation-for="DateA" class="text-danger"></span>
+            <!-- Data di Arrivo -->
+            <div class="mb-3 position-relative">
+                <div class="input-group">
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="document.getElementById('DateA').showPicker();" title="Seleziona data">
+                        <i class="bi bi-calendar"></i>
+                    </button>
+                    <div class="form-floating flex-grow-1">
+                        <input asp-for="DateA" type="datetime-local" class="form-control" id="DateA" placeholder="Data di arrivo">
+                        <label asp-for="DateA">Data di arrivo</label>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-floating mb-3">
-                <input asp-for="DateF" type="datetime-local" class="form-control" id="DateF" placeholder="Data di smarco">
-                <label asp-for="DateF">Data di smarco</label>
-                <span asp-validation-for="DateF" class="text-danger"></span>
+            <!-- Data di Fine Smarco -->
+            <div class="mb-3 position-relative">
+                <div class="input-group">
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="document.getElementById('DateF').showPicker();" title="Seleziona data">
+                        <i class="bi bi-calendar"></i>
+                    </button>
+                    <div class="form-floating flex-grow-1">
+                        <input asp-for="DateF" type="datetime-local" class="form-control" id="DateF" placeholder="Data di fine smarco">
+                        <label asp-for="DateF">Data di fine smarco</label>
+                    </div>
+                </div>
             </div>
 
             <div class="form-floating mb-3">
@@ -80,4 +96,3 @@
         });
     </script>
 }
-
