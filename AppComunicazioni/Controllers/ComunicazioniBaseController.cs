@@ -213,7 +213,7 @@ namespace AppComunicazioni.Controllers
             }, _logger, this);
         }
 
-        [HttpPost]
+        [NonAction]
         public IActionResult ResetFiltri()
         {
             _filtroService.ResetFiltri();

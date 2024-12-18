@@ -59,13 +59,19 @@ builder.Services.AddHostedService<CleanupBackgroundService>();
 builder.Services.AddHostedService<NotificationBackgroundService>();
 
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IMonitoringService, MonitoringService>();
-builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
-builder.Services.AddScoped<IContabilitàService, ContabilitàService>();
-builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<ISendMailService, SendMailService>();
-builder.Services.AddScoped < IViewBagService, ViewBagService>(); // Servizio per ViewBag
+
+builder.Services.AddScoped<IMonitoringService, MonitoringService>();
+builder.Services.AddScoped<IStopMonitoringService, StopMonitoringService>();
+
+builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
+
+builder.Services.AddScoped<IContabilitàService, ContabilitàService>();
+
+builder.Services.AddScoped<IExcelService, ExcelService>();
+builder.Services.AddScoped<IViewBagService, ViewBagService>();
 builder.Services.AddScoped<IRetryService, RetryService>();
+
 builder.Services.AddScoped<CleanupService>();
 
 // Registrazione di AutoMapper

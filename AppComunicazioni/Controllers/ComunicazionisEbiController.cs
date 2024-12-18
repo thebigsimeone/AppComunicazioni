@@ -5,18 +5,23 @@ using AppComunicazioni.Models.DTO_s;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
+[Route("ComunicazionisEbi")]
 public class ComunicazionisEbiController : ComunicazioniBaseController<ComunicazionisEbiController>
 {
-    private readonly EditController _editController;
-
-    public ComunicazionisEbiController(ComDbContext context, IMapper mapper, IEmailService emailService,
-                                       IMonitoringService monitoringService, IFiltroComunicazioniService filtroComunicazioniService,
-                                       IExcelService excelService, ISendMailService sendMailService,
-                                       ILogger<ComunicazionisEbiController> logger, IViewBagService viewBagService,
-                                       IRetryService retryService, IEncryptionService encryptionService)
-        : base(context, mapper, emailService, monitoringService, filtroComunicazioniService, excelService, sendMailService, logger, viewBagService, retryService, encryptionService)
+    public ComunicazionisEbiController(
+        ComDbContext context,
+        IMapper mapper,
+        IEmailService emailService,
+        IMonitoringService monitoringService,
+        IFiltroComunicazioniService filtroService, // Aggiunto
+        IExcelService excelService,                // Aggiunto
+        ISendMailService sendMailService,
+        IViewBagService viewBagService,
+        IRetryService retryService,
+        IEncryptionService encryptionService,
+        ILogger<ComunicazionisEbiController> logger) // Logger
+        : base(context, mapper, emailService, monitoringService, filtroService, excelService, sendMailService, logger, viewBagService, retryService, encryptionService)
     {
-        _editController = new EditController(context, mapper, retryService, viewBagService, monitoringService, sendMailService, excelService, encryptionService);
     }
 
     [HttpGet]
@@ -29,22 +34,23 @@ public class ComunicazionisEbiController : ComunicazioniBaseController<Comunicaz
         return await BaseIndex(filtri, "EBI");
     }
 
-    public async Task<IActionResult> Details(string id)
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Edit(string id)
     {
         return await BaseDetails(id);
     }
 
-    // Delego al controller EditController
-    public async Task<IActionResult> Edit(string id)
+    [HttpPost("{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(string id, ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
     {
-        return await _editController.Index(id);
+        var editController = new EditController(_context, _mapper, _retryService, _viewBagService, _sendMailService, _encryptionService);
+        return await editController.Index(id, comunicazioniDTO, excelFile);
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(string id, ComunicazioniDTO comunicazioniDTO, IFormFile excelFile)
+    public async Task<IActionResult> Details(string id)
     {
-        return await _editController.Index(id, comunicazioniDTO, excelFile);
+        return await BaseDetails(id);
     }
 
     public async Task<IActionResult> Delete(string id)
@@ -58,4 +64,11 @@ public class ComunicazionisEbiController : ComunicazioniBaseController<Comunicaz
     {
         return await BaseDeleteConfirmed(id);
     }
+
+    [HttpPost("ResetFiltri")]
+    public IActionResult ResetFiltri()
+    {
+        return base.ResetFiltri();
+    }
+
 }

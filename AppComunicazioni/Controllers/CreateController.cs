@@ -41,7 +41,7 @@ public class CreateController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note")] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
+    public async Task<IActionResult> Create([Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note, ")] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
     {
         if (ModelState.IsValid)
         {

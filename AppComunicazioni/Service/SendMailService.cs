@@ -9,15 +9,16 @@ public class SendMailService : ISendMailService
 {
     private readonly ComDbContext _context;
     private readonly IEmailService _emailService;
-    private readonly IMonitoringService _monitoringService;
+    private readonly IStopMonitoringService _stopMonitoringService; // Usa solo questo
     private readonly ILogger<SendMailService> _logger;
 
-    public SendMailService(ComDbContext context, IEmailService emailService, IMonitoringService monitoringService, ILogger<SendMailService> logger)
+    public SendMailService(ComDbContext context, IEmailService emailService,
+                           IStopMonitoringService stopMonitoringService, ILogger<SendMailService> logger)
     {
-        _context = context;
-        _emailService = emailService;
-        _monitoringService = monitoringService;
-        _logger = logger;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+        _stopMonitoringService = stopMonitoringService ?? throw new ArgumentNullException(nameof(stopMonitoringService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task HandlePostEditActionsAsync(Comunicazioni comunicazioniToUpdate)
@@ -25,7 +26,7 @@ public class SendMailService : ISendMailService
         if (comunicazioniToUpdate.DateF != null)
         {
             await SendMarkingEmailsAsync(comunicazioniToUpdate);
-            await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
+            await _stopMonitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
         }
     }
 

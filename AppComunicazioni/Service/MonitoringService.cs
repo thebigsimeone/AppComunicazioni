@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 public class MonitoringService : IMonitoringService
 {
     private readonly ComDbContext _context;
-    private readonly ISendMailService _sendMailService;
+    private readonly ISendMailService _sendMailService; // Mantieni questa dipendenza
     private readonly ILogger<MonitoringService> _logger;
 
     public MonitoringService(ComDbContext context, ISendMailService sendMailService, ILogger<MonitoringService> logger)
@@ -151,25 +151,4 @@ public class MonitoringService : IMonitoringService
         };
     }
 
-    public async Task StopMonitoringForComunicazioneAsync(int comunicazioneId)
-    {
-        try
-        {
-            var comunicazione = await _context.Comunicazionis.FindAsync(comunicazioneId);
-            if (comunicazione != null)
-            {
-                comunicazione.DateF = DateTime.Now;
-                await _context.SaveChangesAsync();
-                _logger.LogInformation($"Il monitoraggio per la comunicazione con ID {comunicazioneId} è stato interrotto.");
-            }
-            else
-            {
-                _logger.LogWarning($"Nessuna comunicazione trovata con ID {comunicazioneId}.");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Errore durante l'interruzione del monitoraggio per la comunicazione con ID {comunicazioneId}: {ex.Message}");
-        }
-    }
 }

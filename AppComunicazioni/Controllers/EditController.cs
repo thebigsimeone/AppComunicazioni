@@ -14,27 +14,25 @@ namespace AppComunicazioni.Controllers
         private readonly IMapper _mapper;
         private readonly IRetryService _retryService;
         private readonly IViewBagService _viewBagService;
-        private readonly IMonitoringService _monitoringService;
         private readonly ISendMailService _sendMailService;
-        private readonly IExcelService _excelService;
         private readonly IEncryptionService _encryptionService;
 
-        public EditController(ComDbContext context, IMapper mapper, IRetryService retryService,
-                              IViewBagService viewBagService, IMonitoringService monitoringService,
-                              ISendMailService sendMailService, IExcelService excelService,
-                              IEncryptionService encryptionService)
+        public EditController(
+            ComDbContext context,
+            IMapper mapper,
+            IRetryService retryService,
+            IViewBagService viewBagService,
+            ISendMailService sendMailService,
+            IEncryptionService encryptionService)
         {
-            _context = context;
-            _mapper = mapper;
-            _retryService = retryService;
-            _viewBagService = viewBagService;
-            _monitoringService = monitoringService;
-            _sendMailService = sendMailService;
-            _excelService = excelService;
-            _encryptionService = encryptionService;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _retryService = retryService ?? throw new ArgumentNullException(nameof(retryService));
+            _viewBagService = viewBagService ?? throw new ArgumentNullException(nameof(viewBagService));
+            _sendMailService = sendMailService ?? throw new ArgumentNullException(nameof(sendMailService));
+            _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
         }
 
-        // GET: Edit/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> Index(string id)
         {
@@ -53,23 +51,21 @@ namespace AppComunicazioni.Controllers
             return View(comunicazioniDTO);
         }
 
-        // POST: Edit/{id}
         [HttpPost("{id}")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(string id, [Bind] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
         {
-            int decryptedId = DecryptId(id); // Decripta l'ID dalla route
+            int decryptedId = DecryptId(id);
             if (decryptedId == -1) return BadRequest("ID non valido.");
 
-            // Assicurati che l'ID decriptato corrisponda al modello
             comunicazioniDTO.Id = decryptedId;
-
-            ModelState.Clear(); // Puliamo il ModelState per rimuovere problemi di binding sull'ID
-            TryValidateModel(comunicazioniDTO); // Ricalcoliamo la validazione del modello
+            ModelState.Clear();
+            TryValidateModel(comunicazioniDTO);
 
             if (!ModelState.IsValid)
             {
                 LogModelStateErrors();
-                ViewData["EncryptedId"] = id; // Reimposta l'ID crittografato
+                ViewData["EncryptedId"] = id;
                 SetViewBagOptions();
                 return View(comunicazioniDTO);
             }
@@ -81,36 +77,20 @@ namespace AppComunicazioni.Controllers
 
                 _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
 
-                // Logica DateF e Ritornato
                 if (comunicazioniDTO.DateF.HasValue)
                 {
                     comunicazioniToUpdate.Ritornato = true;
-                    comunicazioniToUpdate.Email_inviata = false; // Assicura che l'email venga inviata
+                    comunicazioniToUpdate.Email_inviata = false;
                     await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
-                    await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
                 }
                 else if (comunicazioniDTO.Ritornato)
                 {
                     comunicazioniToUpdate.Ritornato = true;
                     comunicazioniToUpdate.DateF = null;
-                    comunicazioniToUpdate.Email_inviata = true; // Nessuna email inviata
-                    await _monitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
                 }
 
                 await _context.SaveChangesAsync();
 
-                // Gestione file Excel
-                if (excelFile != null && excelFile.Length > 0)
-                {
-                    var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioniToUpdate.Id);
-                    if (dettagli != null)
-                    {
-                        _context.ComunicazioniDettagli.AddRange(dettagli);
-                        await _context.SaveChangesAsync();
-                    }
-                }
-
-                // Reindirizza alla pagina corretta in base al FileName
                 if (comunicazioniDTO.FileName?.Contains("EBI") == true)
                 {
                     return RedirectToAction("Index", "ComunicazionisEbi");
@@ -120,7 +100,6 @@ namespace AppComunicazioni.Controllers
                     return RedirectToAction("Index", "ComunicazionisSsc");
                 }
 
-                // Reindirizzamento predefinito
                 return RedirectToAction("Index", "Home");
             }, null, this);
         }
