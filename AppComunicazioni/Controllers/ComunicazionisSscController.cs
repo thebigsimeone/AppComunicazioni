@@ -68,8 +68,10 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
     }
 
     [HttpPost("ResetFiltri")]
-    public IActionResult ResetFiltri()
+    public new IActionResult ResetFiltri()
     {
-        return base.ResetFiltri();
+        base.ResetFiltri(); // Richiama il metodo della classe base, se necessario.
+        return RedirectToAction("Index");
     }
+
 }
