@@ -47,18 +47,14 @@
                 </tr>
             </thead>
             <tbody>
-                @{
-                    int rowNumber = 1;
-                }
-                @foreach (var dettaglio in Model.Dettagli)
+                @for (int i = 0; i < Model.Dettagli.Count; i++)
                 {
                     <tr>
-                        <td>@rowNumber</td>
-                        <td>@dettaglio.Protocollo</td>
-                        <td>@dettaglio.CodiceFiscale</td>
-                        <td>@dettaglio.ColonnaSupplementare</td>
+                        <td>@(i + 1)</td>
+                        <td>@Model.Dettagli[i].Protocollo</td>
+                        <td>@Model.Dettagli[i].CodiceFiscale</td>
+                        <td>@Model.Dettagli[i].ColonnaSupplementare</td>
                     </tr>
-                    rowNumber++; // Incrementa il contatore
                 }
             </tbody>
         </table>

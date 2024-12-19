@@ -13,13 +13,13 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
         IMapper mapper,
         IEmailService emailService,
         IMonitoringService monitoringService,
-        IFiltroComunicazioniService filtroService, // Aggiunto
-        IExcelService excelService,                // Aggiunto
+        IFiltroComunicazioniService filtroService,
+        IExcelService excelService,
         ISendMailService sendMailService,
         IViewBagService viewBagService,
         IRetryService retryService,
         IEncryptionService encryptionService,
-        ILogger<ComunicazionisSscController> logger) // Logger
+        ILogger<ComunicazionisSscController> logger)
         : base(context, mapper, emailService, monitoringService, filtroService, excelService, sendMailService, logger, viewBagService, retryService, encryptionService)
     {
     }
@@ -34,13 +34,19 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
         return await BaseIndex(filtri, "SSC");
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("Details/{id}")]
+    public async Task<IActionResult> Details(string id)
+    {
+        return await BaseDetails(id);
+    }
+
+    [HttpGet("Edit/{id}")]
     public async Task<IActionResult> Edit(string id)
     {
         return await BaseDetails(id);
     }
 
-    [HttpPost("{id}")]
+    [HttpPost("Edit/{id}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(string id, ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
     {
@@ -48,17 +54,13 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
         return await editController.Index(id, comunicazioniDTO, excelFile);
     }
 
-    public async Task<IActionResult> Details(string id)
-    {
-        return await BaseDetails(id);
-    }
-
+    [HttpGet("Delete/{id}")]
     public async Task<IActionResult> Delete(string id)
     {
         return await BaseDelete(id);
     }
 
-    [HttpPost, ActionName("Delete")]
+    [HttpPost("Delete/{id}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
@@ -70,5 +72,4 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
     {
         return base.ResetFiltri();
     }
-
 }
