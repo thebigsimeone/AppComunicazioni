@@ -15,15 +15,13 @@ namespace AppComunicazioni.Controllers
         private readonly IRetryService _retryService;
         private readonly IViewBagService _viewBagService;
         private readonly ISendMailService _sendMailService;
+        private readonly ILogger<EditController> _logger;
         private readonly IEncryptionService _encryptionService;
 
-        public EditController(
-            ComDbContext context,
-            IMapper mapper,
-            IRetryService retryService,
-            IViewBagService viewBagService,
-            ISendMailService sendMailService,
-            IEncryptionService encryptionService)
+        public EditController(ComDbContext context, IMapper mapper,
+                              IRetryService retryService, IViewBagService viewBagService,
+                              ISendMailService sendMailService, IEncryptionService encryptionService,
+                              ILogger<EditController> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -31,6 +29,7 @@ namespace AppComunicazioni.Controllers
             _viewBagService = viewBagService ?? throw new ArgumentNullException(nameof(viewBagService));
             _sendMailService = sendMailService ?? throw new ArgumentNullException(nameof(sendMailService));
             _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
+            _logger = logger;
         }
 
         [HttpGet("{id}")]
@@ -72,7 +71,7 @@ namespace AppComunicazioni.Controllers
             if (!ModelState.IsValid)
             {
                 LogModelStateErrors();
-                ViewData["EncryptedId"] = id ?? string.Empty; // Assegna un valore predefinito per evitare null
+                ViewData["EncryptedId"] = id ?? string.Empty;
                 SetViewBagOptions();
                 return View(comunicazioniDTO);
             }
@@ -83,22 +82,31 @@ namespace AppComunicazioni.Controllers
                 if (comunicazioniToUpdate == null)
                     return NotFound();
 
+                // Mappa i dati modificati
                 _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
 
-                if (comunicazioniDTO.DateF.HasValue)
+                bool isEmailInviata = comunicazioniToUpdate.Email_inviata ?? false;
+
+                if (comunicazioniToUpdate.DateF != null && !isEmailInviata)
                 {
+                    // Solo se DateF è valorizzato e Email_inviata è false
                     comunicazioniToUpdate.Ritornato = true;
-                    comunicazioniToUpdate.Email_inviata = false;
                     await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                 }
-                else if (comunicazioniDTO.Ritornato)
+                else if (comunicazioniDTO.Ritornato && comunicazioniToUpdate.DateF == null)
                 {
+                    // Se solo Ritornato è valorizzato a true e DateF è null
                     comunicazioniToUpdate.Ritornato = true;
-                    comunicazioniToUpdate.DateF = null;
+                }
+                else if (isEmailInviata)
+                {
+                    // Se Email_inviata è già true
+                    _logger.LogInformation($"Email già inviata per il file: {comunicazioniToUpdate.FileName}. Nessuna azione richiesta.");
                 }
 
                 await _context.SaveChangesAsync();
 
+                // Reindirizzamento in base al nome del file
                 if (!string.IsNullOrEmpty(comunicazioniDTO.FileName) && comunicazioniDTO.FileName.Contains("EBI"))
                 {
                     return RedirectToAction("Index", "ComunicazionisEbi");

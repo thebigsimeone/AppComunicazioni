@@ -23,7 +23,9 @@ public class SendMailService : ISendMailService
 
     public async Task HandlePostEditActionsAsync(Comunicazioni comunicazioniToUpdate)
     {
-        if (comunicazioniToUpdate.DateF != null)
+        bool isEmailInviata = comunicazioniToUpdate.Email_inviata ?? false;
+
+        if (comunicazioniToUpdate.DateF != null && !isEmailInviata)
         {
             await SendMarkingEmailsAsync(comunicazioniToUpdate);
             await _stopMonitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
@@ -32,7 +34,9 @@ public class SendMailService : ISendMailService
 
     public async Task SendMarkingEmailsAsync(Comunicazioni comunicazioni)
     {
-        if (comunicazioni.Email_inviata == true)
+        bool isEmailInviata = comunicazioni.Email_inviata ?? false;
+
+        if (isEmailInviata)
         {
             _logger.LogInformation($"Email già inviata per il file: {comunicazioni.FileName}. Nessuna azione richiesta.");
             return;
@@ -80,7 +84,7 @@ public class SendMailService : ISendMailService
             }
         }
 
-        // Aggiorna la colonna Email_inviata
+        // Aggiorna il flag Email_inviata
         if (emailSuccess)
         {
             comunicazioni.Email_inviata = true;
