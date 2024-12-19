@@ -30,10 +30,14 @@
         </dd>
     </dl>
 </div>
+<!-- Pulsante Indietro -->
+<div class="d-flex justify-content-between">
+    <a href="@ViewContext.HttpContext.Request.Headers["Referer"]" class="btn btn-outline-secondary">Indietro</a>
+</div>
 <h3>Dettagli del File Caricato</h3>
 @if (Model.Dettagli != null && Model.Dettagli.Any())
 {
-    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#dettagliTable" aria-expanded="false" aria-controls="dettagliTable">
+    <button class="btn btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#dettagliTable" aria-expanded="false" aria-controls="dettagliTable">
         Mostra/Nascondi Dettagli
     </button>
     <div class="collapse" id="dettagliTable">

@@ -36,17 +36,20 @@ namespace AppComunicazioni.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Index(string id)
         {
-            if (string.IsNullOrEmpty(id)) return NotFound();
+            if (string.IsNullOrEmpty(id))
+                return NotFound();
 
             int decryptedId = DecryptId(id);
-            if (decryptedId == -1) return BadRequest("ID non valido.");
+            if (decryptedId == -1)
+                return BadRequest("ID non valido.");
 
             var comunicazioni = await _context.Comunicazionis.FindAsync(decryptedId);
-            if (comunicazioni == null) return NotFound();
+            if (comunicazioni == null)
+                return NotFound();
 
             var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
 
-            ViewData["EncryptedId"] = id;
+            ViewData["EncryptedId"] = id ?? string.Empty; // Assegna un valore predefinito per evitare null
             SetViewBagOptions();
             return View(comunicazioniDTO);
         }
@@ -55,8 +58,12 @@ namespace AppComunicazioni.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(string id, [Bind] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
         {
+            if (string.IsNullOrEmpty(id))
+                return BadRequest("ID non valido.");
+
             int decryptedId = DecryptId(id);
-            if (decryptedId == -1) return BadRequest("ID non valido.");
+            if (decryptedId == -1)
+                return BadRequest("ID non valido.");
 
             comunicazioniDTO.Id = decryptedId;
             ModelState.Clear();
@@ -65,7 +72,7 @@ namespace AppComunicazioni.Controllers
             if (!ModelState.IsValid)
             {
                 LogModelStateErrors();
-                ViewData["EncryptedId"] = id;
+                ViewData["EncryptedId"] = id ?? string.Empty; // Assegna un valore predefinito per evitare null
                 SetViewBagOptions();
                 return View(comunicazioniDTO);
             }
@@ -73,7 +80,8 @@ namespace AppComunicazioni.Controllers
             return await _retryService.ExecuteWithRetry(async () =>
             {
                 var comunicazioniToUpdate = await _context.Comunicazionis.FindAsync(decryptedId);
-                if (comunicazioniToUpdate == null) return NotFound();
+                if (comunicazioniToUpdate == null)
+                    return NotFound();
 
                 _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
 
@@ -91,11 +99,11 @@ namespace AppComunicazioni.Controllers
 
                 await _context.SaveChangesAsync();
 
-                if (comunicazioniDTO.FileName?.Contains("EBI") == true)
+                if (!string.IsNullOrEmpty(comunicazioniDTO.FileName) && comunicazioniDTO.FileName.Contains("EBI"))
                 {
                     return RedirectToAction("Index", "ComunicazionisEbi");
                 }
-                else if (comunicazioniDTO.FileName?.Contains("SSC") == true)
+                else if (!string.IsNullOrEmpty(comunicazioniDTO.FileName) && comunicazioniDTO.FileName.Contains("SSC"))
                 {
                     return RedirectToAction("Index", "ComunicazionisSsc");
                 }
@@ -108,11 +116,11 @@ namespace AppComunicazioni.Controllers
         {
             try
             {
-                return int.Parse(_encryptionService.Decrypt(encryptedId));
+                return int.Parse(_encryptionService.Decrypt(encryptedId) ?? "-1"); // Gestisce null
             }
             catch
             {
-                return -1;
+                return -1; // Ritorna -1 in caso di errore
             }
         }
 
@@ -120,7 +128,9 @@ namespace AppComunicazioni.Controllers
         {
             foreach (var key in ModelState.Keys)
             {
-                var errors = ModelState[key].Errors;
+                var errors = ModelState[key]?.Errors;
+                if (errors == null) continue;
+
                 foreach (var error in errors)
                 {
                     Console.WriteLine($"Chiave: {key}, Errore: {error.ErrorMessage}");

@@ -76,17 +76,18 @@
             <!-- Bottoni -->
             <div class="d-flex justify-content-between">
                 <button type="submit" class="btn btn-outline-primary">Salva</button>
-                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Indietro</a>
+                <a href="@ViewContext.HttpContext.Request.Headers["Referer"]" class="btn btn-outline-secondary">Indietro</a>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    @Html.Partial("_ValidationScriptsPartial")
+    <partial name="_ValidationScriptsPartial" />
     <script>
         function clearDateF() {
             document.getElementById("DateF").value = '';
         }
     </script>
 }
+

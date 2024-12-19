@@ -35,16 +35,16 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
     }
 
     [HttpGet("Details/{id}")]
-    public async Task<IActionResult> Details(string id)
+    public IActionResult Details(string id)
     {
-        return await BaseDetails(id);
+        return RedirectToAction("Index", "Details", new { id });
     }
 
-    [HttpGet("Edit/{id}")]
-    public async Task<IActionResult> Edit(string id)
-    {
-        return await BaseDetails(id);
-    }
+    /*    [HttpGet("Edit/{id}")]
+        public async Task<IActionResult> Edit(string id)
+        {
+            return await BaseDetails(id);
+        }*/
 
     [HttpPost("Edit/{id}")]
     [ValidateAntiForgeryToken]

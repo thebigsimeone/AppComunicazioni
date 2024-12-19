@@ -125,7 +125,7 @@ namespace AppComunicazioni.Controllers
             }, _logger, this);
         }
 
-        protected async Task<IActionResult> BaseDetails(string encryptedId)
+/*        protected async Task<IActionResult> BaseDetails(string encryptedId)
         {
             return await _retryService.ExecuteWithRetry(async () =>
             {
@@ -152,7 +152,7 @@ namespace AppComunicazioni.Controllers
                 }
             }, _logger, this);
         }
-
+*/
         protected async Task<IActionResult> BaseDelete(string encryptedId)
         {
             return await _retryService.ExecuteWithRetry(async () =>
