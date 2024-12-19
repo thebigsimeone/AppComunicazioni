@@ -88,9 +88,14 @@ namespace AppComunicazioni.Service
 
         private IQueryable<Comunicazioni> FiltraPerTermineRicerca(IQueryable<Comunicazioni> query, string searchTerm)
         {
+            // Identifica se il searchTerm è un Protocollo o un Codice Fiscale
+            bool isProtocollo = searchTerm.Length == 11 && searchTerm.All(char.IsDigit);
+            bool isCodiceFiscale = searchTerm.Length >= 11 && searchTerm.All(char.IsLetterOrDigit);
+
             return query.Where(x =>
-                (x.FileName != null && x.FileName.Contains(searchTerm)) ||
-                (x.Dettagli != null && x.Dettagli.Any(d => d.Protocollo != null && d.Protocollo.Contains(searchTerm)))
+                (x.FileName != null && x.FileName.Contains(searchTerm)) || // Cerca nel nome del file
+                (isProtocollo && x.Dettagli != null && x.Dettagli.Any(d => d.Protocollo != null && d.Protocollo.Contains(searchTerm))) || // Cerca per Protocollo
+                (isCodiceFiscale && x.Dettagli != null && x.Dettagli.Any(d => d.CodiceFiscale != null && d.CodiceFiscale.Contains(searchTerm))) // Cerca per Codice Fiscale
             );
         }
 

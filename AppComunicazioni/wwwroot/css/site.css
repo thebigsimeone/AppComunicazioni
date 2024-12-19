@@ -1,3 +1,4 @@
+/* Impostazioni globali */
 html {
     font-size: 14px;
 }
@@ -8,37 +9,46 @@ html {
     }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
+/* Stile per input floating */
+.form-floating {
     position: relative;
-    min-height: 100%;
 }
 
-body {
-    margin-bottom: 60px;
+/* Spaziatura per input con icona */
+.input-with-icon {
+    padding-left: 4.1rem !important; /* Spazio per il pulsante */
 }
 
-/* Input Group Spacing */
-.input-group .btn {
-    z-index: 2;
-    border-radius: 0.375rem;
+/* Etichette allineate */
+.label-with-icon {
+    margin-left: 3.5rem; /* Allineamento con pulsante */
 }
 
-.input-group .form-floating input {
-    padding-left: 3rem; /* Spazio per il pulsante a sinistra */
-    padding-right: 3rem; /* Spazio per il pulsante a destra */
+/* Pulsante a sinistra */
+.floating-button {
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+/* Pulsante a destra */
+.floating-button-right {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
 }
 
 /* Icone dimensionate */
-.input-group .btn i {
+.btn i {
     font-size: 1.3rem;
 }
 
-/* Pulsante "pulisci" con spazio uniforme */
-.input-group .btn-outline-danger {
+/* Pulsante "pulisci" */
+.btn-outline-danger {
     margin-left: 0.5rem;
 }
 
@@ -46,3 +56,33 @@ body {
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     display: none;
 }
+
+/* Stile uniforme per i pulsanti di azione */
+.action-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px; /* Imposta una larghezza uguale per tutti i pulsanti */
+    height: 40px; /* Imposta un'altezza uguale per tutti i pulsanti */
+    padding: 0; /* Rimuove il padding interno */
+    font-size: 1.2rem; /* Dimensione del carattere per le icone */
+    border-radius: 0.25rem; /* Mantiene un aspetto arrotondato */
+}
+
+/* Differenziazione per i colori */
+.btn-outline-primary.action-button {
+    color: #0d6efd; /* Colore primario */
+    border-color: #0d6efd;
+}
+
+.btn-outline-danger.action-button {
+    color: #dc3545; /* Colore per il pulsante di eliminazione */
+    border-color: #dc3545;
+}
+
+/* Hover per evidenziare */
+.action-button:hover {
+    opacity: 0.85;
+    transition: all 0.2s ease-in-out;
+}
+
