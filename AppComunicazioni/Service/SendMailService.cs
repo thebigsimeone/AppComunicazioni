@@ -23,78 +23,62 @@ public class SendMailService : ISendMailService
 
     public async Task HandlePostEditActionsAsync(Comunicazioni comunicazioniToUpdate)
     {
-        bool isEmailInviata = comunicazioniToUpdate.Email_inviata ?? false;
+        await SendMarkingEmailsAsync(comunicazioniToUpdate);
 
-        if (comunicazioniToUpdate.DateF != null && !isEmailInviata)
-        {
-            await SendMarkingEmailsAsync(comunicazioniToUpdate);
-            await _stopMonitoringService.StopMonitoringForComunicazioneAsync(comunicazioniToUpdate.Id);
-        }
+        // Aggiorna Email_inviata
+        comunicazioniToUpdate.Email_inviata = true;
+        _context.Comunicazionis.Update(comunicazioniToUpdate);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation($"Email inviata e Email_inviata impostato a true per il file: {comunicazioniToUpdate.FileName}");
     }
 
     public async Task SendMarkingEmailsAsync(Comunicazioni comunicazioni)
     {
-        bool isEmailInviata = comunicazioni.Email_inviata ?? false;
-
-        if (isEmailInviata)
-        {
-            _logger.LogInformation($"Email già inviata per il file: {comunicazioni.FileName}. Nessuna azione richiesta.");
-            return;
-        }
-
         bool emailSuccess = true;
         var destinatari = await _context.Destinataris.Where(d => d.Attivo == "S").ToListAsync();
 
-        if (destinatari.Count == 0)
+        if (!destinatari.Any())
         {
             _logger.LogWarning("Non ci sono destinatari attivi.");
+            return;
         }
-        else
+
+        string subject = $"SMARCO ACCERTAMENTI DEL FILE: {comunicazioni.FileName}";
+        string formattedNote = !string.IsNullOrEmpty(comunicazioni.Note)
+            ? _emailService.FormatNote(comunicazioni.Note)
+            : "Nessuna nota disponibile.";
+
+        string message = $"<p>Il seguente file è stato smarcato: {comunicazioni.FileName}<br>" +
+                         $"Numero protocolli: {comunicazioni.NProtocol}<br>" +
+                         $"Protocolli da controllare: {comunicazioni.NsProtocol}<br>" +
+                         $"{formattedNote}<br>" +
+                         "Cordiali saluti,<br>Flavio Simeone</p>";
+
+        foreach (var destinatario in destinatari)
         {
-            string subject = $"SMARCO ACCERTAMENTI DEL FILE: {comunicazioni.FileName}";
-            string formattedNote = !string.IsNullOrEmpty(comunicazioni.Note)
-                ? _emailService.FormatNote(comunicazioni.Note)
-                : "Nessuna nota disponibile.";
-
-            string message = $"<p>Il seguente file è stato smarcato: {comunicazioni.FileName}<br>" +
-                             $"con il numero protocolli: {comunicazioni.NProtocol}<br><br>" +
-                             $"Questi sono i protocolli da controllare: {comunicazioni.NsProtocol}<br><br>" +
-                             $"{formattedNote}<br><br>" +
-                             $"Cordiali saluti,<br>Flavio Simeone</p>";
-
-            foreach (var destinatario in destinatari)
+            if (!string.IsNullOrEmpty(destinatario.Destinatario))
             {
-                if (!string.IsNullOrEmpty(destinatario.Destinatario))
+                try
                 {
-                    try
-                    {
-                        await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError($"Errore invio email a: {destinatario.Destinatario} | {ex.Message}");
-                        emailSuccess = false;
-                    }
+                    await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
+                    _logger.LogInformation($"Email inviata a: {destinatario.Destinatario}");
                 }
-                else
+                catch (Exception ex)
                 {
-                    _logger.LogWarning("Il destinatario non è valido (null o vuoto). Email non inviata.");
+                    _logger.LogError($"Errore invio email a {destinatario.Destinatario}: {ex.Message}");
                     emailSuccess = false;
                 }
             }
+            else
+            {
+                _logger.LogWarning("Il destinatario non è valido (null o vuoto).");
+                emailSuccess = false;
+            }
         }
 
-        // Aggiorna il flag Email_inviata
-        if (emailSuccess)
+        if (!emailSuccess)
         {
-            comunicazioni.Email_inviata = true;
-            _context.Comunicazionis.Update(comunicazioni);
-            await _context.SaveChangesAsync();
-            _logger.LogInformation($"Email inviata con successo per il file: {comunicazioni.FileName}");
-        }
-        else
-        {
-            _logger.LogWarning("Invio email fallito. Email_inviata non aggiornata.");
+            _logger.LogWarning("Invio email fallito. Flag Email_inviata non aggiornato.");
         }
     }
 

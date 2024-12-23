@@ -96,6 +96,7 @@ public class CreateController : Controller
                         comunicazioni.Notificato = false;
                         comunicazioni.Ritornato = false;
                         comunicazioni.NsProtocol = 0;
+                        comunicazioni.Email_inviata = false;
 
                         // Aggiungere la comunicazione al contesto
                         _context.Add(comunicazioni);

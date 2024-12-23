@@ -1,5 +1,6 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
+using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
@@ -99,17 +100,17 @@ namespace AppComunicazioni.Controllers
                         // Creazione del ViewModel
                         var model = new ComunicazioniViewModel
                         {
-                            Comunicazioni = items,
+                            Comunicazioni = items ?? new List<Comunicazioni>(),
                             CurrentPage = filtri.PageNumber,
                             TotalPages = (int)Math.Ceiling(totalItems / (double)filtri.PageSize),
                             StartDate = filtri.StartDate,
                             EndDate = filtri.EndDate,
-                            CodCor = filtri.CodCor,
-                            Servizio = filtri.Servizio,
+                            CodCor = filtri.CodCor ?? string.Empty,
+                            Servizio = filtri.Servizio ?? string.Empty,
                             MonthYear = filtri.MonthYear,
-                            SortField = filtri.SortField,
-                            SortOrder = filtri.SortOrder,
-                            SearchTerm = filtri.SearchTerm,
+                            SortField = filtri.SortField ?? "DateA",
+                            SortOrder = filtri.SortOrder ?? "asc",
+                            SearchTerm = filtri.SearchTerm ?? string.Empty,
                             SoloRigheNonRestituite = filtri.SoloRigheNonRestituite
                         };
 
@@ -124,35 +125,6 @@ namespace AppComunicazioni.Controllers
                 }
             }, _logger, this);
         }
-
-/*        protected async Task<IActionResult> BaseDetails(string encryptedId)
-        {
-            return await _retryService.ExecuteWithRetry(async () =>
-            {
-                using (var transaction = await _context.Database.BeginTransactionAsync())
-                {
-                    try
-                    {
-                        var id = DecryptId(encryptedId);
-
-                        var entity = await _context.Comunicazionis.FirstOrDefaultAsync(c => c.Id == id);
-                        if (entity == null) return NotFound();
-
-                        await _context.Entry(entity).Collection(c => c.Dettagli!).LoadAsync();
-                        var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(entity);
-
-                        await transaction.CommitAsync();
-                        return View("Details", comunicazioniDTO);
-                    }
-                    catch
-                    {
-                        await transaction.RollbackAsync();
-                        throw;
-                    }
-                }
-            }, _logger, this);
-        }
-*/
         protected async Task<IActionResult> BaseDelete(string encryptedId)
         {
             return await _retryService.ExecuteWithRetry(async () =>

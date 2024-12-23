@@ -1,9 +1,11 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
+using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 
 namespace AppComunicazioni.Controllers
 {
@@ -42,9 +44,13 @@ namespace AppComunicazioni.Controllers
             if (decryptedId == -1)
                 return BadRequest("ID non valido.");
 
-            var comunicazioni = await _context.Comunicazionis.FindAsync(decryptedId);
+            var comunicazioni = await _context.Comunicazionis
+                                .AsNoTracking() // Garantisce che il valore venga caricato dal database
+                                .FirstOrDefaultAsync(c => c.Id == decryptedId);
             if (comunicazioni == null)
                 return NotFound();
+
+            _logger.LogInformation($"Email_inviata al caricamento: {comunicazioni.Email_inviata}");
 
             var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
 
@@ -78,33 +84,35 @@ namespace AppComunicazioni.Controllers
 
             return await _retryService.ExecuteWithRetry(async () =>
             {
-                var comunicazioniToUpdate = await _context.Comunicazionis.FindAsync(decryptedId);
+                var comunicazioniToUpdate = await _context.Comunicazionis
+                                                    .FirstOrDefaultAsync(c => c.Id == decryptedId);
+
                 if (comunicazioniToUpdate == null)
                     return NotFound();
 
-                // Mappa i dati modificati
-                _mapper.Map(comunicazioniDTO, comunicazioniToUpdate);
+                // Log iniziale del valore Email_inviata
+                _logger.LogInformation($"Email_inviata dal DB (prima di qualsiasi operazione): {comunicazioniToUpdate.Email_inviata}");
 
-                bool isEmailInviata = comunicazioniToUpdate.Email_inviata ?? false;
+                // Ricaricare i valori dal database per evitare inconsistenze
+                await _context.Entry(comunicazioniToUpdate).ReloadAsync();
+                _logger.LogInformation($"Dopo Reload - Email_inviata: {comunicazioniToUpdate.Email_inviata}");
 
-                if (comunicazioniToUpdate.DateF != null && !isEmailInviata)
+                // Logica per invio email
+                if (!comunicazioniToUpdate.Email_inviata)
                 {
-                    // Solo se DateF è valorizzato e Email_inviata è false
-                    comunicazioniToUpdate.Ritornato = true;
+                    _logger.LogInformation($"Invio email per il file: {comunicazioniToUpdate.FileName}");
                     await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
+                    comunicazioniToUpdate.Email_inviata = true;
                 }
-                else if (comunicazioniDTO.Ritornato && comunicazioniToUpdate.DateF == null)
+                else
                 {
-                    // Se solo Ritornato è valorizzato a true e DateF è null
-                    comunicazioniToUpdate.Ritornato = true;
-                }
-                else if (isEmailInviata)
-                {
-                    // Se Email_inviata è già true
                     _logger.LogInformation($"Email già inviata per il file: {comunicazioniToUpdate.FileName}. Nessuna azione richiesta.");
                 }
 
+
+                // Salvataggio delle modifiche
                 await _context.SaveChangesAsync();
+                _logger.LogInformation($"Stato finale Email_inviata: {comunicazioniToUpdate.Email_inviata}");
 
                 // Reindirizzamento in base al nome del file
                 if (!string.IsNullOrEmpty(comunicazioniDTO.FileName) && comunicazioniDTO.FileName.Contains("EBI"))
