@@ -22,8 +22,9 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
         IRetryService retryService,
         IEncryptionService encryptionService,
         ILogger<ComunicazionisSscController> logger,
-        ILogger<EditController> editLogger)
-        : base(context, mapper, emailService, monitoringService, filtroService, excelService, sendMailService, logger, viewBagService, retryService, encryptionService)
+        ILogger<EditController> editLogger,
+        IPaginationService paginationService)
+        : base(context, mapper, emailService, monitoringService, filtroService, excelService, sendMailService, logger, viewBagService, retryService, encryptionService, paginationService)
     {
         _editLogger = editLogger ?? throw new ArgumentNullException(nameof(editLogger));
     }
@@ -31,10 +32,6 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
     [HttpGet]
     public async Task<IActionResult> Index([FromQuery] ComunicazioniViewModel filtri)
     {
-        if (filtri.PageNumber < 1)
-        {
-            filtri.PageNumber = 1;
-        }
         return await BaseIndex(filtri, "SSC");
     }
 

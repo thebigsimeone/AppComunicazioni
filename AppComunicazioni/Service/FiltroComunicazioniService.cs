@@ -17,11 +17,7 @@ namespace AppComunicazioni.Service
         {
             if (_session != null)
             {
-                var filtri = new[]
-                {
-                    "searchTerm", "startDate", "endDate", "codCor", "servizio",
-                    "monthYear", "sortField", "sortOrder", "soloRigheNonRestituite"
-                };
+                var filtri = new[] { "searchTerm", "startDate", "endDate", "codCor", "servizio", "monthYear", "soloRigheNonRestituite" };
 
                 foreach (var filtro in filtri)
                 {
@@ -31,72 +27,57 @@ namespace AppComunicazioni.Service
         }
 
         public async Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(
-            IQueryable<Comunicazioni> query,
-            string tenant,
-            string? searchTerm,
-            DateTime? startDate,
-            DateTime? endDate,
-            string? codCor,
-            string? servizio,
-            DateTime? monthYear,
-            string sortField,
-            string sortOrder,
-            bool soloRigheNonRestituite)
+                                                     IQueryable<Comunicazioni> query,
+                                                     string tenant,
+                                                     string? searchTerm,
+                                                     DateTime? startDate,
+                                                     DateTime? endDate,
+                                                     string? codCor,
+                                                     string? servizio,
+                                                     DateTime? monthYear,
+                                                     string sortField,
+                                                     string sortOrder,
+                                                     bool soloRigheNonRestituite)
         {
-            // Garantisce che i parametri non siano null, usando valori predefiniti se necessario
-            tenant = tenant ?? string.Empty;
-            searchTerm = searchTerm?.Trim() ?? string.Empty;
-            codCor = codCor ?? string.Empty;
-            servizio = servizio ?? string.Empty;
-            sortField = string.IsNullOrWhiteSpace(sortField) ? "DateA" : sortField;
-            sortOrder = string.IsNullOrWhiteSpace(sortOrder) ? "asc" : sortOrder;
-
-            // Applicazione dei filtri
-            query = query.Include(c => c.Dettagli);
-
-            if (!string.IsNullOrEmpty(tenant))
-                query = FiltraPerTenant(query, tenant);
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-                query = FiltraPerTermineRicerca(query, searchTerm);
-
-            if (startDate.HasValue || endDate.HasValue)
-                query = FiltraPerDate(query, startDate, endDate);
-
-            if (!string.IsNullOrEmpty(codCor))
-                query = FiltraPerCodCor(query, codCor);
-
-            if (!string.IsNullOrEmpty(servizio))
-                query = FiltraPerServizio(query, servizio);
-
-            if (monthYear.HasValue)
-                query = FiltraPerMeseAnno(query, monthYear);
-
+            // Applica i filtri modulari
+            query = FiltraPerTenant(query, tenant);
+            query = FiltraPerTermineRicerca(query, searchTerm);
+            query = FiltraPerDate(query, startDate, endDate);
+            query = FiltraPerCodCor(query, codCor);
+            query = FiltraPerServizio(query, servizio);
+            query = FiltraPerMeseAnno(query, monthYear);
             if (soloRigheNonRestituite)
-                query = FiltraPerRigheNonRestituite(query, soloRigheNonRestituite);
+                query = FiltraPerRigheNonRestituite(query);
 
+            // Applica ordinamento
             query = OrdinaQuery(query, sortField, sortOrder);
 
             return await Task.FromResult(query);
         }
 
-        #region Metodi di Filtraggio
         private IQueryable<Comunicazioni> FiltraPerTenant(IQueryable<Comunicazioni> query, string tenant)
         {
-            return query.Where(x => x.FileName != null && x.FileName.Contains(tenant));
+            if (!string.IsNullOrEmpty(tenant))
+            {
+                query = query.Where(x => x.Mandante != null && x.Mandante == tenant);
+            }
+            return query;
         }
 
-        private IQueryable<Comunicazioni> FiltraPerTermineRicerca(IQueryable<Comunicazioni> query, string searchTerm)
+        private IQueryable<Comunicazioni> FiltraPerTermineRicerca(IQueryable<Comunicazioni> query, string? searchTerm)
         {
-            // Identifica se il searchTerm è un Protocollo o un Codice Fiscale
-            bool isProtocollo = searchTerm.Length == 11 && searchTerm.All(char.IsDigit);
-            bool isCodiceFiscale = searchTerm.Length >= 11 && searchTerm.All(char.IsLetterOrDigit);
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                bool isProtocollo = searchTerm.Length == 11 && searchTerm.All(char.IsDigit);
+                bool isCodiceFiscale = searchTerm.Length >= 11 && searchTerm.All(char.IsLetterOrDigit);
 
-            return query.Where(x =>
-                (x.FileName != null && x.FileName.Contains(searchTerm)) || // Cerca nel nome del file
-                (isProtocollo && x.Dettagli != null && x.Dettagli.Any(d => d.Protocollo != null && d.Protocollo.Contains(searchTerm))) || // Cerca per Protocollo
-                (isCodiceFiscale && x.Dettagli != null && x.Dettagli.Any(d => d.CodiceFiscale != null && d.CodiceFiscale.Contains(searchTerm))) // Cerca per Codice Fiscale
-            );
+                query = query.Where(x =>
+                    (x.FileName != null && x.FileName.Contains(searchTerm)) ||
+                    (isProtocollo && x.Dettagli != null && x.Dettagli.Any(d => d.Protocollo != null && d.Protocollo.Contains(searchTerm))) ||
+                    (isCodiceFiscale && x.Dettagli != null && x.Dettagli.Any(d => d.CodiceFiscale != null && d.CodiceFiscale.Contains(searchTerm)))
+                );
+            }
+            return query;
         }
 
         private IQueryable<Comunicazioni> FiltraPerDate(IQueryable<Comunicazioni> query, DateTime? startDate, DateTime? endDate)
@@ -112,24 +93,32 @@ namespace AppComunicazioni.Service
             return query;
         }
 
-        private IQueryable<Comunicazioni> FiltraPerCodCor(IQueryable<Comunicazioni> query, string codCor)
+        private IQueryable<Comunicazioni> FiltraPerCodCor(IQueryable<Comunicazioni> query, string? codCor)
         {
-            return codCor switch
+            if (!string.IsNullOrEmpty(codCor))
             {
-                nameof(CodCorType.CESSIONI) => query.Where(x => x.FileName != null &&
-                    (x.FileName.StartsWith("001-1990") ||
-                     x.FileName.StartsWith("001-1989") ||
-                     x.FileName.StartsWith("001-8027") ||
-                     x.FileName.StartsWith("001-1988"))),
-                nameof(CodCorType.FORZA) => query.Where(x => x.FileName != null && x.FileName.StartsWith("001-8096")),
-                nameof(CodCorType.DATAVIZ) => query.Where(x => x.FileName != null && x.FileName.StartsWith("001-8033")),
-                _ => query.Where(x => x.FileName != null && x.FileName.Contains(codCor)),
-            };
+                query = codCor switch
+                {
+                    nameof(CodCorType.CESSIONI) => query.Where(x => x.FileName != null &&
+                        (x.FileName.StartsWith("001-1990") ||
+                         x.FileName.StartsWith("001-1989") ||
+                         x.FileName.StartsWith("001-8027") ||
+                         x.FileName.StartsWith("001-1988"))),
+                    nameof(CodCorType.FORZA) => query.Where(x => x.FileName != null && x.FileName.StartsWith("001-8096")),
+                    nameof(CodCorType.DATAVIZ) => query.Where(x => x.FileName != null && x.FileName.StartsWith("001-8033")),
+                    _ => query.Where(x => x.FileName != null && x.FileName.Contains(codCor)),
+                };
+            }
+            return query;
         }
 
-        private IQueryable<Comunicazioni> FiltraPerServizio(IQueryable<Comunicazioni> query, string servizio)
+        private IQueryable<Comunicazioni> FiltraPerServizio(IQueryable<Comunicazioni> query, string? servizio)
         {
-            return query.Where(x => x.Servizio != null && x.Servizio == servizio);
+            if (!string.IsNullOrEmpty(servizio))
+            {
+                query = query.Where(x => x.Servizio != null && x.Servizio == servizio);
+            }
+            return query;
         }
 
         private IQueryable<Comunicazioni> FiltraPerMeseAnno(IQueryable<Comunicazioni> query, DateTime? monthYear)
@@ -143,7 +132,7 @@ namespace AppComunicazioni.Service
             return query;
         }
 
-        private IQueryable<Comunicazioni> FiltraPerRigheNonRestituite(IQueryable<Comunicazioni> query, bool soloRigheNonRestituite)
+        private IQueryable<Comunicazioni> FiltraPerRigheNonRestituite(IQueryable<Comunicazioni> query)
         {
             return query.Where(x => x.DateF == null);
         }
@@ -173,6 +162,6 @@ namespace AppComunicazioni.Service
                 _ => query.OrderBy(x => x.DateA),
             };
         }
-        #endregion
+
     }
 }

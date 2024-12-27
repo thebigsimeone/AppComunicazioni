@@ -2,6 +2,7 @@
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
+using AppComunicazioni.Service;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -22,12 +23,13 @@ namespace AppComunicazioni.Controllers
         protected readonly ILogger<TLogger> _logger;
         protected readonly IRetryService _retryService;
         protected readonly IEncryptionService _encryptionService;
+        protected readonly IPaginationService _paginationService;
 
         public ComunicazioniBaseController(ComDbContext context, IMapper mapper, IEmailService emailService,
                                            IMonitoringService monitoringService, IFiltroComunicazioniService filtroService,
                                            IExcelService excelService, ISendMailService sendMailService,
                                            ILogger<TLogger> logger, IViewBagService viewBagService,
-                                           IRetryService retryService, IEncryptionService encryptionService)
+                                           IRetryService retryService, IEncryptionService encryptionService, IPaginationService paginationService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -40,6 +42,7 @@ namespace AppComunicazioni.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _retryService = retryService ?? throw new ArgumentNullException(nameof(retryService));
             _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
+            _paginationService = paginationService;
         }
 
         protected string EncryptId(int id) => _encryptionService.Encrypt(id.ToString());
@@ -64,45 +67,36 @@ namespace AppComunicazioni.Controllers
                 {
                     try
                     {
-
                         SetViewBagOptions(filtri.CodCor);
 
-                        // Gestione dei possibili valori null
-                        var searchTerm = filtri.SearchTerm ?? string.Empty;
-                        var codCor = filtri.CodCor ?? string.Empty;
-                        var servizio = filtri.Servizio ?? string.Empty;
-                        var sortField = filtri.SortField ?? "DateA"; // Campo di ordinamento predefinito
-                        var sortOrder = filtri.SortOrder ?? "asc";   // Ordinamento predefinito
-
-                        // Applicazione dei filtri tramite il servizio
                         var query = _context.Comunicazionis.AsQueryable();
+
                         query = await _filtroService.FiltraComunicazioniAsync(
                             query,
                             tipoAccertamento,
-                            searchTerm,
+                            filtri.SearchTerm ?? string.Empty,
                             filtri.StartDate,
                             filtri.EndDate,
-                            codCor,
-                            servizio,
+                            filtri.CodCor ?? string.Empty,
+                            filtri.Servizio ?? string.Empty,
                             filtri.MonthYear,
-                            sortField,
-                            sortOrder,
+                            filtri.SortField ?? "DateA",
+                            filtri.SortOrder ?? "asc",
                             filtri.SoloRigheNonRestituite
                         );
 
-                        // Paginazione
-                        var totalItems = await query.CountAsync();
-                        var items = await query
-                            .Skip((filtri.PageNumber - 1) * filtri.PageSize)
-                            .Take(filtri.PageSize)
-                            .ToListAsync();
+                        // Usare il PaginationService
+                        var (paginatedData, totalPages) = await _paginationService.PaginateAsync(
+                            query,
+                            filtri.PageNumber,
+                            filtri.PageSize
+                        );
 
-                        // Creazione del ViewModel
                         var model = new ComunicazioniViewModel
                         {
-                            Comunicazioni = items ?? new List<Comunicazioni>(),
+                            Comunicazioni = await paginatedData.ToListAsync(),
                             CurrentPage = filtri.PageNumber,
-                            TotalPages = (int)Math.Ceiling(totalItems / (double)filtri.PageSize),
+                            TotalPages = totalPages,
                             StartDate = filtri.StartDate,
                             EndDate = filtri.EndDate,
                             CodCor = filtri.CodCor ?? string.Empty,
@@ -125,6 +119,7 @@ namespace AppComunicazioni.Controllers
                 }
             }, _logger, this);
         }
+
         protected async Task<IActionResult> BaseDelete(string encryptedId)
         {
             return await _retryService.ExecuteWithRetry(async () =>

@@ -65,6 +65,7 @@ builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 builder.Services.AddScoped<IStopMonitoringService, StopMonitoringService>();
 
 builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
+builder.Services.AddScoped<IPaginationService, PaginationService>();
 
 builder.Services.AddScoped<IContabilitàService, ContabilitàService>();
 

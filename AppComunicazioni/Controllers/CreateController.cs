@@ -65,7 +65,7 @@ public class CreateController : Controller
                                 var servicePart = fileNameParts[^2]; // Penultima parte della stringa
 
                                 // Gestire caso particolare "035" -> "S035"
-                                if (servicePart == "35")
+                                if (servicePart == "035")
                                 {
                                     servicePart = "S035";
                                 }
@@ -97,6 +97,9 @@ public class CreateController : Controller
                         comunicazioni.Ritornato = false;
                         comunicazioni.NsProtocol = 0;
                         comunicazioni.Email_inviata = false;
+                        comunicazioni.Mandante = comunicazioni.FileName.Contains("SSC", StringComparison.OrdinalIgnoreCase)
+                                                                                ? "SSC"
+                                                                                : "EBI";
 
                         // Aggiungere la comunicazione al contesto
                         _context.Add(comunicazioni);

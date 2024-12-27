@@ -1,7 +1,9 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
+using AppComunicazioni.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 
 namespace AppComunicazioni.Controllers
 {
@@ -29,39 +31,46 @@ namespace AppComunicazioni.Controllers
         {
             return await _retryService.ExecuteWithRetry(async () =>
             {
-                using (var transaction = await _context.Database.BeginTransactionAsync())
-                {
-                    try
+                // Configurazione ViewBag
+                ViewBag.CodCorOptions = _viewBagService.GetCodCorOptions(codCor);
+                ViewBag.TipoAccertamentoOptions = new List<SelectListItem>
+        {
+            new SelectListItem { Value = "SSC", Text = "SSC", Selected = tipoAccertamento == "SSC" },
+            new SelectListItem { Value = "EBI", Text = "EBI", Selected = tipoAccertamento == "EBI" }
+        };
+
+                ViewData["MeseAnno"] = meseAnno?.ToString("yyyy-MM");
+                ViewData["CodCor"] = codCor;
+                ViewData["TipoAccertamento"] = tipoAccertamento;
+
+                var query = _context.Comunicazionis.AsQueryable();
+
+                query = await _filtroService.FiltraComunicazioniAsync(
+                    query,
+                    tipoAccertamento ?? string.Empty,
+                    string.Empty, // Nessun termine di ricerca
+                    null,         // Nessuna data di inizio
+                    null,         // Nessuna data di fine
+                    codCor ?? string.Empty,
+                    string.Empty, // Nessun filtro sul servizio
+                    meseAnno,     // Filtra per mese/anno
+                    "DateA",      // Campo predefinito per l'ordinamento
+                    "asc",        // Ordinamento crescente
+                    false         // Nessun filtro per righe non restituite
+                );
+
+                var model = await query
+                    .GroupBy(x => x.Servizio)
+                    .Select(g => new ContabilitaAccertamentiViewModel
                     {
-                        // Utilizza il servizio ViewBagService per configurare le opzioni del ViewBag
-                        ViewBag.CodCorOptions = _viewBagService.GetCodCorOptions(codCor);
-                        ViewBag.TipoAccertamentoOptions = new List<SelectListItem>
-                    {
-                        new SelectListItem { Value = "SSC", Text = "SSC", Selected = tipoAccertamento == "SSC" },
-                        new SelectListItem { Value = "EBI", Text = "EBI", Selected = tipoAccertamento == "EBI" }
-                    };
+                        Servizio = g.Key ?? "N/A",
+                        TotaleAccertamenti = g.Sum(x => x.NProtocol ?? 0),
+                        TotaleAccertamentiRitornati = g.Sum(x => x.DateF.HasValue ? x.NProtocol ?? 0 : 0),
+                        TotaleAccertamentiMancanti = g.Sum(x => !x.DateF.HasValue ? x.NProtocol ?? 0 : 0)
+                    })
+                    .ToListAsync();
 
-                        ViewData["MeseAnno"] = meseAnno?.ToString("yyyy-MM");
-                        ViewData["CodCor"] = codCor;
-                        ViewData["TipoAccertamento"] = tipoAccertamento;
-
-                        if (_contabilitaService == null)
-                        {
-                            return NotFound("Servizio di contabilità non disponibile.");
-                        }
-
-                        // Recupera il totale degli accertamenti utilizzando il servizio di contabilità
-                        var model = await _contabilitaService.GetTotaleAccertamentiAsync(meseAnno, codCor, tipoAccertamento);
-
-                        await transaction.CommitAsync(); // Conferma la transazione se tutto è andato a buon fine
-                        return View(model);
-                    }
-                    catch
-                    {
-                        await transaction.RollbackAsync(); // Annulla la transazione in caso di errore
-                        throw;
-                    }
-                }
+                return View(model);
             }, _logger, this);
         }
 

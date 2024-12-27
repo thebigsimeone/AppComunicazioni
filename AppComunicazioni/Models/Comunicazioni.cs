@@ -51,6 +51,9 @@ public partial class Comunicazioni
     [Column("email_inviata")]
     [Display(Name = "Email inviata")]
     public bool Email_inviata { get; set; }
+    [Column("mandante")]
+    [Display(Name = "Mandante")]
+    public string? Mandante { get; set; }
 
     public ICollection<ComunicazioniDettaglio>? Dettagli { get; set; }
 }

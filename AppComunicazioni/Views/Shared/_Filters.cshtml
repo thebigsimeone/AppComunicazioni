@@ -1,0 +1,83 @@
+﻿@model ComunicazioniViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+<form asp-action="Index" method="get" class="p-3 border rounded bg-light mb-4" style="font-size: 0.9rem;">
+    <div class="row g-2 align-items-center">
+        <!-- Search Term -->
+        <div class="col-lg-3 col-md-4">
+            <div class="input-group">
+                <label for="searchTerm" class="visually-hidden">Cerca per nome file/protocollo/CF|PI</label>
+                <span class="input-group-text"><i class="bi bi-search" title="Cerca per nome file/protocollo/CF|PI"></i></span>
+                <input type="text" name="searchTerm" id="searchTerm" class="form-control" placeholder="Nome file/Protocollo/CF|PI" value="@(Model.SearchTerm ?? "")">
+            </div>
+        </div>
+
+        <!-- Start Date -->
+        <div class="col-lg-2 col-md-4">
+            <div class="input-group">
+                <label for="startDate" class="visually-hidden">Data Inizio</label>
+                <span class="input-group-text"><i class="bi bi-calendar" title="Data di invio"></i></span>
+                <input type="date" name="startDate" id="startDate" class="form-control" value="@(Model.StartDate?.ToString("yyyy-MM-dd") ?? "")">
+            </div>
+        </div>
+
+        <!-- End Date -->
+        <div class="col-lg-2 col-md-4">
+            <div class="input-group">
+                <label for="endDate" class="visually-hidden">Data Fine</label>
+                <span class="input-group-text"><i class="bi bi-calendar" title="Data di arrivo"></i></span>
+                <input type="date" name="endDate" id="endDate" class="form-control" value="@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "")">
+            </div>
+        </div>
+
+        <!-- Month Year -->
+        <div class="col-lg-2 col-md-4">
+            <div class="input-group">
+                <label for="monthYear" class="visually-hidden">Mese e Anno</label>
+                <span class="input-group-text"><i class="bi bi-calendar2-month" title="Filtra per anno/mese"></i></span>
+                <input type="month" name="monthYear" id="monthYear" class="form-control" value="@(Model.MonthYear?.ToString("yyyy-MM") ?? "")">
+            </div>
+        </div>
+
+        <!-- CodCor Select -->
+        <div class="col-lg-2 col-md-4">
+            <div class="input-group">
+                <label for="codCorSelect" class="visually-hidden">Seleziona Codice Correlato</label>
+                <span class="input-group-text"><i class="bi bi-list-task" title="Fornitore"></i></span>
+                <select id="codCorSelect" name="codCor" class="form-select" asp-items="ViewBag.CodCorOptions" onchange="updateServizioOptions()">
+                    <option value="">-- Seleziona Codice Correlato --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Servizio Select -->
+        <div class="col-lg-2 col-md-4">
+            <div class="input-group">
+                <label for="servizioSelect" class="visually-hidden">Seleziona Servizio</label>
+                <span class="input-group-text"><i class="bi bi-list-task" title="Servizio"></i></span>
+                <select id="servizioSelect" name="servizio" class="form-select" asp-items="ViewBag.ServizioOptions">
+                    <option value="">-- Seleziona Servizio --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Checkbox Solo Righe Non Restituite -->
+        <div class="col-auto d-flex align-items-center">
+            <div class="form-check">
+                <input type="checkbox" name="soloRigheNonRestituite" class="form-check-input" id="soloRigheNonRestituite"
+                       value="true" @(Model.SoloRigheNonRestituite ? "checked" : "")>
+                <label class="form-check-label" for="soloRigheNonRestituite">Solo file non evasi</label>
+            </div>
+        </div>
+
+        <!-- Buttons for Filter and Reset -->
+        <div class="col-auto d-flex align-items-center">
+            <button type="submit" class="btn btn-outline-primary me-2" aria-label="Filtra risultati" title="Filtra">
+                <i class="bi bi-funnel-fill"></i>
+            </button>
+            <button type="submit" formaction="@Url.Action("ResetFiltri")" formmethod="post" class="btn btn-outline-secondary" aria-label="Reimposta filtri" title="Reset Filtro">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+    </div>
+</form>
