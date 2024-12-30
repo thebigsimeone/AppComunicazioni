@@ -5,9 +5,9 @@
     @foreach (var item in Model)
     {
         <tr class="@(item.DateF == null ? "table-danger" : "table-light")">
-            <a asp-controller="Details" asp-action="Index" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="btn btn-link">
+            <td asp-controller="Details" asp-action="Index" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="btn btn-link">
                 @item.FileName
-            </a>
+            </td>
             <td>@item.DateA?.ToString("dd/MM/yyyy")</td>
             <td>@item.DateF?.ToString("dd/MM/yyyy")</td>
             <td>@item.NProtocol</td>
