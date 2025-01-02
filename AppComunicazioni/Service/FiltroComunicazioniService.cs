@@ -1,58 +1,81 @@
 ﻿using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
-using Microsoft.EntityFrameworkCore;
+using AppComunicazioni.Utility;
 
 namespace AppComunicazioni.Service
 {
     public class FiltroComunicazioniService : IFiltroComunicazioniService
     {
-        private readonly ISession? _session;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<FiltroComunicazioniService> _logger;
 
-        public FiltroComunicazioniService(IHttpContextAccessor httpContextAccessor)
+        public FiltroComunicazioniService(IHttpContextAccessor httpContextAccessor, ILogger<FiltroComunicazioniService> logger)
         {
-            _session = httpContextAccessor.HttpContext?.Session;
+            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+            _logger = logger;
         }
+
+        private ISession Session => _httpContextAccessor.HttpContext?.Session
+            ?? throw new InvalidOperationException("Session is not available");
 
         public void ResetFiltri()
         {
-            if (_session != null)
-            {
-                var filtri = new[] { "searchTerm", "startDate", "endDate", "codCor", "servizio", "monthYear", "soloRigheNonRestituite" };
+            var filtri = new[] { "searchTerm", "startDate", "endDate", "codCor", "servizio", "monthYear", "soloRigheNonRestituite" };
 
-                foreach (var filtro in filtri)
-                {
-                    _session.Remove(filtro);
-                }
+            foreach (var filtro in filtri)
+            {
+                Session.Remove(filtro);
+                _logger.LogInformation($"Filtro '{filtro}' rimosso dalla sessione.");
             }
+
+            _logger.LogInformation("Tutti i filtri sono stati resettati.");
         }
 
         public async Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(
-                                                     IQueryable<Comunicazioni> query,
-                                                     string tenant,
-                                                     string? searchTerm,
-                                                     DateTime? startDate,
-                                                     DateTime? endDate,
-                                                     string? codCor,
-                                                     string? servizio,
-                                                     DateTime? monthYear,
-                                                     string sortField,
-                                                     string sortOrder,
-                                                     bool soloRigheNonRestituite)
+            IQueryable<Comunicazioni> query,
+            string tenant,
+            string? searchTerm,
+            DateTime? startDate,
+            DateTime? endDate,
+            string? codCor,
+            string? servizio,
+            DateTime? monthYear,
+            string sortField,
+            string sortOrder,
+            bool soloRigheNonRestituite)
         {
-            // Applica i filtri modulari
+            // Salva i parametri di filtro nella sessione
+            Session.SetString("SearchTerm", searchTerm ?? Session.GetString("SearchTerm") ?? string.Empty);
+            Session.SetString("CodCor", codCor ?? Session.GetString("CodCor") ?? string.Empty);
+            Session.SetString("Servizio", servizio ?? Session.GetString("Servizio") ?? string.Empty);
+            Session.SetString("SortField", sortField ?? Session.GetString("SortField") ?? "DateA");
+            Session.SetString("SortOrder", sortOrder ?? Session.GetString("SortOrder") ?? "asc");
+            Session?.SetBoolean("SoloRigheNonRestituite", soloRigheNonRestituite);
+
+            if (startDate.HasValue)
+                Session?.SetString("StartDate", startDate.Value.ToString("o"));
+            else if (Session?.GetString("StartDate") != null)
+                startDate = DateTime.Parse(Session.GetString("StartDate")!);
+
+            if (endDate.HasValue)
+                Session?.SetString("EndDate", endDate.Value.ToString("o"));
+            else if (Session?.GetString("EndDate") != null)
+                endDate = DateTime.Parse(Session.GetString("EndDate")!);
+
+            // Applica i filtri
             query = FiltraPerTenant(query, tenant);
             query = FiltraPerTermineRicerca(query, searchTerm);
             query = FiltraPerDate(query, startDate, endDate);
             query = FiltraPerCodCor(query, codCor);
             query = FiltraPerServizio(query, servizio);
             query = FiltraPerMeseAnno(query, monthYear);
+
             if (soloRigheNonRestituite)
                 query = FiltraPerRigheNonRestituite(query);
 
-            // Applica ordinamento
-            query = OrdinaQuery(query, sortField, sortOrder);
+            await Task.CompletedTask; // Per mantenere il metodo asincrono
 
-            return await Task.FromResult(query);
+            return OrdinaQuery(query, sortField, sortOrder);
         }
 
         private IQueryable<Comunicazioni> FiltraPerTenant(IQueryable<Comunicazioni> query, string tenant)
@@ -60,6 +83,7 @@ namespace AppComunicazioni.Service
             if (!string.IsNullOrEmpty(tenant))
             {
                 query = query.Where(x => x.Mandante != null && x.Mandante == tenant);
+                _logger.LogInformation($"Applicato filtro per tenant: {query}");
             }
             return query;
         }
@@ -77,6 +101,7 @@ namespace AppComunicazioni.Service
                     (isCodiceFiscale && x.Dettagli != null && x.Dettagli.Any(d => d.CodiceFiscale != null && d.CodiceFiscale.Contains(searchTerm)))
                 );
             }
+            _logger.LogInformation($"Applicato filtro per termine di ricerca: {query}");
             return query;
         }
 
@@ -109,6 +134,7 @@ namespace AppComunicazioni.Service
                     _ => query.Where(x => x.FileName != null && x.FileName.Contains(codCor)),
                 };
             }
+            _logger.LogInformation($"Applicato filtro per termine di ricerca: {query}");
             return query;
         }
 
@@ -118,6 +144,7 @@ namespace AppComunicazioni.Service
             {
                 query = query.Where(x => x.Servizio != null && x.Servizio == servizio);
             }
+            _logger.LogInformation($"Applicato filtro per termine di ricerca: {query}");
             return query;
         }
 
@@ -129,12 +156,15 @@ namespace AppComunicazioni.Service
                 var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
                 query = query.Where(x => x.DateA.HasValue && x.DateA.Value >= firstDayOfMonth && x.DateA.Value <= lastDayOfMonth);
             }
+            _logger.LogInformation($"Applicato filtro per termine di ricerca: {query}");
             return query;
         }
 
         private IQueryable<Comunicazioni> FiltraPerRigheNonRestituite(IQueryable<Comunicazioni> query)
         {
+            _logger.LogInformation($"Applicato filtro per termine di ricerca: {query}");
             return query.Where(x => x.DateF == null);
+
         }
 
         private IQueryable<Comunicazioni> OrdinaQuery(IQueryable<Comunicazioni> query, string sortField, string sortOrder)

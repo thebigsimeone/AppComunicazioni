@@ -1,31 +1,29 @@
-﻿<nav class="d-flex justify-content-center mt-4">
-    <ul class="pagination">
-        <!-- Bottone Prima Pagina -->
-        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
-            <a class="page-link" asp-route-pageNumber="1">Prima</a>
-        </li>
-
-        <!-- Bottone Pagina Precedente -->
-        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
-            <a class="page-link" asp-route-pageNumber="@(Model.CurrentPage - 1)">«</a>
-        </li>
-
-        <!-- Intervallo dinamico delle pagine -->
-        @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
-        {
-            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                <a class="page-link" asp-route-pageNumber="@i">@i</a>
+﻿<div class="d-flex justify-content-center">
+    <nav>
+        <ul class="pagination">
+            <!-- Prima Pagina -->
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-route-CurrentPage="1" asp-route-PageSize="@Model.PageSize">Prima</a>
             </li>
-        }
-
-        <!-- Bottone Pagina Successiva -->
-        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
-            <a class="page-link" asp-route-pageNumber="@(Model.CurrentPage + 1)">»</a>
-        </li>
-
-        <!-- Bottone Ultima Pagina -->
-        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
-            <a class="page-link" asp-route-pageNumber="@Model.TotalPages">Ultima</a>
-        </li>
-    </ul>
-</nav>
+            <!-- Pagina Precedente -->
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-route-CurrentPage="@(Model.CurrentPage - 1)" asp-route-PageSize="@Model.PageSize">«</a>
+            </li>
+            <!-- Intervallo di Pagine -->
+            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" asp-route-CurrentPage="@i" asp-route-PageSize="@Model.PageSize">@i</a>
+                </li>
+            }
+            <!-- Pagina Successiva -->
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-route-CurrentPage="@(Model.CurrentPage + 1)" asp-route-PageSize="@Model.PageSize">»</a>
+            </li>
+            <!-- Ultima Pagina -->
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-route-CurrentPage="@Model.TotalPages" asp-route-PageSize="@Model.PageSize">Ultima</a>
+            </li>
+        </ul>
+    </nav>
+</div>

@@ -49,9 +49,9 @@ builder.Services.AddDbContext<ComDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Timeout sessione
     options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
+    options.Cookie.IsEssential = true; // Necessario per GDPR
 });
 
 // Registrazione dei servizi

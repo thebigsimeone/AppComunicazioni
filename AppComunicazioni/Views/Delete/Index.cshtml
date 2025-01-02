@@ -1,0 +1,34 @@
+﻿@model AppComunicazioni.Models.Comunicazioni
+
+@{
+    ViewData["Title"] = "Conferma eliminazione";
+}
+
+<h1>Conferma eliminazione</h1>
+
+<div class="alert alert-warning" role="alert">
+    Sei sicuro di voler eliminare la comunicazione seguente? L'operazione non può essere annullata.
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Nome file:</dt>
+    <dd class="col-sm-9">@Model.FileName</dd>
+
+    <dt class="col-sm-3">Data di invio:</dt>
+    <dd class="col-sm-9">@Model.DateA?.ToString("dd/MM/yyyy")</dd>
+
+    <dt class="col-sm-3">Data di fine smarco:</dt>
+    <dd class="col-sm-9">@Model.DateF?.ToString("dd/MM/yyyy")</dd>
+
+    <dt class="col-sm-3">Numero protocolli:</dt>
+    <dd class="col-sm-9">@Model.NProtocol</dd>
+
+    <dt class="col-sm-3">Servizio:</dt>
+    <dd class="col-sm-9">@Model.Servizio</dd>
+</dl>
+
+<form asp-action="DeleteConfirmed" method="post">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <button type="submit" class="btn btn-danger">Conferma eliminazione</button>
+    <a href="@ViewContext.HttpContext.Request.Headers["Referer"]" class="btn btn-secondary">Annulla</a>
+</form>

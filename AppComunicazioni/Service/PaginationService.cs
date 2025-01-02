@@ -1,27 +1,22 @@
 ﻿using AppComunicazioni.Interface;
 using Microsoft.EntityFrameworkCore;
 
-namespace AppComunicazioni.Service
+public class PaginationService : IPaginationService
 {
-    public class PaginationService : IPaginationService
+    public async Task<(IQueryable<T> PaginatedData, int TotalPages)> PaginateAsync<T>(
+        IQueryable<T> query, int pageNumber, int pageSize) where T : class
     {
-        public async Task<(IQueryable<T> PaginatedData, int TotalPages)> PaginateAsync<T>(
-            IQueryable<T> query,
-            int pageNumber,
-            int pageSize
-        ) where T : class
-        {
-            if (pageNumber < 1) pageNumber = 1;
-            if (pageSize < 1) pageSize = 20;
+        if (pageNumber < 1) pageNumber = 1;
 
-            var totalItems = await query.CountAsync();
-            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        // Conta totale degli elementi
+        var totalItems = await query.CountAsync();
+        var totalPages = pageSize > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
 
-            var paginatedData = query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize);
+        var paginatedData = query
+            .OrderBy(e => EF.Property<object>(e, "Id")) // Ordinamento per 'Id'
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize);
 
-            return (paginatedData, totalPages);
-        }
+        return (paginatedData, totalPages);
     }
 }

@@ -3,7 +3,9 @@ using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
 using AppComunicazioni.Service;
+using AppComunicazioni.Utility;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -12,38 +14,44 @@ namespace AppComunicazioni.Controllers
 {
     public abstract class ComunicazioniBaseController<TLogger> : Controller
     {
-        protected readonly ComDbContext _context;
-        protected readonly IMapper _mapper;
-        protected readonly IEmailService _emailService;
-        protected readonly IMonitoringService _monitoringService;
-        protected readonly IFiltroComunicazioniService _filtroService;
-        protected readonly IExcelService _excelService;
-        protected readonly ISendMailService _sendMailService;
-        protected readonly IViewBagService _viewBagService;
-        protected readonly ILogger<TLogger> _logger;
-        protected readonly IRetryService _retryService;
-        protected readonly IEncryptionService _encryptionService;
-        protected readonly IPaginationService _paginationService;
+    protected readonly ComDbContext _context;
+    protected readonly IMapper _mapper;
+    protected readonly IEmailService _emailService;
+    protected readonly IMonitoringService _monitoringService;
+    protected readonly IFiltroComunicazioniService _filtroService;
+    protected readonly IExcelService _excelService;
+    protected readonly ISendMailService _sendMailService;
+    protected readonly IViewBagService _viewBagService;
+    protected readonly ILogger<TLogger> _logger;
+    protected readonly IRetryService _retryService;
+    protected readonly IEncryptionService _encryptionService;
+    protected readonly IPaginationService _paginationService;
+    protected readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ComunicazioniBaseController(ComDbContext context, IMapper mapper, IEmailService emailService,
-                                           IMonitoringService monitoringService, IFiltroComunicazioniService filtroService,
-                                           IExcelService excelService, ISendMailService sendMailService,
-                                           ILogger<TLogger> logger, IViewBagService viewBagService,
-                                           IRetryService retryService, IEncryptionService encryptionService, IPaginationService paginationService)
-        {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-            _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
-            _monitoringService = monitoringService ?? throw new ArgumentNullException(nameof(monitoringService));
-            _filtroService = filtroService ?? throw new ArgumentNullException(nameof(filtroService));
-            _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
-            _sendMailService = sendMailService ?? throw new ArgumentNullException(nameof(sendMailService));
-            _viewBagService = viewBagService ?? throw new ArgumentNullException(nameof(viewBagService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _retryService = retryService ?? throw new ArgumentNullException(nameof(retryService));
-            _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
-            _paginationService = paginationService;
-        }
+    public ComunicazioniBaseController(ComDbContext context, IMapper mapper, IEmailService emailService,
+                                       IMonitoringService monitoringService, IFiltroComunicazioniService filtroService,
+                                       IExcelService excelService, ISendMailService sendMailService,
+                                       ILogger<TLogger> logger, IViewBagService viewBagService,
+                                       IRetryService retryService, IEncryptionService encryptionService,
+                                       IPaginationService paginationService, IHttpContextAccessor httpContextAccessor)
+    {
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+        _monitoringService = monitoringService ?? throw new ArgumentNullException(nameof(monitoringService));
+        _filtroService = filtroService ?? throw new ArgumentNullException(nameof(filtroService));
+        _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
+        _sendMailService = sendMailService ?? throw new ArgumentNullException(nameof(sendMailService));
+        _viewBagService = viewBagService ?? throw new ArgumentNullException(nameof(viewBagService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _retryService = retryService ?? throw new ArgumentNullException(nameof(retryService));
+        _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
+        _paginationService = paginationService ?? throw new ArgumentNullException(nameof(paginationService));
+        _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+    }
+
+    protected ISession Session => _httpContextAccessor.HttpContext?.Session 
+        ?? throw new InvalidOperationException("Session is not available");
 
         protected string EncryptId(int id) => _encryptionService.Encrypt(id.ToString());
 
@@ -63,120 +71,47 @@ namespace AppComunicazioni.Controllers
         {
             return await _retryService.ExecuteWithRetry(async () =>
             {
-                using (var transaction = await _context.Database.BeginTransactionAsync())
+                SetViewBagOptions(filtri.CodCor);
+
+                var query = _context.Comunicazionis.AsQueryable();
+
+                // Recupera i valori dei filtri dalla sessione
+                query = await _filtroService.FiltraComunicazioniAsync(
+                    query,
+                    tipoAccertamento,
+                        filtri.SearchTerm ?? Session?.GetString("SearchTerm"),
+                        filtri.StartDate ?? (Session?.GetString("StartDate") != null ? DateTime.Parse(Session.GetString("StartDate")!) : null),
+                        filtri.EndDate ?? (Session?.GetString("EndDate") != null ? DateTime.Parse(Session.GetString("EndDate")!) : null),
+                        filtri.CodCor ?? Session?.GetString("CodCor"),
+                        filtri.Servizio ?? Session?.GetString("Servizio"),
+                        filtri.MonthYear,
+                        filtri.SortField ?? Session?.GetString("SortField") ?? "DateA",
+                        filtri.SortOrder ?? Session?.GetString("SortOrder") ?? "asc",
+                        filtri.SoloRigheNonRestituite || (Session?.GetBoolean("SoloRigheNonRestituite") ?? false)
+                );
+
+                var pageSize = filtri.PageSize > 0 ? filtri.PageSize : 10;
+                var (paginatedData, totalPages) = await _paginationService.PaginateAsync(query, filtri.CurrentPage, pageSize);
+
+                // Crea il modello
+                var model = new ComunicazioniViewModel
                 {
-                    try
-                    {
-                        SetViewBagOptions(filtri.CodCor);
+                    Comunicazioni = await paginatedData.ToListAsync(),
+                    CurrentPage = filtri.CurrentPage,
+                    TotalPages = totalPages,
+                    PageSize = pageSize,
+                    StartDate = filtri.StartDate,
+                    EndDate = filtri.EndDate,
+                    CodCor = filtri.CodCor,
+                    Servizio = filtri.Servizio,
+                    MonthYear = filtri.MonthYear,
+                    SortField = filtri.SortField,
+                    SortOrder = filtri.SortOrder,
+                    SearchTerm = filtri.SearchTerm,
+                    SoloRigheNonRestituite = filtri.SoloRigheNonRestituite
+                };
 
-                        var query = _context.Comunicazionis.AsQueryable();
-
-                        query = await _filtroService.FiltraComunicazioniAsync(
-                            query,
-                            tipoAccertamento,
-                            filtri.SearchTerm ?? string.Empty,
-                            filtri.StartDate,
-                            filtri.EndDate,
-                            filtri.CodCor ?? string.Empty,
-                            filtri.Servizio ?? string.Empty,
-                            filtri.MonthYear,
-                            filtri.SortField ?? "DateA",
-                            filtri.SortOrder ?? "asc",
-                            filtri.SoloRigheNonRestituite
-                        );
-
-                        // Usare il PaginationService
-                        var (paginatedData, totalPages) = await _paginationService.PaginateAsync(
-                            query,
-                            filtri.PageNumber,
-                            filtri.PageSize
-                        );
-
-                        var model = new ComunicazioniViewModel
-                        {
-                            Comunicazioni = await paginatedData.ToListAsync(),
-                            CurrentPage = filtri.PageNumber,
-                            TotalPages = totalPages,
-                            StartDate = filtri.StartDate,
-                            EndDate = filtri.EndDate,
-                            CodCor = filtri.CodCor ?? string.Empty,
-                            Servizio = filtri.Servizio ?? string.Empty,
-                            MonthYear = filtri.MonthYear,
-                            SortField = filtri.SortField ?? "DateA",
-                            SortOrder = filtri.SortOrder ?? "asc",
-                            SearchTerm = filtri.SearchTerm ?? string.Empty,
-                            SoloRigheNonRestituite = filtri.SoloRigheNonRestituite
-                        };
-
-                        await transaction.CommitAsync();
-                        return View("Index", model);
-                    }
-                    catch
-                    {
-                        await transaction.RollbackAsync();
-                        throw;
-                    }
-                }
-            }, _logger, this);
-        }
-
-        protected async Task<IActionResult> BaseDelete(string encryptedId)
-        {
-            return await _retryService.ExecuteWithRetry(async () =>
-            {
-                using (var transaction = await _context.Database.BeginTransactionAsync())
-                {
-                    try
-                    {
-                        var id = DecryptId(encryptedId);
-
-                        var entity = await _context.Comunicazionis.FindAsync(id);
-                        if (entity   == null) return NotFound();
-
-                        await transaction.CommitAsync();
-                        return View("Delete", entity);
-                    }
-                    catch
-                    {
-                        await transaction.RollbackAsync();
-                        throw;
-                    }
-                }
-            }, _logger, this);
-        }
-
-        protected async Task<IActionResult> BaseDeleteConfirmed(int id)
-        {
-            return await _retryService.ExecuteWithRetry(async () =>
-            {
-                using (var transaction = await _context.Database.BeginTransactionAsync())
-                {
-                    try
-                    {
-                        var comunicazioni = await _context.Comunicazionis.FirstOrDefaultAsync(c => c.Id == id);
-
-                        if (comunicazioni != null)
-                        {
-                            await _context.Entry(comunicazioni).Collection(c => c.Dettagli!).LoadAsync();
-
-                            if (comunicazioni.Dettagli != null && comunicazioni.Dettagli.Any())
-                            {
-                                _context.ComunicazioniDettagli.RemoveRange(comunicazioni.Dettagli);
-                            }
-
-                            _context.Comunicazionis.Remove(comunicazioni);
-                            await _context.SaveChangesAsync();
-                        }
-
-                        await transaction.CommitAsync();
-                        return RedirectToAction("Index");
-                    }
-                    catch
-                    {
-                        await transaction.RollbackAsync();
-                        throw;
-                    }
-                }
+                return View("Index", model);
             }, _logger, this);
         }
 

@@ -5,17 +5,26 @@
     @foreach (var item in Model)
     {
         <tr class="@(item.DateF == null ? "table-danger" : "table-light")">
-            <td asp-controller="Details" asp-action="Index" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="btn btn-link">
-                @item.FileName
+            <!-- Nome File come link per Dettagli -->
+            <td>
+                <a asp-controller="Details" asp-action="Index" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="btn btn-link">
+                    @item.FileName
+                </a>
             </td>
             <td>@item.DateA?.ToString("dd/MM/yyyy")</td>
             <td>@item.DateF?.ToString("dd/MM/yyyy")</td>
             <td>@item.NProtocol</td>
             <td>@item.Servizio</td>
             <td>
-                <a asp-controller="Edit" asp-action="Index" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="btn btn-warning btn-sm">Modifica</a>
-                <a asp-controller="Delete" asp-action="Index" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="btn btn-danger btn-sm">Elimina</a>
+                <a asp-controller="Edit" asp-action="Index" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="btn btn-outline-info btn-sm">
+                    Modifica
+                </a>
+                <a asp-controller="Delete" asp-action="Index" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="btn btn-outline-danger btn-sm">
+                    Elimina
+                </a>
+
             </td>
         </tr>
     }
 </tbody>
+

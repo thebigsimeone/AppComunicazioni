@@ -9,11 +9,10 @@ public class ComunicazioniViewModel
     public string? CodCor { get; set; }
     public string? Servizio { get; set; }
     public DateTime? MonthYear { get; set; }
-    public bool SoloRigheNonRestituite { get; set; } // Nuovo campo
+    public bool SoloRigheNonRestituite { get; set; }
     public string? SortField { get; set; }
     public string? SortOrder { get; set; }
-    public int CurrentPage { get; set; }
+    public int CurrentPage { get; set; } = 1;
     public int TotalPages { get; set; }
     public int PageSize { get; set; } = 10;
-    public int PageNumber { get; set; } = 1;
 }

@@ -31,7 +31,9 @@ namespace AppComunicazioni.Controllers
             _viewBagService = viewBagService ?? throw new ArgumentNullException(nameof(viewBagService));
             _sendMailService = sendMailService ?? throw new ArgumentNullException(nameof(sendMailService));
             _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _logger.LogInformation("EditController istanziato correttamente.");
         }
 
         [HttpGet("{id}")]
@@ -64,11 +66,17 @@ namespace AppComunicazioni.Controllers
         public async Task<IActionResult> Index(string id, [Bind] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
         {
             if (string.IsNullOrEmpty(id))
+            {
+                _logger.LogError("ID nullo o vuoto passato al metodo Index.");
                 return BadRequest("ID non valido.");
+            }
 
             int decryptedId = DecryptId(id);
             if (decryptedId == -1)
+            {
+                _logger.LogError("ID decriptato non valido.");
                 return BadRequest("ID non valido.");
+            }
 
             comunicazioniDTO.Id = decryptedId;
             ModelState.Clear();
@@ -84,48 +92,47 @@ namespace AppComunicazioni.Controllers
 
             return await _retryService.ExecuteWithRetry(async () =>
             {
-                var comunicazioniToUpdate = await _context.Comunicazionis
-                                                    .FirstOrDefaultAsync(c => c.Id == decryptedId);
+                var comunicazioniToUpdate = await _context.Comunicazionis.FirstOrDefaultAsync(c => c.Id == decryptedId);
 
                 if (comunicazioniToUpdate == null)
+                {
+                    _logger.LogWarning($"Comunicazione con ID {decryptedId} non trovata.");
                     return NotFound();
+                }
 
-                // Log iniziale del valore Email_inviata
-                _logger.LogInformation($"Email_inviata dal DB (prima di qualsiasi operazione): {comunicazioniToUpdate.Email_inviata}");
-
-                // Ricaricare i valori dal database per evitare inconsistenze
+                _logger.LogInformation($"Prima del reload - DateF: {comunicazioniToUpdate.DateF}, Email_inviata: {comunicazioniToUpdate.Email_inviata}");
                 await _context.Entry(comunicazioniToUpdate).ReloadAsync();
-                _logger.LogInformation($"Dopo Reload - Email_inviata: {comunicazioniToUpdate.Email_inviata}");
+
+                // Aggiorna i valori
+                comunicazioniToUpdate.DateF = comunicazioniDTO.DateF;
+                comunicazioniToUpdate.Note = comunicazioniDTO.Note;
+                _logger.LogInformation($"Valori aggiornati - DateF: {comunicazioniToUpdate.DateF}, Email_inviata: {comunicazioniToUpdate.Email_inviata}");
 
                 // Logica per invio email
-                if (!comunicazioniToUpdate.Email_inviata)
+                if (comunicazioniToUpdate.Email_inviata.HasValue && !comunicazioniToUpdate.Email_inviata.Value)
                 {
                     _logger.LogInformation($"Invio email per il file: {comunicazioniToUpdate.FileName}");
                     await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                     comunicazioniToUpdate.Email_inviata = true;
                 }
-                else
-                {
-                    _logger.LogInformation($"Email già inviata per il file: {comunicazioniToUpdate.FileName}. Nessuna azione richiesta.");
-                }
 
-
-                // Salvataggio delle modifiche
+                // Salva le modifiche
+                _logger.LogInformation($"Prima del salvataggio - DateF: {comunicazioniToUpdate.DateF}, Email_inviata: {comunicazioniToUpdate.Email_inviata}");
+                _context.Entry(comunicazioniToUpdate).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
-                _logger.LogInformation($"Stato finale Email_inviata: {comunicazioniToUpdate.Email_inviata}");
+                _logger.LogInformation($"Modifiche salvate correttamente per il file: {comunicazioniToUpdate.FileName}");
 
-                // Reindirizzamento in base al nome del file
-                if (!string.IsNullOrEmpty(comunicazioniDTO.FileName) && comunicazioniDTO.FileName.Contains("EBI"))
+                // Determina il controller di destinazione
+                var referer = Request.Headers["Referer"].ToString();
+                string controllerName = comunicazioniToUpdate.FileName?.Contains("SSC") == true ? "ComunicazionisSsc" : "ComunicazionisEbi";
+
+                if (!string.IsNullOrEmpty(referer))
                 {
-                    return RedirectToAction("Index", "ComunicazionisEbi");
-                }
-                else if (!string.IsNullOrEmpty(comunicazioniDTO.FileName) && comunicazioniDTO.FileName.Contains("SSC"))
-                {
-                    return RedirectToAction("Index", "ComunicazionisSsc");
+                    return RedirectToAction("Index", controllerName);
                 }
 
-                return RedirectToAction("Index", "Home");
-            }, null, this);
+                return RedirectToAction("Index", controllerName);
+            }, _logger, this);
         }
 
         private int DecryptId(string encryptedId)
