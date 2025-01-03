@@ -25,19 +25,19 @@ namespace AppComunicazioni.Controllers
         protected readonly IHttpContextAccessor _httpContextAccessor;
 
         public ComunicazioniBaseController(
-            ComDbContext context,
-            IMapper mapper,
-            IEmailService emailService,
-            IMonitoringService monitoringService,
-            IFiltroComunicazioniService filtroService,
-            IExcelService excelService,
-            ISendMailService sendMailService,
-            ILogger<TLogger> logger,
-            IViewBagService viewBagService,
-            IRetryService retryService,
-            IEncryptionService encryptionService,
-            IPaginationService paginationService,
-            IHttpContextAccessor httpContextAccessor)
+                                            ComDbContext context,
+                                            IMapper mapper,
+                                            IEmailService emailService,
+                                            IMonitoringService monitoringService,
+                                            IFiltroComunicazioniService filtroService,
+                                            IExcelService excelService,
+                                            ISendMailService sendMailService,
+                                            ILogger<TLogger> logger,
+                                            IViewBagService viewBagService,
+                                            IRetryService retryService,
+                                            IEncryptionService encryptionService,
+                                            IPaginationService paginationService,
+                                            IHttpContextAccessor httpContextAccessor)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
