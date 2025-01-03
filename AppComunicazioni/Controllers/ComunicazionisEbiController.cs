@@ -68,9 +68,9 @@ public class ComunicazionisEbiController : ComunicazioniBaseController<Comunicaz
     }
 
     [HttpPost("ResetFiltri")]
-    public new IActionResult ResetFiltri()
+    public IActionResult ResetFiltri()
     {
-        base.ResetFiltri(); // Richiama il metodo della classe base, se necessario.
-        return RedirectToAction("Index");
+        return base.ResetFiltri("EBI");
     }
+
 }

@@ -40,14 +40,14 @@ namespace AppComunicazioni.Service
 
         public void ResetFilters()
         {
-            var keys = new[] { "searchTerm", "startDate", "endDate", "codCor", "servizio", "monthYear", "soloRigheNonRestituite" };
+            var keys = new[] { "SearchTerm", "StartDate", "EndDate", "CodCor", "Servizio", "MonthYear", "SoloRigheNonRestituite" };
 
             foreach (var key in keys)
             {
                 Remove(key);
             }
 
-            _logger.LogInformation("Tutti i filtri sono stati resettati.");
+            _logger.LogInformation("Tutti i filtri sono stati resettati. Query tornata allo stato primario.");
         }
     }
 }
