@@ -6,31 +6,19 @@ namespace AppComunicazioni.Service
 {
     public class FiltroComunicazioniService : IFiltroComunicazioniService
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ISessionService _sessionService;
         private readonly ILogger<FiltroComunicazioniService> _logger;
 
-        public FiltroComunicazioniService(IHttpContextAccessor httpContextAccessor, ILogger<FiltroComunicazioniService> logger)
+        public FiltroComunicazioniService(ISessionService sessionService, ILogger<FiltroComunicazioniService> logger)
         {
-            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-            _logger = logger;
+            _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-
-        private ISession Session => _httpContextAccessor.HttpContext?.Session
-            ?? throw new InvalidOperationException("Session is not available");
 
         public void ResetFiltri()
         {
-            var filtri = new[] { "searchTerm", "startDate", "endDate", "codCor", "servizio", "monthYear", "soloRigheNonRestituite" };
-
-            foreach (var filtro in filtri)
-            {
-                if (Session.GetString(filtro) != null)
-                {
-                    Session.Remove(filtro);
-                    _logger.LogInformation($"Filtro '{filtro}' rimosso dalla sessione.");
-                }
-            }
-            _logger.LogInformation("Tutti i filtri sono stati resettati.");
+            _sessionService.ResetFilters();
+            _logger.LogInformation("I filtri sono stati resettati tramite il servizio di sessione.");
         }
 
         public async Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(
@@ -46,23 +34,24 @@ namespace AppComunicazioni.Service
             string sortOrder,
             bool soloRigheNonRestituite)
         {
-            // Salva i parametri di filtro nella sessione
-            Session.SetString("SearchTerm", searchTerm ?? Session.GetString("SearchTerm") ?? string.Empty);
-            Session.SetString("CodCor", codCor ?? Session.GetString("CodCor") ?? string.Empty);
-            Session.SetString("Servizio", servizio ?? Session.GetString("Servizio") ?? string.Empty);
-            Session.SetString("SortField", sortField ?? Session.GetString("SortField") ?? "DateA");
-            Session.SetString("SortOrder", sortOrder ?? Session.GetString("SortOrder") ?? "asc");
-            Session?.SetBoolean("SoloRigheNonRestituite", soloRigheNonRestituite);
+            // Salva i filtri nella sessione
+            _sessionService.Set("SearchTerm", searchTerm ?? _sessionService.Get("SearchTerm") ?? string.Empty);
+            _sessionService.Set("CodCor", codCor ?? _sessionService.Get("CodCor") ?? string.Empty);
+            _sessionService.Set("Servizio", servizio ?? _sessionService.Get("Servizio") ?? string.Empty);
+            _sessionService.Set("SortField", sortField ?? _sessionService.Get("SortField") ?? "DateA");
+            _sessionService.Set("SortOrder", sortOrder ?? _sessionService.Get("SortOrder") ?? "asc");
 
             if (startDate.HasValue)
-                Session?.SetString("StartDate", startDate.Value.ToString("o"));
-            else if (Session?.GetString("StartDate") != null)
-                startDate = DateTime.Parse(Session.GetString("StartDate")!);
+                _sessionService.Set("StartDate", startDate.Value.ToString("o"));
+            else if (_sessionService.Get("StartDate") != null)
+                startDate = DateTime.Parse(_sessionService.Get("StartDate")!);
 
             if (endDate.HasValue)
-                Session?.SetString("EndDate", endDate.Value.ToString("o"));
-            else if (Session?.GetString("EndDate") != null)
-                endDate = DateTime.Parse(Session.GetString("EndDate")!);
+                _sessionService.Set("EndDate", endDate.Value.ToString("o"));
+            else if (_sessionService.Get("EndDate") != null)
+                endDate = DateTime.Parse(_sessionService.Get("EndDate")!);
+
+            _sessionService.Set("SoloRigheNonRestituite", soloRigheNonRestituite.ToString());
 
             // Applica i filtri
             query = FiltraPerTenant(query, tenant);
@@ -75,7 +64,7 @@ namespace AppComunicazioni.Service
             if (soloRigheNonRestituite)
                 query = FiltraPerRigheNonRestituite(query);
 
-            await Task.CompletedTask; // Per mantenere il metodo asincrono
+            await Task.CompletedTask; // Metodo asincrono
 
             return OrdinaQuery(query, sortField, sortOrder);
         }

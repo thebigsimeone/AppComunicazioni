@@ -119,8 +119,8 @@ namespace AppComunicazioni.Controllers
         public IActionResult ResetFiltri()
         {
             _filtroService.ResetFiltri();
-            // Reindirizza con un ViewModel vuoto
             return RedirectToAction("Index", new { filtri = new ComunicazioniViewModel() });
         }
+
     }
 }

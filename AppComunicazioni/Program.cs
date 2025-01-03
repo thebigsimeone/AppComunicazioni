@@ -51,7 +51,7 @@ builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(5); // Timeout sessione
+    options.IdleTimeout = TimeSpan.FromSeconds(10); // Timeout sessione
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true; // Necessario per GDPR
 });
@@ -65,6 +65,7 @@ builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniServi
 builder.Services.AddScoped<IPaginationService, PaginationService>();
 builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<IViewBagService, ViewBagService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IRetryService, RetryService>();
 builder.Services.AddScoped<CleanupService>();
 
