@@ -47,33 +47,29 @@ builder.Services.AddDbContext<ComDbContext>(options =>
 
 // Servizi HTTP e sessione
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddDistributedMemoryCache();
+
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Timeout sessione
+    options.IdleTimeout = TimeSpan.FromMinutes(5); // Timeout sessione
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true; // Necessario per GDPR
 });
 
 // Registrazione dei servizi
-builder.Services.AddHostedService<CleanupBackgroundService>();
-builder.Services.AddHostedService<NotificationBackgroundService>();
-
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISendMailService, SendMailService>();
-
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 builder.Services.AddScoped<IStopMonitoringService, StopMonitoringService>();
-
 builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
 builder.Services.AddScoped<IPaginationService, PaginationService>();
-
-builder.Services.AddScoped<IContabilitàService, ContabilitàService>();
-
 builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<IViewBagService, ViewBagService>();
 builder.Services.AddScoped<IRetryService, RetryService>();
-
 builder.Services.AddScoped<CleanupService>();
+
+builder.Services.AddHostedService<CleanupBackgroundService>();
+builder.Services.AddHostedService<NotificationBackgroundService>();
 
 // Registrazione di AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
@@ -90,12 +86,11 @@ if (app.Environment != null)
 {
     app.UseCors("AllowAll");
     app.UseResponseCompression();
-    // Configurazione della cultura  
+
     var cultureInfo = new CultureInfo("it-IT");
     CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
     CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
-    // Gestione degli errori  
     if (!app.Environment.IsDevelopment())
     {
         app.UseExceptionHandler("/Error");
@@ -106,16 +101,6 @@ if (app.Environment != null)
     {
         app.UseDeveloperExceptionPage();
     }
-
-    // Middleware di compressione  
-    app.Use(async (context, next) =>
-    {
-        if (!context.Request.Headers.ContainsKey("Accept-Encoding"))
-        {
-            context.Request.Headers["Accept-Encoding"] = "gzip, br";
-        }
-        await next.Invoke();
-    });
 
     app.UseStaticFiles();
     app.UseSession();

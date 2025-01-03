@@ -2,6 +2,7 @@
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 public class MonitoringService : IMonitoringService
 {
@@ -23,13 +24,21 @@ public class MonitoringService : IMonitoringService
             var currentTime = DateTimeOffset.Now;
             _logger.LogInformation($"Valore di currentTime: {currentTime}");
 
+            _logger.LogInformation("Inizio monitoraggio delle comunicazioni...");
+            var stopwatch = Stopwatch.StartNew();
+
+            var batchSize = 1000; // Dimensione del batch
             var comunicazioniList = await _context.Comunicazionis
                 .Where(x => !x.DateF.HasValue && (x.Notificato == false || x.Notificato == null))
+                .Take(batchSize)
                 .ToListAsync();
 
-            if (comunicazioniList == null || comunicazioniList.Count == 0)
+            stopwatch.Stop();
+            _logger.LogInformation($"Recuperati {comunicazioniList.Count} record in {stopwatch.ElapsedMilliseconds} ms.");
+
+            if (!comunicazioniList.Any())
             {
-                _logger.LogWarning("Nessuna comunicazione trovata da notificare.");
+                _logger.LogWarning("Nessuna comunicazione trovata per la notifica.");
                 return;
             }
 
@@ -65,6 +74,8 @@ public class MonitoringService : IMonitoringService
 
                 var invioPrevisto = CalcolaDataInvio(comunicazione.DateA.Value, giorniDaAggiungere);
 
+                _logger.LogInformation($"Invio previsto per la comunicazione '{comunicazione.FileName}': {invioPrevisto}");
+
                 if (currentTime >= invioPrevisto)
                 {
                     var totalDays = CalcolaGiorniLavorativi(comunicazione.DateA.Value, (currentTime - comunicazione.DateA.Value).Days);
@@ -96,6 +107,7 @@ public class MonitoringService : IMonitoringService
 
             _logger.LogInformation($"Trovate {notifications.Count} comunicazioni che necessitano di notifica.");
             await _sendMailService.SendNotificationEmailAsync(notifications);
+            _logger.LogInformation("Notifiche inviate con successo.");
         }
         catch (Exception ex)
         {

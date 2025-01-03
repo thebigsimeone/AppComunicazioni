@@ -55,7 +55,8 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
             _viewBagService,
             _sendMailService,
             _encryptionService,
-            _editLogger);
+            _editLogger,
+            _excelService);
 
         return await editController.Index(id, comunicazioniDTO, excelFile);
     }

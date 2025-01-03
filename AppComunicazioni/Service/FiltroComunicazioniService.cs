@@ -24,10 +24,12 @@ namespace AppComunicazioni.Service
 
             foreach (var filtro in filtri)
             {
-                Session.Remove(filtro);
-                _logger.LogInformation($"Filtro '{filtro}' rimosso dalla sessione.");
+                if (Session.GetString(filtro) != null)
+                {
+                    Session.Remove(filtro);
+                    _logger.LogInformation($"Filtro '{filtro}' rimosso dalla sessione.");
+                }
             }
-
             _logger.LogInformation("Tutti i filtri sono stati resettati.");
         }
 

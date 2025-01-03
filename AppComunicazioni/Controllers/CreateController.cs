@@ -18,10 +18,15 @@ public class CreateController : Controller
     private readonly IViewBagService _viewBagService;
     private readonly IRetryService _retryService;
 
-    public CreateController(ComDbContext context, IMapper mapper, IEmailService emailService,
-                            ILogger<CreateController> logger, IMonitoringService monitoringService,
-                            IExcelService excelService, IViewBagService viewBagService,
-                            IRetryService retryService)
+    public CreateController(
+        ComDbContext context,
+        IMapper mapper,
+        IEmailService emailService,
+        ILogger<CreateController> logger,
+        IMonitoringService monitoringService,
+        IExcelService excelService,
+        IViewBagService viewBagService,
+        IRetryService retryService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -41,97 +46,101 @@ public class CreateController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note, ")] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
+    public async Task<IActionResult> Create([Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note")] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
     {
-        if (ModelState.IsValid)
+        if (comunicazioniDTO == null)
         {
-            if (comunicazioniDTO == null)
-            {
-                throw new ArgumentNullException(nameof(comunicazioniDTO));
-            }
+            _logger.LogError("Il DTO delle comunicazioni è nullo.");
+            throw new ArgumentNullException(nameof(comunicazioniDTO));
+        }
 
-            return await _retryService.ExecuteWithRetry(async () =>
+        if (!ModelState.IsValid)
+        {
+            SetViewBagOptions();
+            return View(comunicazioniDTO);
+        }
+
+        return await _retryService.ExecuteWithRetry(async () =>
+        {
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                using (var transaction = await _context.Database.BeginTransactionAsync())
+                try
                 {
-                    try
+                    // Estrai e valida i dati dal nome file
+                    if (!string.IsNullOrEmpty(comunicazioniDTO.FileName))
                     {
-                        if (!string.IsNullOrEmpty(comunicazioniDTO.FileName))
+                        var fileNameParts = comunicazioniDTO.FileName.Split('_');
+                        var mandante = fileNameParts.FirstOrDefault(part => part.Equals("SSC", StringComparison.OrdinalIgnoreCase) || part.Equals("EBI", StringComparison.OrdinalIgnoreCase));
+                        if (mandante != null)
                         {
-                            var fileNameParts = comunicazioniDTO.FileName.Split('_');
-                            if (fileNameParts.Length > 3)
+                            comunicazioniDTO.Mandante = mandante;
+
+                            // Trova l'indice del mandante e prendi la parte successiva come servizio
+                            var mandanteIndex = Array.IndexOf(fileNameParts, mandante);
+                            if (mandanteIndex >= 0 && mandanteIndex + 1 < fileNameParts.Length)
                             {
-                                // Estrarre il servizio
-                                var servicePart = fileNameParts[^2]; // Penultima parte della stringa
+                                var servicePart = fileNameParts[mandanteIndex + 1];
 
-                                // Gestire caso particolare "035" -> "S035"
-                                if (servicePart == "035")
-                                {
-                                    servicePart = "S035";
-                                }
+                                if (servicePart == "035") servicePart = "S035";
 
-                                // Validare il servizio rispetto all'enum
                                 if (Enum.TryParse<ServizioType>(servicePart, true, out var servizioParsed))
                                 {
                                     comunicazioniDTO.Servizio = servizioParsed;
                                 }
                                 else
                                 {
-                                    _logger.LogWarning($"Il servizio '{servicePart}' non è valido per il file {comunicazioniDTO.FileName}.");
-                                }
-
-                                // Estrarre il numero di protocollo
-                                var lastPart = fileNameParts.LastOrDefault();
-                                if (int.TryParse(lastPart, out var protocolNumber))
-                                {
-                                    comunicazioniDTO.NProtocol = protocolNumber;
+                                    _logger.LogWarning($"Servizio non valido: {servicePart} in file {comunicazioniDTO.FileName}");
                                 }
                             }
                         }
 
-                        // Mappatura da DTO a Entity
-                        var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
-
-                        // Impostare valori di default
-                        comunicazioni.Notificato = false;
-                        comunicazioni.Ritornato = false;
-                        comunicazioni.NsProtocol = 0;
-                        comunicazioni.Email_inviata = false;
-                        comunicazioni.Mandante = comunicazioni.FileName.Contains("SSC", StringComparison.OrdinalIgnoreCase)
-                                                                                ? "SSC"
-                                                                                : "EBI";
-
-                        // Aggiungere la comunicazione al contesto
-                        _context.Add(comunicazioni);
-                        await _context.SaveChangesAsync();
-
-                        // Elaborare il file Excel
-                        if (excelFile != null && excelFile.Length > 0)
+                        // Estrai il numero di protocollo dalla parte finale
+                        var lastPart = fileNameParts.LastOrDefault();
+                        if (int.TryParse(lastPart, out var protocolNumber))
                         {
-                            var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioni.Id);
-                            if (dettagli != null)
-                            {
-                                _context.ComunicazioniDettagli.AddRange(dettagli);
-                                await _context.SaveChangesAsync();
-                            }
+                            comunicazioniDTO.NProtocol = protocolNumber;
                         }
-
-                        // Completa la transazione
-                        await transaction.CommitAsync();
-                        TempData["Message"] = "Comunicazione creata con successo.";
-                        return RedirectToAction(nameof(Index));
                     }
-                    catch
+
+                    // Mappatura e valori di default
+                    var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
+                    comunicazioni.Notificato = false;
+                    comunicazioni.Ritornato = false;
+                    comunicazioni.NsProtocol = 0;
+                    comunicazioni.Email_inviata = false;
+
+                    // Aggiungi comunicazione al contesto
+                    _context.Add(comunicazioni);
+                    await _context.SaveChangesAsync();
+
+                    // Elaborazione del file Excel
+                    if (excelFile != null && excelFile.Length > 0)
                     {
-                        await transaction.RollbackAsync();
-                        throw;
+                        var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioni.Id);
+                        if (dettagli != null)
+                        {
+                            _context.ComunicazioniDettagli.AddRange(dettagli);
+                            await _context.SaveChangesAsync();
+                        }
                     }
-                }
-            }, _logger, this);
-        }
 
-        SetViewBagOptions();
-        return View(comunicazioniDTO);
+                    // Invoca il servizio di monitoraggio
+                    await _monitoringService.CheckAndSendNotificationsAsync();
+
+                    // Commit della transazione
+                    await transaction.CommitAsync();
+                    TempData["Message"] = "Comunicazione creata con successo.";
+
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Errore durante la creazione della comunicazione.");
+                    throw;
+                }
+            }
+        }, _logger, this);
     }
 
     private void SetViewBagOptions()

@@ -115,11 +115,12 @@ namespace AppComunicazioni.Controllers
             }, _logger, this);
         }
 
-        [NonAction]
+        [HttpPost]
         public IActionResult ResetFiltri()
         {
             _filtroService.ResetFiltri();
-            return RedirectToAction("Index");
+            // Reindirizza con un ViewModel vuoto
+            return RedirectToAction("Index", new { filtri = new ComunicazioniViewModel() });
         }
     }
 }

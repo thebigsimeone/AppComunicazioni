@@ -2,6 +2,7 @@
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
+using AppComunicazioni.Service;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -19,11 +20,12 @@ namespace AppComunicazioni.Controllers
         private readonly ISendMailService _sendMailService;
         private readonly ILogger<EditController> _logger;
         private readonly IEncryptionService _encryptionService;
+        private readonly IExcelService _excelService;
 
         public EditController(ComDbContext context, IMapper mapper,
                               IRetryService retryService, IViewBagService viewBagService,
                               ISendMailService sendMailService, IEncryptionService encryptionService,
-                              ILogger<EditController> logger)
+                              ILogger<EditController> logger, IExcelService excelService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -32,6 +34,7 @@ namespace AppComunicazioni.Controllers
             _sendMailService = sendMailService ?? throw new ArgumentNullException(nameof(sendMailService));
             _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
 
             _logger.LogInformation("EditController istanziato correttamente.");
         }
@@ -115,6 +118,17 @@ namespace AppComunicazioni.Controllers
                     await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                     comunicazioniToUpdate.Email_inviata = true;
                 }
+
+                /*// Elaborazione del file Excel
+                  if (excelFile != null && excelFile.Length > 0)
+                  {
+                      var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioniDTO.Id);
+                      if (dettagli != null)
+                      {
+                          _context.ComunicazioniDettagli.AddRange(dettagli);
+                          await _context.SaveChangesAsync();
+                      }
+                }*/
 
                 // Salva le modifiche
                 _logger.LogInformation($"Prima del salvataggio - DateF: {comunicazioniToUpdate.DateF}, Email_inviata: {comunicazioniToUpdate.Email_inviata}");
