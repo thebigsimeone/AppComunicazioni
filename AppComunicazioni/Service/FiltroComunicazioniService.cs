@@ -1,5 +1,6 @@
 ﻿using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
+using System.Globalization;
 
 public class FiltroComunicazioniService : IFiltroComunicazioniService
 {
@@ -19,26 +20,46 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
     }
 
     public async Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(
-                                                                            IQueryable<Comunicazioni> query,
-                                                                            string tenant,
-                                                                            string? searchTerm,
-                                                                            DateTime? startDate,
-                                                                            DateTime? endDate,
-                                                                            string? codCor, // Non salviamo questo nella sessione
-                                                                            string? servizio,
-                                                                            DateTime? monthYear,
-                                                                            string sortField,
-                                                                            string sortOrder,
-                                                                            bool soloRigheNonRestituite)
+                        IQueryable<Comunicazioni> query,
+                        string? tenant,
+                        string? searchTerm,
+                        DateTime? startDate,
+                        DateTime? endDate,
+                        string? codCor,
+                        string? servizio,
+                        DateTime? monthYear,
+                        string? sortField,
+                        string? sortOrder,
+                        bool soloRigheNonRestituite)
     {
         if (query == null) throw new ArgumentNullException(nameof(query));
-        if (string.IsNullOrEmpty(tenant)) throw new ArgumentNullException(nameof(tenant));
 
-        sortField ??= "DateA";  // Default sort field
-        sortOrder ??= "asc";    // Default sort order
+        // Validazione del tenant
+        if (string.IsNullOrEmpty(tenant))
+        {
+            _logger.LogWarning("Il valore del tenant è nullo o vuoto. Utilizzo di un valore predefinito.");
+            tenant = "SSC"; // Valore predefinito
+        }
 
-        // Salva gli altri filtri nella sessione
+        sortField ??= "DateA"; // Campo di ordinamento predefinito
+        sortOrder ??= "asc";   // Ordine predefinito
+
+        // Se nessun filtro è applicato, ritorna la query primaria
+        if (string.IsNullOrEmpty(searchTerm) &&
+            !startDate.HasValue &&
+            !endDate.HasValue &&
+            string.IsNullOrEmpty(codCor) &&
+            string.IsNullOrEmpty(servizio) &&
+            !monthYear.HasValue &&
+            !soloRigheNonRestituite)
+        {
+            _logger.LogInformation("Nessun filtro applicato. Ritorno alla query primaria.");
+            return query.Where(x => x.Mandante == tenant);
+        }
+
+        // Salva i filtri nella sessione
         _sessionService.Set("SearchTerm", searchTerm ?? string.Empty);
+        _sessionService.Set("CodCor", codCor ?? string.Empty);
         _sessionService.Set("Servizio", servizio ?? string.Empty);
         _sessionService.Set("SortField", sortField);
         _sessionService.Set("SortOrder", sortOrder);
@@ -55,25 +76,17 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
             _sessionService.Remove("EndDate");
 
         if (monthYear.HasValue)
-            _sessionService.Set("MonthYear", monthYear.Value.ToString("o"));
+            _sessionService.Set("MonthYear", monthYear.Value.ToString("yyyy-MM"));
         else
             _sessionService.Remove("MonthYear");
-
-        // Se i filtri sono stati resettati, ritorna la query primaria
-        if (string.IsNullOrEmpty(searchTerm) && !startDate.HasValue && !endDate.HasValue &&
-            string.IsNullOrEmpty(servizio) && !monthYear.HasValue && !soloRigheNonRestituite)
-        {
-            query = FiltraPerTenant(query, tenant);
-            await Task.CompletedTask;
-            return query;
-        }
 
         // Applica i filtri
         query = FiltraPerTenant(query, tenant);
         query = FiltraPerTermineRicerca(query, searchTerm);
         query = FiltraPerDate(query, startDate, endDate);
+        query = FiltraPerCodCor(query, codCor);
         query = FiltraPerServizio(query, servizio);
-        query = FiltraPerMeseAnno(query, monthYear);
+        query = FiltraPerAnnoOMese(query, monthYear);
 
         if (soloRigheNonRestituite)
             query = FiltraPerRigheNonRestituite(query);
@@ -107,6 +120,13 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
         return query;
     }
 
+    private IQueryable<Comunicazioni> FiltraPerServizio(IQueryable<Comunicazioni> query, string? servizio)
+    {
+        if (!string.IsNullOrEmpty(servizio))
+            query = query.Where(x => x.Servizio != null && x.Servizio.ToLower() == servizio.ToLower());
+
+        return query;
+    }
     private IQueryable<Comunicazioni> FiltraPerCodCor(IQueryable<Comunicazioni> query, string? codCor)
     {
         if (!string.IsNullOrEmpty(codCor))
@@ -117,23 +137,20 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
         return query;
     }
 
-    private IQueryable<Comunicazioni> FiltraPerServizio(IQueryable<Comunicazioni> query, string? servizio)
-    {
-        if (!string.IsNullOrEmpty(servizio))
-        {
-            query = query.Where(x => x.Servizio != null && x.Servizio.ToLower() == servizio.ToLower());
-        }
-        _logger.LogInformation($"Applicato filtro per servizio: {servizio}");
-        return query;
-    }
-
-    private IQueryable<Comunicazioni> FiltraPerMeseAnno(IQueryable<Comunicazioni> query, DateTime? monthYear)
+    private IQueryable<Comunicazioni> FiltraPerAnnoOMese(IQueryable<Comunicazioni> query, DateTime? monthYear)
     {
         if (monthYear.HasValue)
         {
-            var start = new DateTime(monthYear.Value.Year, monthYear.Value.Month, 1);
-            var end = start.AddMonths(1).AddDays(-1);
-            query = query.Where(x => x.DateA >= start && x.DateA <= end);
+            if (monthYear.Value.Month == 1 && monthYear.Value.Day == 1) // Solo anno
+            {
+                query = query.Where(x => x.DateA.HasValue && x.DateA.Value.Year == monthYear.Value.Year);
+            }
+            else // Mese/anno
+            {
+                var start = new DateTime(monthYear.Value.Year, monthYear.Value.Month, 1);
+                var end = start.AddMonths(1).AddDays(-1);
+                query = query.Where(x => x.DateA.HasValue && x.DateA.Value >= start && x.DateA.Value <= end);
+            }
         }
 
         return query;

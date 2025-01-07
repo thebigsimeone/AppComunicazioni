@@ -10,7 +10,8 @@
     <div class="row mb-3">
         <div class="col">
             <label for="meseAnno">Mese/Anno:</label>
-            <input type="month" name="meseAnno" class="form-control" value="@ViewData["MeseAnno"]">
+            <input type="text" name="meseAnno" id="meseAnno" class="form-control"
+                   placeholder="AAAA-MM o AAAA" value="@ViewData["MeseAnno"]">
         </div>
         <div class="col">
             <label for="codCor">Codice Correlato (CodCor):</label>
@@ -25,7 +26,9 @@
             </select>
         </div>
         <div class="col-auto align-self-end">
-            <button type="submit" class="btn btn-outline-primary">Filtra</button>
+            <button type="submit" class="btn btn-outline-primary me-2" aria-label="Filtra risultati" title="Filtra">
+                <i class="bi bi-funnel-fill"></i>
+            </button>
             <button type="submit" formaction="@Url.Action("ResetFiltri")" formmethod="post" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>

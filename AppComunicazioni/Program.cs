@@ -59,16 +59,21 @@ builder.Services.AddSession(options =>
 // Registrazione dei servizi
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISendMailService, SendMailService>();
+
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 builder.Services.AddScoped<IStopMonitoringService, StopMonitoringService>();
+
+builder.Services.AddScoped<IContabilitàService, ContabilitàService>();
 builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
-builder.Services.AddScoped<IPaginationService, PaginationService>();
-builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<IViewBagService, ViewBagService>();
+builder.Services.AddScoped<IPaginationService, PaginationService>();
+
+builder.Services.AddScoped<IExcelService, ExcelService>();
+
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IRetryService, RetryService>();
-builder.Services.AddScoped<CleanupService>();
 
+builder.Services.AddScoped<CleanupService>();
 builder.Services.AddHostedService<CleanupBackgroundService>();
 builder.Services.AddHostedService<NotificationBackgroundService>();
 

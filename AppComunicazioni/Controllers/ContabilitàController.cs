@@ -4,6 +4,7 @@ using AppComunicazioni.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace AppComunicazioni.Controllers
 {
@@ -27,10 +28,12 @@ namespace AppComunicazioni.Controllers
         }
 
         // GET: Contabilità
-        public async Task<IActionResult> Index(DateTime? meseAnno = null, string? codCor = null, string? tipoAccertamento = null)
+        public async Task<IActionResult> Index(string? meseAnno = null, string? codCor = null, string? tipoAccertamento = null)
         {
             return await _retryService.ExecuteWithRetry(async () =>
             {
+                tipoAccertamento ??= "SSC";
+
                 // Configurazione ViewBag
                 ViewBag.CodCorOptions = _viewBagService.GetCodCorOptions(codCor);
                 ViewBag.TipoAccertamentoOptions = new List<SelectListItem>
@@ -39,24 +42,38 @@ namespace AppComunicazioni.Controllers
             new SelectListItem { Value = "EBI", Text = "EBI", Selected = tipoAccertamento == "EBI" }
         };
 
-                ViewData["MeseAnno"] = meseAnno?.ToString("yyyy-MM");
+                ViewData["MeseAnno"] = meseAnno;
                 ViewData["CodCor"] = codCor;
                 ViewData["TipoAccertamento"] = tipoAccertamento;
 
                 var query = _context.Comunicazionis.AsQueryable();
 
+                // Determina se l'input è solo anno o mese/anno
+                DateTime? parsedDate = null;
+                if (!string.IsNullOrEmpty(meseAnno))
+                {
+                    if (meseAnno.Length == 4 && int.TryParse(meseAnno, out var year)) // Solo anno
+                    {
+                        parsedDate = new DateTime(year, 1, 1);
+                    }
+                    else if (DateTime.TryParseExact(meseAnno, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out var monthYear)) // Mese/anno
+                    {
+                        parsedDate = monthYear;
+                    }
+                }
+
                 query = await _filtroService.FiltraComunicazioniAsync(
                     query,
-                    tipoAccertamento ?? string.Empty,
-                    string.Empty, // Nessun termine di ricerca
-                    null,         // Nessuna data di inizio
-                    null,         // Nessuna data di fine
+                    tipoAccertamento,
+                    string.Empty,
+                    null,
+                    null,
                     codCor ?? string.Empty,
-                    string.Empty, // Nessun filtro sul servizio
-                    meseAnno,     // Filtra per mese/anno
-                    "DateA",      // Campo predefinito per l'ordinamento
-                    "asc",        // Ordinamento crescente
-                    false         // Nessun filtro per righe non restituite
+                    string.Empty,
+                    parsedDate,
+                    "DateA",
+                    "asc",
+                    false
                 );
 
                 var model = await query

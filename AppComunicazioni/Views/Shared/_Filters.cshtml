@@ -30,12 +30,13 @@
             </div>
         </div>
 
-        <!-- Month Year -->
-        <div class="col-lg-2 col-md-4">
+        <!-- Filtraggio per anno o mese -->
+        <div class="col-lg-3 col-md-6">
             <div class="input-group">
-                <label for="monthYear" class="visually-hidden">Mese e Anno</label>
-                <span class="input-group-text"><i class="bi bi-calendar2-month" title="Filtra per anno/mese"></i></span>
-                <input type="month" name="monthYear" id="monthYear" class="form-control" value="@(Model.MonthYear?.ToString("yyyy-MM") ?? "")">
+                <label for="monthYear" class="visually-hidden">Anno/Mese</label>
+                <span class="input-group-text"><i class="bi bi-calendar2"></i></span>
+                <input type="month" id="monthYear" name="monthYear" class="form-control"
+                       value="@(Model.MonthYear?.ToString("yyyy-MM") ?? "")">
             </div>
         </div>
 

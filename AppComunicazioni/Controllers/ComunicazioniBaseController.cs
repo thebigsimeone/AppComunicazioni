@@ -75,7 +75,6 @@ namespace AppComunicazioni.Controllers
         {
             return await _retryService.ExecuteWithRetry(async () =>
             {
-                // Imposta le opzioni del ViewBag basandoti su CodCor
                 SetViewBagOptions(filtri.CodCor);
 
                 var query = _context.Comunicazionis.AsQueryable();
@@ -86,9 +85,9 @@ namespace AppComunicazioni.Controllers
                     filtri.SearchTerm ?? Session?.GetString("SearchTerm") ?? string.Empty,
                     filtri.StartDate ?? (Session?.GetString("StartDate") != null ? DateTime.Parse(Session.GetString("StartDate")!) : null),
                     filtri.EndDate ?? (Session?.GetString("EndDate") != null ? DateTime.Parse(Session.GetString("EndDate")!) : null),
-                    null, // Non passiamo CodCor
+                    filtri.CodCor,
                     filtri.Servizio ?? Session?.GetString("Servizio") ?? string.Empty,
-                    filtri.MonthYear,
+                    filtri.MonthYear ?? (Session?.GetString("MonthYear") != null ? DateTime.Parse(Session.GetString("MonthYear")!) : DateTime.UtcNow),
                     filtri.SortField ?? Session?.GetString("SortField") ?? "DateA",
                     filtri.SortOrder ?? Session?.GetString("SortOrder") ?? "asc",
                     filtri.SoloRigheNonRestituite || (Session?.GetBoolean("SoloRigheNonRestituite") ?? false)
@@ -105,7 +104,7 @@ namespace AppComunicazioni.Controllers
                     PageSize = pageSize,
                     StartDate = filtri.StartDate,
                     EndDate = filtri.EndDate,
-                    CodCor = filtri.CodCor, // Per il dropdown, non per la query
+                    CodCor = filtri.CodCor,
                     Servizio = filtri.Servizio,
                     MonthYear = filtri.MonthYear,
                     SortField = filtri.SortField,
