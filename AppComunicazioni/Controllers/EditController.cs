@@ -70,24 +70,22 @@ namespace AppComunicazioni.Controllers
         {
             if (string.IsNullOrEmpty(id))
             {
-                _logger.LogError("ID nullo o vuoto passato al metodo Index.");
+                TempData["Error"] = "ID non valido.";
                 return BadRequest("ID non valido.");
             }
 
             int decryptedId = DecryptId(id);
             if (decryptedId == -1)
             {
-                _logger.LogError("ID decriptato non valido.");
+                TempData["Error"] = "Errore nella decrittazione dell'ID.";
                 return BadRequest("ID non valido.");
             }
 
             comunicazioniDTO.Id = decryptedId;
-            ModelState.Clear();
-            TryValidateModel(comunicazioniDTO);
 
             if (!ModelState.IsValid)
             {
-                LogModelStateErrors();
+                TempData["Error"] = "Alcuni campi non sono validi. Controlla i dati inseriti.";
                 ViewData["EncryptedId"] = id ?? string.Empty;
                 SetViewBagOptions();
                 return View(comunicazioniDTO);
@@ -100,51 +98,38 @@ namespace AppComunicazioni.Controllers
                 if (comunicazioniToUpdate == null)
                 {
                     _logger.LogWarning($"Comunicazione con ID {decryptedId} non trovata.");
+                    TempData["ToastMessage"] = "Errore durante il salvataggio.";
+                    TempData["ToastType"] = "error";
                     return NotFound();
                 }
 
-                _logger.LogInformation($"Prima del reload - DateF: {comunicazioniToUpdate.DateF}, Email_inviata: {comunicazioniToUpdate.Email_inviata}");
-                await _context.Entry(comunicazioniToUpdate).ReloadAsync();
-
-                // Aggiorna i valori
                 comunicazioniToUpdate.DateF = comunicazioniDTO.DateF;
                 comunicazioniToUpdate.Note = comunicazioniDTO.Note;
-                _logger.LogInformation($"Valori aggiornati - DateF: {comunicazioniToUpdate.DateF}, Email_inviata: {comunicazioniToUpdate.Email_inviata}");
 
-                // Logica per invio email
                 if (comunicazioniToUpdate.Email_inviata.HasValue && !comunicazioniToUpdate.Email_inviata.Value)
                 {
-                    _logger.LogInformation($"Invio email per il file: {comunicazioniToUpdate.FileName}");
                     await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                     comunicazioniToUpdate.Email_inviata = true;
                 }
 
-                /*// Elaborazione del file Excel
-                  if (excelFile != null && excelFile.Length > 0)
-                  {
-                      var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioniDTO.Id);
-                      if (dettagli != null)
-                      {
-                          _context.ComunicazioniDettagli.AddRange(dettagli);
-                          await _context.SaveChangesAsync();
-                      }
+/*                // Elaborazione del file Excel
+                if (excelFile != null && excelFile.Length > 0)
+                {
+                   var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioniDTO.Id);
+                   if (dettagli != null)
+                   {
+                        _context.ComunicazioniDettagli.AddRange(dettagli);
+                        await _context.SaveChangesAsync();
+                   }
                 }*/
 
-                // Salva le modifiche
-                _logger.LogInformation($"Prima del salvataggio - DateF: {comunicazioniToUpdate.DateF}, Email_inviata: {comunicazioniToUpdate.Email_inviata}");
                 _context.Entry(comunicazioniToUpdate).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
-                _logger.LogInformation($"Modifiche salvate correttamente per il file: {comunicazioniToUpdate.FileName}");
 
-                // Determina il controller di destinazione
-                var referer = Request.Headers["Referer"].ToString();
+                TempData["ToastMessage"] = "Operazione completata con successo.";
+                TempData["ToastType"] = "success";
+
                 string controllerName = comunicazioniToUpdate.FileName?.Contains("SSC") == true ? "ComunicazionisSsc" : "ComunicazionisEbi";
-
-                if (!string.IsNullOrEmpty(referer))
-                {
-                    return RedirectToAction("Index", controllerName);
-                }
-
                 return RedirectToAction("Index", controllerName);
             }, _logger, this);
         }

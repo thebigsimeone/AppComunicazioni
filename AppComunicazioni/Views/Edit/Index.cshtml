@@ -5,11 +5,11 @@
 }
 
 <h1>Modifica</h1>
-<hr/>
+<hr />
 
 <div class="row">
     <div class="col-md-6">
-        <form asp-action="Index" method="post" enctype="multipart/form-data">
+        <form asp-action="Index" method="post" enctype="multipart/form-data" id="editForm">
             <input type="hidden" name="id" value="@ViewData["EncryptedId"]" />
 
             <!-- Nome File -->
@@ -20,22 +20,14 @@
 
             <!-- Data di Arrivo -->
             <div class="form-floating mb-3 position-relative">
-                <input asp-for="DateA" type="datetime-local" class="form-control input-with-icon" id="DateA" placeholder="Data di arrivo">
-                <label asp-for="DateA" class="label-with-icon">Data di arrivo</label>
-                <button type="button" class="btn btn-outline-secondary floating-button"
-                        onclick="document.getElementById('DateA').showPicker();" title="Seleziona data">
-                    <i class="bi bi-calendar-date"></i>
-                </button>
+                <input asp-for="DateA" type="datetime-local" class="form-control" id="DateA" placeholder="Data di arrivo">
+                <label asp-for="DateA">Data di arrivo</label>
             </div>
 
             <!-- Data di Fine Smarco -->
             <div class="form-floating mb-3 position-relative">
-                <input asp-for="DateF" type="datetime-local" class="form-control input-with-icon" id="DateF" placeholder="Data di fine smarco">
-                <label asp-for="DateF" class="label-with-icon">Data di fine smarco</label>
-                <button type="button" class="btn btn-outline-secondary floating-button"
-                        onclick="document.getElementById('DateF').showPicker();" title="Seleziona data">
-                    <i class="bi bi-calendar-date"></i>
-                </button>
+                <input asp-for="DateF" type="datetime-local" class="form-control" id="DateF" placeholder="Data di fine smarco">
+                <label asp-for="DateF">Data di fine smarco</label>
                 <button type="button" class="btn btn-outline-danger floating-button-right" onclick="clearDateF();" title="Pulisci data">
                     <i class="bi bi-x-circle"></i>
                 </button>
@@ -73,21 +65,50 @@
                 <label asp-for="Ritornato" class="form-check-label">Ritornato</label>
             </div>
 
-            <!-- Bottoni -->
-            <div class="d-flex justify-content-between">
-                <button type="submit" class="btn btn-outline-primary">Salva</button>
+            <!-- Spinner e Bottoni -->
+            <div class="d-flex justify-content-between align-items-center">
+                <button type="submit" class="btn btn-outline-primary" id="submitButton">Salva</button>
                 <a href="@ViewContext.HttpContext.Request.Headers["Referer"]" class="btn btn-outline-secondary">Indietro</a>
+                <div class="spinner-border text-primary ms-3 d-none" role="status" id="spinner">
+                    <span class="visually-hidden">Caricamento...</span>
+                </div>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="toastMessage" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Operazione completata con successo.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        document.getElementById("editForm").addEventListener("submit", function () {
+            const spinner = document.getElementById("spinner");
+            const submitButton = document.getElementById("submitButton");
+            spinner.classList.remove("d-none");
+            submitButton.disabled = true;
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const toastElement = document.getElementById("toastMessage");
+            const toast = new bootstrap.Toast(toastElement);
+            if (toastElement.dataset.show === "true") {
+                toast.show();
+            }
+        });
+
         function clearDateF() {
             document.getElementById("DateF").value = '';
         }
     </script>
 }
-

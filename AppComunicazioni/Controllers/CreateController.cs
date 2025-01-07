@@ -51,12 +51,14 @@ public class CreateController : Controller
         if (comunicazioniDTO == null)
         {
             _logger.LogError("Il DTO delle comunicazioni è nullo.");
-            throw new ArgumentNullException(nameof(comunicazioniDTO));
+            TempData["Message"] = "Errore: Il modulo è vuoto.";
+            return RedirectToAction(nameof(Index));
         }
 
         if (!ModelState.IsValid)
         {
             SetViewBagOptions();
+            TempData["Message"] = "Errore: I dati inseriti non sono validi.";
             return View(comunicazioniDTO);
         }
 
@@ -74,15 +76,11 @@ public class CreateController : Controller
                         if (mandante != null)
                         {
                             comunicazioniDTO.Mandante = mandante;
-
-                            // Trova l'indice del mandante e prendi la parte successiva come servizio
                             var mandanteIndex = Array.IndexOf(fileNameParts, mandante);
                             if (mandanteIndex >= 0 && mandanteIndex + 1 < fileNameParts.Length)
                             {
                                 var servicePart = fileNameParts[mandanteIndex + 1];
-
                                 if (servicePart == "035") servicePart = "S035";
-
                                 if (Enum.TryParse<ServizioType>(servicePart, true, out var servizioParsed))
                                 {
                                     comunicazioniDTO.Servizio = servizioParsed;
@@ -93,8 +91,6 @@ public class CreateController : Controller
                                 }
                             }
                         }
-
-                        // Estrai il numero di protocollo dalla parte finale
                         var lastPart = fileNameParts.LastOrDefault();
                         if (int.TryParse(lastPart, out var protocolNumber))
                         {
@@ -102,18 +98,15 @@ public class CreateController : Controller
                         }
                     }
 
-                    // Mappatura e valori di default
                     var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
                     comunicazioni.Notificato = false;
                     comunicazioni.Ritornato = false;
                     comunicazioni.NsProtocol = 0;
                     comunicazioni.Email_inviata = false;
 
-                    // Aggiungi comunicazione al contesto
                     _context.Add(comunicazioni);
                     await _context.SaveChangesAsync();
 
-                    // Elaborazione del file Excel
                     if (excelFile != null && excelFile.Length > 0)
                     {
                         var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioni.Id);
@@ -124,20 +117,18 @@ public class CreateController : Controller
                         }
                     }
 
-                    // Invoca il servizio di monitoraggio
                     await _monitoringService.CheckAndSendNotificationsAsync();
 
-                    // Commit della transazione
                     await transaction.CommitAsync();
                     TempData["Message"] = "Comunicazione creata con successo.";
-
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
                     _logger.LogError(ex, "Errore durante la creazione della comunicazione.");
-                    throw;
+                    TempData["Message"] = "Errore: Non è stato possibile completare l'operazione.";
+                    return RedirectToAction(nameof(Index));
                 }
             }
         }, _logger, this);
