@@ -104,7 +104,19 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
     private IQueryable<Comunicazioni> FiltraPerTermineRicerca(IQueryable<Comunicazioni> query, string? searchTerm)
     {
         if (!string.IsNullOrWhiteSpace(searchTerm))
-            query = query.Where(x => x.FileName != null && x.FileName.Contains(searchTerm));
+        {
+            // Rimuovi spazi bianchi prima e dopo l'input
+            var trimmedSearchTerm = searchTerm.Trim();
+
+            // Unisci con la tabella ComunicazioniDettaglio
+            query = query.Where(x =>
+                (x.FileName != null && x.FileName.Contains(trimmedSearchTerm)) || // Ricerca per FileName
+                x.Dettagli.Any(d =>
+                    (d.Protocollo != null && d.Protocollo.Contains(trimmedSearchTerm)) || // Ricerca per Protocollo
+                    (d.CodiceFiscale != null && d.CodiceFiscale.Contains(trimmedSearchTerm)) // Ricerca per Codice Fiscale
+                )
+            );
+        }
 
         return query;
     }
@@ -129,11 +141,12 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
     }
     private IQueryable<Comunicazioni> FiltraPerCodCor(IQueryable<Comunicazioni> query, string? codCor)
     {
+        // Il filtro CodCor viene applicato solo quando necessario
         if (!string.IsNullOrEmpty(codCor))
         {
             query = query.Where(x => x.FileName != null && x.FileName.Contains(codCor));
+            _logger.LogInformation($"Applicato filtro per codice correlato: {codCor}");
         }
-        _logger.LogInformation($"Applicato filtro per codice correlato: {codCor}");
         return query;
     }
 

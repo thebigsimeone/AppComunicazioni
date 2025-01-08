@@ -34,7 +34,6 @@ namespace AppComunicazioni.Controllers
             {
                 tipoAccertamento ??= "SSC";
 
-                // Configurazione ViewBag
                 ViewBag.CodCorOptions = _viewBagService.GetCodCorOptions(codCor);
                 ViewBag.TipoAccertamentoOptions = new List<SelectListItem>
         {
@@ -48,29 +47,16 @@ namespace AppComunicazioni.Controllers
 
                 var query = _context.Comunicazionis.AsQueryable();
 
-                // Determina se l'input è solo anno o mese/anno
-                DateTime? parsedDate = null;
-                if (!string.IsNullOrEmpty(meseAnno))
-                {
-                    if (meseAnno.Length == 4 && int.TryParse(meseAnno, out var year)) // Solo anno
-                    {
-                        parsedDate = new DateTime(year, 1, 1);
-                    }
-                    else if (DateTime.TryParseExact(meseAnno, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out var monthYear)) // Mese/anno
-                    {
-                        parsedDate = monthYear;
-                    }
-                }
-
+                // Filtra CodCor solo qui
                 query = await _filtroService.FiltraComunicazioniAsync(
                     query,
                     tipoAccertamento,
                     string.Empty,
                     null,
                     null,
-                    codCor ?? string.Empty,
+                    codCor, // Applica il filtro CodCor
                     string.Empty,
-                    parsedDate,
+                    meseAnno != null ? DateTime.ParseExact(meseAnno, "yyyy-MM", CultureInfo.InvariantCulture) : (DateTime?)null,
                     "DateA",
                     "asc",
                     false

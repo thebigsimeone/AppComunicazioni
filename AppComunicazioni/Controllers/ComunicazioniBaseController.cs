@@ -67,7 +67,7 @@ namespace AppComunicazioni.Controllers
 
         protected void SetViewBagOptions(string? codCor = null)
         {
-            ViewBag.CodCorOptions = _viewBagService.GetCodCorOptions(codCor) ?? new List<SelectListItem>();
+            ViewBag.CodCorOptions = _viewBagService.GetCodCorOptions() ?? new List<SelectListItem>();
             ViewBag.ServizioOptions = _viewBagService.GetServizioOptions(codCor) ?? new List<SelectListItem>();
         }
 
@@ -85,7 +85,7 @@ namespace AppComunicazioni.Controllers
                     filtri.SearchTerm ?? Session?.GetString("SearchTerm") ?? string.Empty,
                     filtri.StartDate ?? (Session?.GetString("StartDate") != null ? DateTime.Parse(Session.GetString("StartDate")!) : null),
                     filtri.EndDate ?? (Session?.GetString("EndDate") != null ? DateTime.Parse(Session.GetString("EndDate")!) : null),
-                    filtri.CodCor,
+                    filtri.CodCor = null,
                     filtri.Servizio ?? Session?.GetString("Servizio") ?? string.Empty,
                     filtri.MonthYear ?? (Session?.GetString("MonthYear") != null ? DateTime.Parse(Session.GetString("MonthYear")!) : DateTime.UtcNow),
                     filtri.SortField ?? Session?.GetString("SortField") ?? "DateA",
