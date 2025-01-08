@@ -6,13 +6,22 @@ using AppComunicazioni.Service;
 using AppComunicazioni.Services;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
+using Serilog;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Chiave di crittografia - 32 caratteri per AES
 var encryptionKey = "12345678901234567890123456789012";
 builder.Services.AddSingleton<IEncryptionService>(provider => new EncryptionService(encryptionKey));
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // Configurazione Kestrel
 builder.WebHost.ConfigureKestrel(options =>
