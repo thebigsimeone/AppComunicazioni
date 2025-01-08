@@ -54,7 +54,7 @@ function updateServizioOptions() {
             options = ["BA2", "BAN", "CEP"];
             break;
         case "DATAVIZ":
-            options = ["APP", "ATP", "DIM", "DV", "ERE", "MA7", "MIM", "PDL", "S035", "VL1", "VLA", "VL3", "VPP", "VSA", "VSS"];
+            options = ["APP", "APT", "DIM", "DV", "ERE", "MA7", "MIM", "PDL", "S035", "VL1", "VLA", "VL3", "VPP", "VSA", "VSS"];
             break;
         case "FORZA":
             options = ["DP1", "VED"];
@@ -78,3 +78,36 @@ function clearDateF() {
         dateFInput.value = '';
     }
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    const toastElement = document.getElementById("toastMessage");
+    const toastBody = document.getElementById("toastBody");
+    const toastContainer = document.getElementById("toastContainer");
+    const submitButton = document.getElementById("submitButton");
+
+    // Mostra lo spinner durante l'invio del form
+    const form = document.querySelector("form");
+    if (form) {
+        form.addEventListener("submit", function () {
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
+            const spinner = document.createElement("div");
+            spinner.className = "spinner-border text-primary";
+            spinner.setAttribute("role", "status");
+            spinner.innerHTML = '<span class="sr-only"></span>';
+            document.body.appendChild(spinner);
+        });
+    }
+
+    // Mostra il toast dopo il caricamento della pagina se TempData contiene un messaggio
+    if (toastElement && toastBody && toastContainer) {
+        const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+
+        const message = toastBody.dataset.message;
+        if (message) {
+            toastBody.textContent = message;
+            toast.show();
+        }
+    }
+});

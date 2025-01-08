@@ -68,7 +68,7 @@ public class MonitoringService : IMonitoringService
                     "S035" => 3,
                     "PDL" or "DIM" or "MA7" or "MIM" or "VL1" or "VLA" or "VL3" or "VSA" or "VPP" or "VSS" => 5,
                     "ERE" => 7,
-                    "APP" or "ATP" => 9,
+                    "APP" or "APT" => 9,
                     _ => 0,
                 };
 
@@ -158,7 +158,7 @@ public class MonitoringService : IMonitoringService
             "S035" => comunicazione.TotalDays >= 3,
             "PDL" or "DIM" or "MA7" or "MIM" or "VL1" or "VLA" or "VL3" or "VSA" or "VPP" or "VSS" => comunicazione.TotalDays >= 5,
             "ERE" => comunicazione.TotalDays >= 7,
-            "APP" or "ATP" => comunicazione.TotalDays >= 9,
+            "APP" or "APT" => comunicazione.TotalDays >= 9,
             _ => false,
         };
     }

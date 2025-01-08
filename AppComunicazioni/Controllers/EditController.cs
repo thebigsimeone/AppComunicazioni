@@ -48,7 +48,7 @@ namespace AppComunicazioni.Controllers
                 return BadRequest("ID non valido.");
 
             var comunicazioni = await _context.Comunicazionis
-                                .AsNoTracking() // Garantisce che il valore venga caricato dal database
+                                .AsNoTracking()
                                 .FirstOrDefaultAsync(c => c.Id == decryptedId);
             if (comunicazioni == null)
                 return NotFound();
@@ -57,34 +57,39 @@ namespace AppComunicazioni.Controllers
 
             var comunicazioniDTO = _mapper.Map<ComunicazioniDTO>(comunicazioni);
 
-            ViewData["EncryptedId"] = id ?? string.Empty; // Assegna un valore predefinito per evitare null
+            ViewData["EncryptedId"] = id ?? string.Empty;
             SetViewBagOptions();
             return View(comunicazioniDTO);
         }
 
         [HttpPost("{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Index(string id, [Bind] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
+        public async Task<IActionResult> Index(string Id, [Bind] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
         {
-            if (string.IsNullOrEmpty(id))
+            if (string.IsNullOrEmpty(Id))
             {
-                TempData["Error"] = "ID non valido.";
+                TempData["Message"] = "Errore: ID non valido.";
                 return BadRequest("ID non valido.");
             }
 
-            int decryptedId = DecryptId(id);
+            int decryptedId = DecryptId(Id);
             if (decryptedId == -1)
             {
-                TempData["Error"] = "Errore nella decrittazione dell'ID.";
+                TempData["Message"] = "Errore nella decrittazione dell'ID.";
                 return BadRequest("ID non valido.");
             }
 
+            // Imposta manualmente l'ID decrittato nel DTO
             comunicazioniDTO.Id = decryptedId;
+
+            _logger.LogInformation($"ID decrittato prima del controllo del ModelState.IsValid: {comunicazioniDTO.Id}");
 
             if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Alcuni campi non sono validi. Controlla i dati inseriti.";
-                ViewData["EncryptedId"] = id ?? string.Empty;
+                _logger.LogError("ModelState non valido durante la modifica della comunicazione.");
+                LogModelStateErrors();
+                TempData["Message"] = "Errore: Dati non validi.";
+                ViewData["EncryptedId"] = Id;
                 SetViewBagOptions();
                 return View(comunicazioniDTO);
             }
@@ -95,9 +100,7 @@ namespace AppComunicazioni.Controllers
 
                 if (comunicazioniToUpdate == null)
                 {
-                    _logger.LogWarning($"Comunicazione con ID {decryptedId} non trovata.");
-                    TempData["ToastMessage"] = "Errore durante il salvataggio.";
-                    TempData["ToastType"] = "error";
+                    TempData["Message"] = "Errore durante il salvataggio.";
                     return NotFound();
                 }
 
@@ -110,7 +113,7 @@ namespace AppComunicazioni.Controllers
                     comunicazioniToUpdate.Email_inviata = true;
                 }
 
-/*                // Elaborazione del file Excel
+                /*                // Elaborazione del file Excel
                 if (excelFile != null && excelFile.Length > 0)
                 {
                    var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioniDTO.Id);
@@ -124,23 +127,23 @@ namespace AppComunicazioni.Controllers
                 _context.Entry(comunicazioniToUpdate).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 
-                TempData["ToastMessage"] = "Operazione completata con successo.";
-                TempData["ToastType"] = "success";
+                TempData["Message"] = "Modifica salvata con successo.";
 
                 string controllerName = comunicazioniToUpdate.FileName?.Contains("SSC") == true ? "ComunicazionisSsc" : "ComunicazionisEbi";
                 return RedirectToAction("Index", controllerName);
             }, _logger, this);
         }
 
+
         private int DecryptId(string encryptedId)
         {
             try
             {
-                return int.Parse(_encryptionService.Decrypt(encryptedId) ?? "-1"); // Gestisce null
+                return int.Parse(_encryptionService.Decrypt(encryptedId) ?? "-1");
             }
             catch
             {
-                return -1; // Ritorna -1 in caso di errore
+                return -1;
             }
         }
 
@@ -149,11 +152,12 @@ namespace AppComunicazioni.Controllers
             foreach (var key in ModelState.Keys)
             {
                 var errors = ModelState[key]?.Errors;
-                if (errors == null) continue;
-
-                foreach (var error in errors)
+                if (errors != null && errors.Any())
                 {
-                    Console.WriteLine($"Chiave: {key}, Errore: {error.ErrorMessage}");
+                    foreach (var error in errors)
+                    {
+                        _logger.LogError($"ModelState Error - Campo: {key}, Messaggio: {error.ErrorMessage}");
+                    }
                 }
             }
         }

@@ -83,8 +83,8 @@
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">
     <div id="toastMessage" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
-            <div class="toast-body" id="toastBody">
-                Operazione completata con successo!
+            <div class="toast-body" id="toastBody" data-message="@TempData["Message"]">
+                <!-- Messaggio gestito tramite dataset -->
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
@@ -93,25 +93,6 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        $(document).ready(function () {
-            const toast = new bootstrap.Toast($('#toastMessage'), { delay: 5000 });
-
-            // Mostra spinner durante l'invio del form
-            $('#createForm').on('submit', function () {
-                $('#submitButton').prop('disabled', true);
-                $('body').append('<div class="spinner-border" role="status"><span class="sr-only"></span></div>');
-            });
-
-            // Mostra il toast dopo il caricamento
-        @if (TempData["Message"] != null)
-        {
-            <text>
-                        $('#toastBody').text('@TempData["Message"]');
-                        toast.show();
-            </text>
-        }
-        });
-    </script>
+    
 }
 
