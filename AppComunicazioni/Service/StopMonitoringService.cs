@@ -1,6 +1,5 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
-using Microsoft.Extensions.Logging;
 
 public class StopMonitoringService : IStopMonitoringService
 {

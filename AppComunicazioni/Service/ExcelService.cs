@@ -1,10 +1,6 @@
 ﻿using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using OfficeOpenXml;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace AppComunicazioni.Service
 {

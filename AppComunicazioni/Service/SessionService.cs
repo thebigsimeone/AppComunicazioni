@@ -1,6 +1,4 @@
 ﻿using AppComunicazioni.Interface;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
 namespace AppComunicazioni.Service
 {

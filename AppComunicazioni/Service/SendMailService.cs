@@ -2,7 +2,6 @@
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Text;
 
 public class SendMailService : ISendMailService
