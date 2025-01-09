@@ -30,9 +30,15 @@
         <dd class="col-sm-10">
             @(Model.Monitor == "S" ? "Attivo" : "Non Attivo")
         </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Report)
+        </dt>
+        <dd class="col-sm-10">
+            @(Model.Report == "S" ? "Attivo" : "Non Attivo")
+        </dd>
     </dl>
 </div>
 <div>
-    <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@Model?.Id">Modifica</a> |
     <a class="btn btn-outline-secondary" asp-action="Index">Indietro</a>
 </div>

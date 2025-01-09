@@ -15,5 +15,8 @@ namespace AppComunicazioni.Models.DTO_s
 
         [StringLength(1)]
         public string? Attivo { get; set; }
+
+        [StringLength(1)]
+        public string? Report { get; set; }
     }
 }

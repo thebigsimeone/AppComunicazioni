@@ -44,12 +44,13 @@ namespace AppComunicazioni.Controllers
         // POST: Destinataris/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Destinatario,Monitor,Attivo")] DestinatariDTO destinatariDTO)
+        public async Task<IActionResult> Create([Bind("Destinatario,Monitor,Attivo,Report")] DestinatariDTO destinatariDTO)
         {
             if (ModelState.IsValid)
             {
                 destinatariDTO.Monitor = Request.Form.ContainsKey("Monitor") ? "S" : "N";
                 destinatariDTO.Attivo = Request.Form.ContainsKey("Attivo") ? "S" : "N";
+                destinatariDTO.Report = Request.Form.ContainsKey("Report") ? "S" : "N";
 
                 var destinatari = _mapper.Map<Destinatari>(destinatariDTO);
 
@@ -102,7 +103,7 @@ namespace AppComunicazioni.Controllers
         // POST: Destinataris/Edit/{id}
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string EncryptedId, [Bind("Destinatario,Monitor,Attivo")] DestinatariDTO destinatariDTO)
+        public async Task<IActionResult> Edit(string EncryptedId, [Bind("Destinatario,Monitor,Attivo,Report")] DestinatariDTO destinatariDTO)
         {
             int decryptedId = DecryptId(EncryptedId);
             if (decryptedId == -1) return BadRequest("ID non valido.");
@@ -111,6 +112,7 @@ namespace AppComunicazioni.Controllers
             {
                 destinatariDTO.Monitor = Request.Form.ContainsKey("Monitor") ? "S" : "N";
                 destinatariDTO.Attivo = Request.Form.ContainsKey("Attivo") ? "S" : "N";
+                destinatariDTO.Report = Request.Form.ContainsKey("Report") ? "S" : "N";
 
                 return await _retryService.ExecuteWithRetry(async () =>
                 {

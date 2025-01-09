@@ -14,8 +14,9 @@
     <thead>
         <tr>
             <th>@Html.DisplayNameFor(model => model.Destinatario)</th>
-            <th>@Html.DisplayNameFor(model => model.Monitor)</th>
             <th>@Html.DisplayNameFor(model => model.Attivo)</th>
+            <th>@Html.DisplayNameFor(model => model.Monitor)</th>
+            <th>@Html.DisplayNameFor(model => model.Report)</th>
             <th></th>
         </tr>
     </thead>
@@ -24,8 +25,9 @@
         {
             <tr>
                 <td>@Html.DisplayFor(modelItem => item.Destinatario)</td>
-                <td>@Html.DisplayFor(modelItem => item.Monitor)</td>
                 <td>@Html.DisplayFor(modelItem => item.Attivo)</td>
+                <td>@Html.DisplayFor(modelItem => item.Monitor)</td>
+                <td>@Html.DisplayFor(modelItem => item.Report)</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="text-primary">
                         <i class="bi bi-pencil-square"></i>

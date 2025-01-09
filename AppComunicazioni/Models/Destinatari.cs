@@ -24,4 +24,8 @@ public partial class Destinatari
     [StringLength(1)]
     [Display(Name = "Attivo")]
     public string? Attivo { get; set; }
+    [Column("report")]
+    [StringLength(1)]
+    [Display(Name = "Report")]
+    public string? Report { get; set; }
 }

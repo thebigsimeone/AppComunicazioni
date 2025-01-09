@@ -29,6 +29,11 @@
                 <label class="form-check-label" for="monitor">Monitoraggio</label>
             </div>
 
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="report" name="Report" value="S" @(Model.Report == "S" ? "checked" : "") />
+                <label class="form-check-label" for="report">Report</label>
+            </div>
+
             <div class="form-group d-flex justify-content-between align-items-end">
                 <button type="submit" class="btn btn-outline-primary">Salva</button>
                 <a class="btn btn-outline-secondary" asp-action="Index">Indietro</a>
