@@ -71,13 +71,24 @@ function updateServizioOptions() {
     });
 }
 
-// Logica per pulire l'input DateF
-function clearDateF() {
-    const dateFInput = document.getElementById("DateF");
-    if (dateFInput) {
-        dateFInput.value = '';
-    }
+// Imposta la data e ora correnti in un campo di tipo datetime-local
+function setCurrentDateTime(inputId) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+
+    const formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    document.getElementById(inputId).value = formattedDateTime;
 }
+
+// Pulisce il valore del campo DateF
+function clearDateF() {
+    document.getElementById("DateF").value = '';
+}
+
 
 document.addEventListener("DOMContentLoaded", function () {
     const toastElement = document.getElementById("toastMessage");

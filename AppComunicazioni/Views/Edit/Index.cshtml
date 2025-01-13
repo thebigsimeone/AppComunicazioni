@@ -29,12 +29,14 @@
                 <input asp-for="DateF" type="datetime-local" class="form-control input-with-icon" id="DateF" placeholder="Data di fine smarco">
                 <label asp-for="DateF" class="label-with-icon">Data di fine smarco</label>
                 <button type="button" class="btn btn-outline-secondary floating-button"
-                        onclick="document.getElementById('DateF').showPicker();" title="Seleziona data">
+                        onclick="setCurrentDateTime('DateF');" title="Imposta data e ora attuali">
                     <i class="bi bi-calendar-date"></i>
+                </button>
                 <button type="button" class="btn btn-outline-danger floating-button-right" onclick="clearDateF();" title="Pulisci data">
                     <i class="bi bi-x-circle"></i>
                 </button>
             </div>
+
 
             <!-- Numero Protocolli -->
             <div class="form-floating mb-3">
@@ -97,9 +99,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        function clearDateF() {
-            document.getElementById("DateF").value = '';
-        }
-    </script>
 }

@@ -20,7 +20,7 @@ public partial class Comunicazioni
     public DateTimeOffset? DateA { get; set; }
 
     [Column("date_f")]
-    [Display(Name = "Data di fine smarco")]
+    [Display(Name = "Data di ritorno")]
     public DateTimeOffset? DateF { get; set; }
 
     [Column("n_protocol")]
