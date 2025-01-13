@@ -71,6 +71,7 @@ builder.Services.AddScoped<ISendMailService, SendMailService>();
 
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 builder.Services.AddScoped<IStopMonitoringService, StopMonitoringService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddScoped<IContabilitàService, ContabilitàService>();
 builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
@@ -85,6 +86,8 @@ builder.Services.AddScoped<IRetryService, RetryService>();
 builder.Services.AddScoped<CleanupService>();
 builder.Services.AddHostedService<CleanupBackgroundService>();
 builder.Services.AddHostedService<NotificationBackgroundService>();
+
+builder.Services.AddScoped<IReportService, ReportService>();
 
 // Registrazione di AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));

@@ -31,6 +31,7 @@ namespace AppComunicazioni.Models.DTO_s
         public bool Ritornato { get; set; }
         public bool Email_inviata { get; set; }
         public string? Mandante { get; set; }
+        public DateTimeOffset? Data_Notifica { get; set; }
 
         // Nuova proprietà per i dettagli
         public List<ComunicazioniDettaglioDTO>? Dettagli { get; set; }

@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace AppComunicazioni.Models
 {
@@ -25,6 +24,6 @@ namespace AppComunicazioni.Models
         VPP,
         VSA,
         VED,
-        VSS
+        VSS,
     }
 }

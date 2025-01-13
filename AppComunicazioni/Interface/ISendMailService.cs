@@ -1,4 +1,5 @@
 ﻿using AppComunicazioni.Models;
+using AppComunicazioni.Models.DTO_s;
 
 namespace AppComunicazioni.Interface
 {
@@ -7,5 +8,6 @@ namespace AppComunicazioni.Interface
         Task HandlePostEditActionsAsync(Comunicazioni comunicazioniToUpdate);
         Task SendMarkingEmailsAsync(Comunicazioni comunicazioni);
         Task SendNotificationEmailAsync(List<ComunicazioniWithDaysModel> notifications);
+        Task SendEmailReportAsync(List<Comunicazioni> ritardi, List<Comunicazioni> ritorni);
     }
 }

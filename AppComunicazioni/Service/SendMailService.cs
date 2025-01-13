@@ -1,6 +1,7 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
+using AppComunicazioni.Models.DTO_s;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
@@ -111,7 +112,7 @@ public class SendMailService : ISendMailService
             try
             {
                 var destinatari = await _context.Destinataris
-                    .Where(d => d.Monitor == "S")
+                    .Where(d => d.Attivo == "S" && d.Monitor == "S")
                     .ToListAsync();
 
                 if (destinatari == null || destinatari.Count == 0)
@@ -142,6 +143,8 @@ public class SendMailService : ISendMailService
                 }
 
                 comunicazione.Notificato = true;
+                comunicazione.Data_Notifica = DateTimeOffset.Now;
+
                 _context.Comunicazionis.Update(comunicazione);
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Comunicazione '{comunicazione.FileName}' è stata notificata.");
@@ -149,6 +152,65 @@ public class SendMailService : ISendMailService
             catch (Exception ex)
             {
                 _logger.LogError($"Errore durante il recupero dei destinatari: {ex.Message}");
+            }
+        }
+    }
+
+    public async Task SendEmailReportAsync(List<Comunicazioni> ritardi, List<Comunicazioni> ritorni)
+    {
+        var today = DateTimeOffset.Now.ToString("dd/MM/yyyy");
+
+        var destinatari = await _context.Destinataris
+            .Where(d => d.Attivo == "S" && d.Report == "S")
+            .ToListAsync();
+
+        if (!destinatari.Any())
+        {
+            _logger.LogWarning("Nessun destinatario trovato per il report giornaliero.");
+            return;
+        }
+
+        var subject = $"Report giornaliero file ritardi e ritorni - {today}";
+        var body = new StringBuilder();
+        body.AppendLine($"<h3>Report giornaliero {today}</h3>");
+
+        if (ritardi.Any())
+        {
+            body.AppendLine("<h4>File in ritardo:</h4><ul>");
+            foreach (var r in ritardi)
+            {
+                body.AppendLine($"<li>{r.FileName} - Notificato il {r.Data_Notifica:dd/MM/yyyy}</li>");
+            }
+            body.AppendLine("</ul>");
+        }
+
+        if (ritorni.Any())
+        {
+            body.AppendLine("<h4>File ritornati e smarcati:</h4><ul>");
+            foreach (var r in ritorni)
+            {
+                body.AppendLine($"<li>{r.FileName} - Ritornato il {r.DateF:dd/MM/yyyy}</li>");
+            }
+            body.AppendLine("</ul>");
+        }
+
+        foreach (var destinatario in destinatari)
+        {
+            if (!string.IsNullOrEmpty(destinatario.Destinatario))
+            {
+                try
+                {
+                    await _emailService.SendEmailAsync(destinatario.Destinatario, subject, body.ToString());
+                    _logger.LogInformation($"Email report inviata a: {destinatario.Destinatario}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Errore durante l'invio del report a {destinatario.Destinatario}: {ex.Message}");
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Destinatario con indirizzo email nullo o vuoto.");
             }
         }
     }

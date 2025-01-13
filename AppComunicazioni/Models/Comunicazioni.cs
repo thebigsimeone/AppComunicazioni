@@ -48,12 +48,19 @@ public partial class Comunicazioni
     [Column("ritornato")]
     [Display(Name = "Ritornato")]
     public bool? Ritornato { get; set; }
+
     [Column("email_inviata")]
     [Display(Name = "Email inviata")]
     public bool? Email_inviata { get; set; }
+
     [Column("mandante")]
     [Display(Name = "Mandante")]
     public string? Mandante { get; set; }
+
+    [Column("data_notifica")]
+    [Display(Name = "Data di notifica")]
+
+    public DateTimeOffset? Data_Notifica { get; set; }
 
     public ICollection<ComunicazioniDettaglio>? Dettagli { get; set; }
 }

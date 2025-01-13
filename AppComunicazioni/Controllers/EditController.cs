@@ -111,6 +111,7 @@ namespace AppComunicazioni.Controllers
                 {
                     await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                     comunicazioniToUpdate.Email_inviata = true;
+                    comunicazioniToUpdate.Ritornato = true;
                 }
 
                 /*                // Elaborazione del file Excel
