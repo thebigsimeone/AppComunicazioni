@@ -52,7 +52,12 @@ ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 // Configurazione del contesto del database
 builder.Services.AddDbContext<ComDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext")
-    ?? throw new InvalidOperationException("La stringa di connessione non può essere null.")));
+    ?? throw new InvalidOperationException("La stringa di connessione non può essere null."),
+    sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,           // Numero massimo di tentativi
+            maxRetryDelay: TimeSpan.FromSeconds(20),  // Ritardo tra i tentativi
+            errorNumbersToAdd: null     // Errori specifici da gestire
+        )));
 
 // Servizi HTTP e sessione
 builder.Services.AddHttpContextAccessor();
@@ -96,6 +101,17 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddHttpClient();
 builder.Services.AddMvc();
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddDbContext<ComDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext"),
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,           // Numero massimo di tentativi
+            maxRetryDelay: TimeSpan.FromSeconds(10),  // Ritardo tra i tentativi
+            errorNumbersToAdd: null     // Errori specifici da gestire
+        )
+    )
+);
+
 
 var app = builder.Build();
 

@@ -53,8 +53,8 @@ namespace AppComunicazioni.Service
                                 _logger.LogInformation("Controllo notifiche completato.");
                             }
 
-                            // Invio report alle 18:00
-                            if (nextRunTime.Hour == 18)
+                            // Invio report alle 17:00
+                            if (nextRunTime.Hour == 17)
                             {
                                 await reportService.GenerateAndSendDailyReportAsync();
                                 _logger.LogInformation("Report giornaliero inviato.");
@@ -75,9 +75,9 @@ namespace AppComunicazioni.Service
 
         private DateTimeOffset GetNextRunTime(DateTimeOffset now)
         {
-            // Esecuzioni programmate alle 10:00 e 18:00
+            // Esecuzioni programmate alle 10:00 e 17:00
             var nextRunMorning = new DateTimeOffset(now.Year, now.Month, now.Day, 10, 0, 0, now.Offset);
-            var nextRunEvening = new DateTimeOffset(now.Year, now.Month, now.Day, 18, 0, 0, now.Offset);
+            var nextRunEvening = new DateTimeOffset(now.Year, now.Month, now.Day, 17, 0, 0, now.Offset);
 
             if (now < nextRunMorning)
             {
