@@ -133,9 +133,6 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
         return query;
     }
 
-    /// <summary>
-    /// Filtro per CodCor aggiornato per usare la colonna Fornitore.
-    /// </summary>
     private IQueryable<Comunicazioni> FiltraPerCodCor(IQueryable<Comunicazioni> query, string? codCor)
     {
         if (!string.IsNullOrEmpty(codCor) && Enum.TryParse<CodCorType>(codCor, true, out var codCorEnum))
