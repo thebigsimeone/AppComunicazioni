@@ -1,15 +1,22 @@
 ﻿using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 public class FiltroComunicazioniService : IFiltroComunicazioniService
 {
     private readonly ISessionService _sessionService;
     private readonly ILogger<FiltroComunicazioniService> _logger;
+    private readonly IFornitoreService _fornitoreService;
 
-    public FiltroComunicazioniService(ISessionService sessionService, ILogger<FiltroComunicazioniService> logger)
+    public FiltroComunicazioniService(
+        ISessionService sessionService,
+        ILogger<FiltroComunicazioniService> logger,
+        IFornitoreService fornitoreService)
     {
         _sessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _fornitoreService = fornitoreService ?? throw new ArgumentNullException(nameof(fornitoreService));
     }
 
     public void ResetFiltri()
@@ -19,17 +26,17 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
     }
 
     public async Task<IQueryable<Comunicazioni>> FiltraComunicazioniAsync(
-                        IQueryable<Comunicazioni> query,
-                        string? tenant,
-                        string? searchTerm,
-                        DateTime? startDate,
-                        DateTime? endDate,
-                        string? codCor,
-                        string? servizio,
-                        DateTime? monthYear,
-                        string? sortField,
-                        string? sortOrder,
-                        bool soloRigheNonRestituite)
+        IQueryable<Comunicazioni> query,
+        string? tenant,
+        string? searchTerm,
+        DateTime? startDate,
+        DateTime? endDate,
+        string? codCor,
+        string? servizio,
+        DateTime? monthYear,
+        string? sortField,
+        string? sortOrder,
+        bool soloRigheNonRestituite)
     {
         if (query == null) throw new ArgumentNullException(nameof(query));
 
@@ -37,13 +44,12 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
         if (string.IsNullOrEmpty(tenant))
         {
             _logger.LogWarning("Il valore del tenant è nullo o vuoto. Utilizzo di un valore predefinito.");
-            tenant = "SSC"; // Valore predefinito
+            tenant = "SSC";
         }
 
-        sortField ??= "DateA"; // Campo di ordinamento predefinito
-        sortOrder ??= "asc";   // Ordine predefinito
+        sortField ??= "DateA";
+        sortOrder ??= "asc";
 
-        // Se nessun filtro è applicato, ritorna la query primaria
         if (string.IsNullOrEmpty(searchTerm) &&
             !startDate.HasValue &&
             !endDate.HasValue &&
@@ -79,7 +85,7 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
         else
             _sessionService.Remove("MonthYear");
 
-        // Applica i filtri
+        // Applica i filtri aggiornati
         query = FiltraPerTenant(query, tenant);
         query = FiltraPerTermineRicerca(query, searchTerm);
         query = FiltraPerDate(query, startDate, endDate);
@@ -104,19 +110,15 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
     {
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            // Rimuovi spazi bianchi prima e dopo l'input
             var trimmedSearchTerm = searchTerm.Trim();
-
-            // Unisci con la tabella ComunicazioniDettaglio
             query = query.Where(x =>
-                (x.FileName != null && x.FileName.Contains(trimmedSearchTerm)) || // Ricerca per FileName
+                (x.FileName != null && x.FileName.Contains(trimmedSearchTerm)) ||
                 x.Dettagli.Any(d =>
-                    (d.Protocollo != null && d.Protocollo.Contains(trimmedSearchTerm)) || // Ricerca per Protocollo
-                    (d.CodiceFiscale != null && d.CodiceFiscale.Contains(trimmedSearchTerm)) // Ricerca per Codice Fiscale
+                    (d.Protocollo != null && d.Protocollo.Contains(trimmedSearchTerm)) ||
+                    (d.CodiceFiscale != null && d.CodiceFiscale.Contains(trimmedSearchTerm))
                 )
             );
         }
-
         return query;
     }
 
@@ -131,20 +133,25 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
         return query;
     }
 
+    /// <summary>
+    /// Filtro per CodCor aggiornato per usare la colonna Fornitore.
+    /// </summary>
+    private IQueryable<Comunicazioni> FiltraPerCodCor(IQueryable<Comunicazioni> query, string? codCor)
+    {
+        if (!string.IsNullOrEmpty(codCor) && Enum.TryParse<CodCorType>(codCor, true, out var codCorEnum))
+        {
+            query = query.Where(x => x.Fornitore != null && EF.Functions.Like(x.Fornitore, codCorEnum.ToString()));
+            _logger.LogInformation($"Filtro per CodCor applicato: {codCorEnum}");
+        }
+        return query;
+    }
+
     private IQueryable<Comunicazioni> FiltraPerServizio(IQueryable<Comunicazioni> query, string? servizio)
     {
         if (!string.IsNullOrEmpty(servizio))
-            query = query.Where(x => x.Servizio != null && x.Servizio.ToLower() == servizio.ToLower());
-
-        return query;
-    }
-    private IQueryable<Comunicazioni> FiltraPerCodCor(IQueryable<Comunicazioni> query, string? codCor)
-    {
-        // Il filtro CodCor viene applicato solo quando necessario
-        if (!string.IsNullOrEmpty(codCor))
         {
-            query = query.Where(x => x.FileName != null && x.FileName.Contains(codCor));
-            _logger.LogInformation($"Applicato filtro per codice correlato: {codCor}");
+            query = query.Where(x => x.Servizio != null && EF.Functions.Like(x.Servizio, servizio));
+            _logger.LogInformation($"Filtro per Servizio applicato: {servizio}");
         }
         return query;
     }
@@ -153,18 +160,10 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
     {
         if (monthYear.HasValue)
         {
-            if (monthYear.Value.Month == 1 && monthYear.Value.Day == 1) // Solo anno
-            {
-                query = query.Where(x => x.DateA.HasValue && x.DateA.Value.Year == monthYear.Value.Year);
-            }
-            else // Mese/anno
-            {
-                var start = new DateTime(monthYear.Value.Year, monthYear.Value.Month, 1);
-                var end = start.AddMonths(1).AddDays(-1);
-                query = query.Where(x => x.DateA.HasValue && x.DateA.Value >= start && x.DateA.Value <= end);
-            }
+            var start = new DateTime(monthYear.Value.Year, monthYear.Value.Month, 1);
+            var end = start.AddMonths(1).AddDays(-1);
+            query = query.Where(x => x.DateA >= start && x.DateA <= end);
         }
-
         return query;
     }
 
@@ -181,14 +180,12 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
             {
                 "filename" => query.OrderBy(x => x.FileName),
                 "datea" => query.OrderBy(x => x.DateA),
-                "datef" => query.OrderBy(x => x.DateF),
                 _ => query.OrderBy(x => x.DateA),
             },
             "desc" => sortField.ToLower() switch
             {
                 "filename" => query.OrderByDescending(x => x.FileName),
                 "datea" => query.OrderByDescending(x => x.DateA),
-                "datef" => query.OrderByDescending(x => x.DateF),
                 _ => query.OrderByDescending(x => x.DateA),
             },
             _ => query.OrderBy(x => x.DateA),

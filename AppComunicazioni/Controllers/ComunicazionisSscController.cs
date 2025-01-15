@@ -11,23 +11,22 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
     private readonly ILogger<EditController> _editLogger;
 
     public ComunicazionisSscController(
-                                        ComDbContext context,
-                                        IMapper mapper,
-                                        IEmailService emailService,
-                                        IMonitoringService monitoringService,
-                                        IFiltroComunicazioniService filtroService,
-                                        IExcelService excelService,
-                                        ISendMailService sendMailService,
-                                        IViewBagService viewBagService,
-                                        IRetryService retryService,
-                                        IEncryptionService encryptionService,
-                                        ILogger<ComunicazionisSscController> logger,
-                                        ILogger<EditController> editLogger,
-                                        IPaginationService paginationService,
-                                        IHttpContextAccessor httpContextAccessor // Aggiunto IHttpContextAccessor
-                                        )
-                                        : base(context, mapper, emailService, monitoringService, filtroService, excelService,
-                                               sendMailService, logger, viewBagService, retryService, encryptionService, paginationService, httpContextAccessor) // Passato alla classe base
+        ComDbContext context,
+        IMapper mapper,
+        IEmailService emailService,
+        IMonitoringService monitoringService,
+        IFiltroComunicazioniService filtroService,
+        IExcelService excelService,
+        ISendMailService sendMailService,
+        IViewBagService viewBagService,
+        IRetryService retryService,
+        IEncryptionService encryptionService,
+        ILogger<ComunicazionisSscController> logger,
+        ILogger<EditController> editLogger,
+        IPaginationService paginationService,
+        IHttpContextAccessor httpContextAccessor)
+        : base(context, mapper, emailService, monitoringService, filtroService, excelService,
+               sendMailService, logger, viewBagService, retryService, encryptionService, paginationService, httpContextAccessor)
     {
         _editLogger = editLogger ?? throw new ArgumentNullException(nameof(editLogger));
     }
@@ -61,16 +60,9 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
         return await editController.Index(id, comunicazioniDTO, excelFile);
     }
 
-    [HttpGet("Delete/{id}")]
-    public IActionResult Delete(string id)
-    {
-        return RedirectToAction("Index", "Details", new { id });
-    }
-
     [HttpPost("ResetFiltri")]
     public IActionResult ResetFiltri()
     {
         return base.ResetFiltri("SSC");
     }
-
 }

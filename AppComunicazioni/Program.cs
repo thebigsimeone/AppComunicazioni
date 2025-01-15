@@ -82,6 +82,7 @@ builder.Services.AddScoped<IContabilitàService, ContabilitàService>();
 builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
 builder.Services.AddScoped<IViewBagService, ViewBagService>();
 builder.Services.AddScoped<IPaginationService, PaginationService>();
+builder.Services.AddScoped<IFornitoreService, FornitoreService>();
 
 builder.Services.AddScoped<IExcelService, ExcelService>();
 

@@ -1,5 +1,7 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
+using AppComunicazioni.Models;
+using AppComunicazioni.Models.DTO_s;
 using AppComunicazioni.Utility;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
@@ -73,7 +75,9 @@ namespace AppComunicazioni.Controllers
 
         protected async Task<IActionResult> BaseIndex(ComunicazioniViewModel filtri, string tipoAccertamento)
         {
-            return await _retryService.ExecuteWithRetry(async () =>
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            return await strategy.ExecuteAsync(async () =>
             {
                 SetViewBagOptions(filtri.CodCor);
 
@@ -85,23 +89,22 @@ namespace AppComunicazioni.Controllers
                     filtri.SearchTerm ?? Session?.GetString("SearchTerm") ?? string.Empty,
                     filtri.StartDate ?? (Session?.GetString("StartDate") != null ? DateTime.Parse(Session.GetString("StartDate")!) : null),
                     filtri.EndDate ?? (Session?.GetString("EndDate") != null ? DateTime.Parse(Session.GetString("EndDate")!) : null),
-                    filtri.CodCor = null,
+                    filtri.CodCor,
                     filtri.Servizio ?? Session?.GetString("Servizio") ?? string.Empty,
                     filtri.MonthYear ?? (Session?.GetString("MonthYear") != null ? DateTime.Parse(Session.GetString("MonthYear")!) : DateTime.UtcNow),
-                    filtri.SortField ?? Session?.GetString("SortField") ?? "DateA",
-                    filtri.SortOrder ?? Session?.GetString("SortOrder") ?? "asc",
+                    filtri.SortField ?? "DateA",
+                    filtri.SortOrder ?? "asc",
                     filtri.SoloRigheNonRestituite || (Session?.GetBoolean("SoloRigheNonRestituite") ?? false)
                 );
 
-                var pageSize = filtri.PageSize > 0 ? filtri.PageSize : 10;
-                var (paginatedData, totalPages) = await _paginationService.PaginateAsync(query, filtri.CurrentPage, pageSize);
+                var (paginatedData, totalPages) = await _paginationService.PaginateAsync(query, filtri.CurrentPage, filtri.PageSize > 0 ? filtri.PageSize : 10);
 
                 var model = new ComunicazioniViewModel
                 {
                     Comunicazioni = await paginatedData.ToListAsync(),
                     CurrentPage = filtri.CurrentPage,
                     TotalPages = totalPages,
-                    PageSize = pageSize,
+                    PageSize = filtri.PageSize,
                     StartDate = filtri.StartDate,
                     EndDate = filtri.EndDate,
                     CodCor = filtri.CodCor,
@@ -114,27 +117,13 @@ namespace AppComunicazioni.Controllers
                 };
 
                 return View("Index", model);
-            }, _logger, this);
+            });
         }
 
         [HttpPost]
         public IActionResult ResetFiltri(string tenant)
         {
             _filtroService.ResetFiltri();
-            var model = new ComunicazioniViewModel
-            {
-                CurrentPage = 1,
-                PageSize = 10,
-                SortField = "DateA",
-                SortOrder = "asc",
-                SearchTerm = null,
-                StartDate = null,
-                EndDate = null,
-                Servizio = null,
-                MonthYear = null,
-                SoloRigheNonRestituite = false
-            };
-
             return RedirectToAction("Index");
         }
     }

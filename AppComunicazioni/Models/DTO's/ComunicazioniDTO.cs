@@ -33,7 +33,8 @@ namespace AppComunicazioni.Models.DTO_s
         public string? Mandante { get; set; }
         public DateTimeOffset? Data_Notifica { get; set; }
 
-        // Nuova proprietà per i dettagli
+        public string? fornitore { get; set; }
+
         public List<ComunicazioniDettaglioDTO>? Dettagli { get; set; }
     }
 

@@ -17,7 +17,13 @@ namespace AppComunicazioni.Controllers
         private readonly IFiltroComunicazioniService _filtroService;
         private readonly ILogger<ContabilitàController> _logger;
 
-        public ContabilitàController(IContabilitàService contabilitaService, ComDbContext context, IRetryService retryService, IViewBagService viewBagService, IFiltroComunicazioniService filtroService, ILogger<ContabilitàController> logger)
+        public ContabilitàController(
+            IContabilitàService contabilitaService,
+            ComDbContext context,
+            IRetryService retryService,
+            IViewBagService viewBagService,
+            IFiltroComunicazioniService filtroService,
+            ILogger<ContabilitàController> logger)
         {
             _contabilitaService = contabilitaService ?? throw new ArgumentNullException(nameof(contabilitaService));
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -34,34 +40,28 @@ namespace AppComunicazioni.Controllers
             {
                 tipoAccertamento ??= "SSC";
 
-                ViewBag.CodCorOptions = _viewBagService.GetCodCorOptions(codCor);
-                ViewBag.TipoAccertamentoOptions = new List<SelectListItem>
-        {
-            new SelectListItem { Value = "SSC", Text = "SSC", Selected = tipoAccertamento == "SSC" },
-            new SelectListItem { Value = "EBI", Text = "EBI", Selected = tipoAccertamento == "EBI" }
-        };
+                // Setup ViewBag per i filtri
+                SetViewBagOptions(codCor, tipoAccertamento, meseAnno);
 
-                ViewData["MeseAnno"] = meseAnno;
-                ViewData["CodCor"] = codCor;
-                ViewData["TipoAccertamento"] = tipoAccertamento;
-
+                // Creazione della query di base
                 var query = _context.Comunicazionis.AsQueryable();
 
-                // Filtra CodCor solo qui
+                // Applica i filtri
                 query = await _filtroService.FiltraComunicazioniAsync(
                     query,
                     tipoAccertamento,
                     string.Empty,
                     null,
                     null,
-                    codCor, // Applica il filtro CodCor
+                    codCor,
                     string.Empty,
-                    meseAnno != null ? DateTime.ParseExact(meseAnno, "yyyy-MM", CultureInfo.InvariantCulture) : (DateTime?)null,
+                    !string.IsNullOrEmpty(meseAnno) ? DateTime.ParseExact(meseAnno, "yyyy-MM", CultureInfo.InvariantCulture) : (DateTime?)null,
                     "DateA",
                     "asc",
                     false
                 );
 
+                // Raggruppamento per Servizio
                 var model = await query
                     .GroupBy(x => x.Servizio)
                     .Select(g => new ContabilitaAccertamentiViewModel
@@ -77,11 +77,26 @@ namespace AppComunicazioni.Controllers
             }, _logger, this);
         }
 
+        // POST: Reset dei filtri
         [HttpPost]
         public IActionResult ResetFiltri()
         {
             _filtroService.ResetFiltri();
             return RedirectToAction("Index");
+        }
+
+        // Metodo per settare ViewBag dinamicamente
+        private void SetViewBagOptions(string? codCor, string tipoAccertamento, string? meseAnno)
+        {
+            ViewBag.CodCorOptions = _viewBagService.GetCodCorOptions(codCor);
+            ViewBag.TipoAccertamentoOptions = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "SSC", Text = "SSC", Selected = tipoAccertamento == "SSC" },
+                new SelectListItem { Value = "EBI", Text = "EBI", Selected = tipoAccertamento == "EBI" }
+            };
+            ViewData["MeseAnno"] = meseAnno;
+            ViewData["CodCor"] = codCor;
+            ViewData["TipoAccertamento"] = tipoAccertamento;
         }
     }
 }

@@ -6,6 +6,7 @@ namespace AppComunicazioni.Models
     {
         APP,
         APT,
+        APL,
         BA2,
         BAN,
         CEP,
