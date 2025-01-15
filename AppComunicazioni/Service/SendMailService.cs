@@ -177,32 +177,110 @@ public class SendMailService : ISendMailService
             return;
         }
 
-        var subject = $"Report giornaliero file ritardi e ritorni - {today}";
+        var subject = $"📊 Report Giornaliero - Ritardi e Ritorni | {today}";
         var body = new StringBuilder();
-        body.AppendLine($"<h3>Report giornaliero {today}</h3>");
 
+        // 🔵 HEADER DEL REPORT
+        body.AppendLine(@$"
+        <html>
+        <head>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    background-color: #f9f9f9;
+                    color: #333;
+                    padding: 20px;
+                }}
+                h3 {{
+                    color: #007BFF;
+                }}
+                h4 {{
+                    color: #343A40;
+                    border-bottom: 2px solid #007BFF;
+                    padding-bottom: 5px;
+                }}
+                table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 15px;
+                    background-color: #fff;
+                }}
+                th, td {{
+                    padding: 10px;
+                    text-align: left;
+                    border-bottom: 1px solid #ddd;
+                }}
+                th {{
+                    background-color: #007BFF;
+                    color: white;
+                }}
+                tr:nth-child(even) {{
+                    background-color: #f2f2f2;
+                }}
+                tr:hover {{
+                    background-color: #e9ecef;
+                }}
+                .fornitore-header {{
+                    background-color: #343A40;
+                    color: white;
+                    padding: 10px;
+                    margin-top: 20px;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                }}
+            </style>
+        </head>
+        <body>
+            <h3>📅 Report Giornaliero - {today}</h3>
+        ");
+
+        // 🔴 FILE IN RITARDO
         if (ritardi.Any())
         {
-            body.AppendLine("<h4>File in ritardo:</h4><ul>");
+            body.AppendLine("<h4>🚨 File in Ritardo</h4>");
+            body.AppendLine("<table>");
+            body.AppendLine("<tr><th>Nome File</th><th>Data Notifica</th></tr>");
             foreach (var r in ritardi)
             {
-                body.AppendLine($"<li>{r.FileName} - Notificato il {r.Data_Notifica:dd/MM/yyyy}</li>");
+                body.AppendLine($"<tr><td>{r.FileName}</td><td>{r.Data_Notifica:dd/MM/yyyy}</td></tr>");
             }
-            body.AppendLine("</ul>");
+            body.AppendLine("</table>");
         }
 
+        // 🟢 FILE RITORNATI E SMARCATI PER FORNITORE
         if (ritorni.Any())
         {
-            body.AppendLine("<h4>File ritornati e smarcati:</h4><ul>");
-            foreach (var r in ritorni)
+            body.AppendLine("<h4>📦 File Ritornati e Smarcati per Fornitore</h4>");
+
+            var ritorniPerFornitore = ritorni
+                .GroupBy(r => r.Fornitore)
+                .OrderBy(g => g.Key);
+
+            foreach (var gruppo in ritorniPerFornitore)
             {
-                body.AppendLine($"<li>{r.FileName} - Ritornato il {r.DateF:dd/MM/yyyy}</li>");
+                string nomeFornitore = gruppo.Key.ToString();
+
+                body.AppendLine($"<div class='fornitore-header'>🔹 {nomeFornitore}</div>");
+                body.AppendLine("<table>");
+                body.AppendLine("<tr><th>Nome File</th><th>Data Ritorno</th></tr>");
+                foreach (var r in gruppo)
+                {
+                    body.AppendLine($"<tr><td>{r.FileName}</td><td>{r.DateF:dd/MM/yyyy}</td></tr>");
+                }
+                body.AppendLine("</table>");
             }
-            body.AppendLine("</ul>");
         }
 
-        body.AppendLine("Cordiali saluti,<br><br>Team Comunicazioni</p>");
+        // 🔵 FOOTER
+        body.AppendLine(@"
+            <br><br>
+            <p style='font-size: 12px; color: #6c757d;'>🔒 Questo è un messaggio automatico. Si prega di non rispondere a questa email.</p>
+            <p style='font-weight: bold;'>Cordiali saluti,<br>Team Comunicazioni</p>
+        </body>
+        </html>
+        ");
 
+        // 📧 INVIO EMAIL
         foreach (var destinatario in destinatari)
         {
             if (!string.IsNullOrEmpty(destinatario.Destinatario))
