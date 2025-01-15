@@ -15,6 +15,7 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
         IMapper mapper,
         IEmailService emailService,
         IMonitoringService monitoringService,
+        IStopMonitoringService stopMonitoringService,
         IFiltroComunicazioniService filtroService,
         IExcelService excelService,
         ISendMailService sendMailService,
@@ -25,7 +26,7 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
         ILogger<EditController> editLogger,
         IPaginationService paginationService,
         IHttpContextAccessor httpContextAccessor)
-        : base(context, mapper, emailService, monitoringService, filtroService, excelService,
+        : base(context, mapper, emailService, monitoringService, stopMonitoringService, filtroService, excelService,
                sendMailService, logger, viewBagService, retryService, encryptionService, paginationService, httpContextAccessor)
     {
         _editLogger = editLogger ?? throw new ArgumentNullException(nameof(editLogger));
@@ -55,7 +56,9 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
             _sendMailService,
             _encryptionService,
             _editLogger,
-            _excelService);
+            _excelService,
+            _stopMonitoringService
+            );
 
         return await editController.Index(id, comunicazioniDTO, excelFile);
     }

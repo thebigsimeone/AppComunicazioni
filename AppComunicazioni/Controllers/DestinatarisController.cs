@@ -46,22 +46,37 @@ namespace AppComunicazioni.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Destinatario,Monitor,Attivo,Report")] DestinatariDTO destinatariDTO)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid) return View(destinatariDTO);
+
+            destinatariDTO.Monitor = Request.Form.ContainsKey("Monitor") ? "S" : "N";
+            destinatariDTO.Attivo = Request.Form.ContainsKey("Attivo") ? "S" : "N";
+            destinatariDTO.Report = Request.Form.ContainsKey("Report") ? "S" : "N";
+
+            var destinatari = _mapper.Map<Destinatari>(destinatariDTO);
+
+            return await _retryService.ExecuteWithRetry(async () =>
             {
-                destinatariDTO.Monitor = Request.Form.ContainsKey("Monitor") ? "S" : "N";
-                destinatariDTO.Attivo = Request.Form.ContainsKey("Attivo") ? "S" : "N";
-                destinatariDTO.Report = Request.Form.ContainsKey("Report") ? "S" : "N";
-
-                var destinatari = _mapper.Map<Destinatari>(destinatariDTO);
-
-                return await _retryService.ExecuteWithRetry(async () =>
+                var strategy = _context.Database.CreateExecutionStrategy();
+                await strategy.ExecuteAsync(async () =>
                 {
-                    await _context.Destinataris.AddAsync(destinatari);
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
-                }, _logger, this);
-            }
-            return View(destinatariDTO);
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
+                    try
+                    {
+                        await _context.Destinataris.AddAsync(destinatari);
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        _logger.LogError(ex, "Errore durante la creazione del destinatario.");
+                        ModelState.AddModelError("", "Errore durante la creazione.");
+                        throw; // Rilancia per la strategia di retry
+                    }
+                });
+
+                return RedirectToAction(nameof(Index));
+            }, _logger, this);
         }
 
         // GET: Destinataris/Details/{id}
@@ -92,8 +107,6 @@ namespace AppComunicazioni.Controllers
                 if (destinatari == null) return NotFound();
 
                 var destinatariDTO = _mapper.Map<DestinatariDTO>(destinatari);
-
-                // Popola ViewData con l'ID crittografato
                 ViewData["EncryptedId"] = _encryptionService.Encrypt(decryptedId.ToString());
 
                 return View(destinatariDTO);
@@ -108,27 +121,43 @@ namespace AppComunicazioni.Controllers
             int decryptedId = DecryptId(EncryptedId);
             if (decryptedId == -1) return BadRequest("ID non valido.");
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid) return View(destinatariDTO);
+
+            destinatariDTO.Monitor = Request.Form.ContainsKey("Monitor") ? "S" : "N";
+            destinatariDTO.Attivo = Request.Form.ContainsKey("Attivo") ? "S" : "N";
+            destinatariDTO.Report = Request.Form.ContainsKey("Report") ? "S" : "N";
+
+            return await _retryService.ExecuteWithRetry(async () =>
             {
-                destinatariDTO.Monitor = Request.Form.ContainsKey("Monitor") ? "S" : "N";
-                destinatariDTO.Attivo = Request.Form.ContainsKey("Attivo") ? "S" : "N";
-                destinatariDTO.Report = Request.Form.ContainsKey("Report") ? "S" : "N";
-
-                return await _retryService.ExecuteWithRetry(async () =>
+                var strategy = _context.Database.CreateExecutionStrategy();
+                await strategy.ExecuteAsync(async () =>
                 {
-                    var destinatariToUpdate = await _context.Destinataris.FindAsync(decryptedId);
-                    if (destinatariToUpdate == null) return NotFound();
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
+                    try
+                    {
+                        var destinatariToUpdate = await _context.Destinataris.FindAsync(decryptedId);
+                        if (destinatariToUpdate == null) throw new Exception("Destinatario non trovato.");
 
-                    // Aggiorna solo le proprietà specifiche
-                    destinatariToUpdate.Destinatario = destinatariDTO.Destinatario;
-                    destinatariToUpdate.Monitor = destinatariDTO.Monitor;
-                    destinatariToUpdate.Attivo = destinatariDTO.Attivo;
+                        destinatariToUpdate.Destinatario = destinatariDTO.Destinatario;
+                        destinatariToUpdate.Monitor = destinatariDTO.Monitor;
+                        destinatariToUpdate.Attivo = destinatariDTO.Attivo;
+                        destinatariToUpdate.Report = destinatariDTO.Report;
 
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Index));
-                }, _logger, this);
-            }
-            return View(destinatariDTO);
+                        _context.Update(destinatariToUpdate);
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        _logger.LogError(ex, "Errore durante la modifica del destinatario.");
+                        ModelState.AddModelError("", "Errore durante la modifica.");
+                        throw;
+                    }
+                });
+
+                return RedirectToAction(nameof(Index));
+            }, _logger, this);
         }
 
         // GET: Destinataris/Delete/{id}
@@ -139,7 +168,7 @@ namespace AppComunicazioni.Controllers
 
             return await _retryService.ExecuteWithRetry(async () =>
             {
-                var destinatari = await _context.Destinataris.FirstOrDefaultAsync(m => m.Id == decryptedId);
+                var destinatari = await _context.Destinataris.FindAsync(decryptedId);
                 if (destinatari == null) return NotFound();
 
                 return View(destinatari);
@@ -156,12 +185,27 @@ namespace AppComunicazioni.Controllers
 
             return await _retryService.ExecuteWithRetry(async () =>
             {
-                var destinatari = await _context.Destinataris.FindAsync(decryptedId);
-                if (destinatari != null)
+                var strategy = _context.Database.CreateExecutionStrategy();
+                await strategy.ExecuteAsync(async () =>
                 {
-                    _context.Destinataris.Remove(destinatari);
-                    await _context.SaveChangesAsync();
-                }
+                    await using var transaction = await _context.Database.BeginTransactionAsync();
+                    try
+                    {
+                        var destinatari = await _context.Destinataris.FindAsync(decryptedId);
+                        if (destinatari == null) throw new Exception("Destinatario non trovato.");
+
+                        _context.Destinataris.Remove(destinatari);
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        _logger.LogError(ex, "Errore durante l'eliminazione del destinatario.");
+                        throw;
+                    }
+                });
+
                 return RedirectToAction(nameof(Index));
             }, _logger, this);
         }

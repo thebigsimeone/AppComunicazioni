@@ -16,6 +16,7 @@ namespace AppComunicazioni.Controllers
         protected readonly IMapper _mapper;
         protected readonly IEmailService _emailService;
         protected readonly IMonitoringService _monitoringService;
+        protected readonly IStopMonitoringService _stopMonitoringService;
         protected readonly IFiltroComunicazioniService _filtroService;
         protected readonly IExcelService _excelService;
         protected readonly ISendMailService _sendMailService;
@@ -31,6 +32,7 @@ namespace AppComunicazioni.Controllers
                                             IMapper mapper,
                                             IEmailService emailService,
                                             IMonitoringService monitoringService,
+                                            IStopMonitoringService stopMonitoringService,
                                             IFiltroComunicazioniService filtroService,
                                             IExcelService excelService,
                                             ISendMailService sendMailService,
@@ -45,6 +47,7 @@ namespace AppComunicazioni.Controllers
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
             _monitoringService = monitoringService ?? throw new ArgumentNullException(nameof(monitoringService));
+            _stopMonitoringService = stopMonitoringService ?? throw new ArgumentNullException(nameof(stopMonitoringService));
             _filtroService = filtroService ?? throw new ArgumentNullException(nameof(filtroService));
             _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
             _sendMailService = sendMailService ?? throw new ArgumentNullException(nameof(sendMailService));

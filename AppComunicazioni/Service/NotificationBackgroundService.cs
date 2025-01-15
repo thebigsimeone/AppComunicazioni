@@ -18,12 +18,10 @@ namespace AppComunicazioni.Service
             while (!stoppingToken.IsCancellationRequested)
             {
                 var now = DateTimeOffset.Now;
-
-                // Calcola quanto manca al prossimo ciclo di esecuzione alle 10:00
                 var nextRunTime = GetNextRunTime(now);
                 var delay = nextRunTime - now;
 
-                _logger.LogInformation($"Il prossimo controllo notifiche sarà alle {nextRunTime}. Attesa per {delay.TotalMinutes} minuti.");
+                _logger.LogInformation($"Il prossimo controllo notifiche sarà alle {nextRunTime}. Attesa per {delay.TotalMinutes:F2} minuti.");
 
                 try
                 {
@@ -37,25 +35,31 @@ namespace AppComunicazioni.Service
 
                 if (IsWeekday(nextRunTime))
                 {
-                    _logger.LogInformation("Esecuzione periodica del controllo notifiche e report...");
+                    _logger.LogInformation($"Esecuzione del servizio alle {nextRunTime}...");
 
                     using (var scope = _serviceProvider.CreateScope())
                     {
-                        var monitoringService = scope.ServiceProvider.GetRequiredService<IMonitoringService>();
-                        var reportService = scope.ServiceProvider.GetRequiredService<IReportService>();
+                        var monitoringService = scope.ServiceProvider.GetService<IMonitoringService>();
+                        var reportService = scope.ServiceProvider.GetService<IReportService>();
+
+                        if (monitoringService == null || reportService == null)
+                        {
+                            _logger.LogError("Errore: I servizi MonitoringService o ReportService non sono disponibili.");
+                            continue;
+                        }
 
                         try
                         {
-                            // Controllo notifiche alle 10:00
                             if (nextRunTime.Hour == 10)
                             {
+                                _logger.LogInformation("Avvio del controllo notifiche...");
                                 await monitoringService.CheckAndSendNotificationsAsync();
                                 _logger.LogInformation("Controllo notifiche completato.");
                             }
 
-                            // Invio report alle 17:00
                             if (nextRunTime.Hour == 17)
                             {
+                                _logger.LogInformation("Avvio invio report giornaliero...");
                                 await reportService.GenerateAndSendDailyReportAsync();
                                 _logger.LogInformation("Report giornaliero inviato.");
                             }
@@ -68,34 +72,26 @@ namespace AppComunicazioni.Service
                 }
                 else
                 {
-                    _logger.LogInformation("Oggi non è un giorno lavorativo, il servizio non verrà eseguito.");
+                    _logger.LogInformation("Oggi non è un giorno lavorativo. Il servizio non verrà eseguito.");
                 }
             }
         }
 
         private DateTimeOffset GetNextRunTime(DateTimeOffset now)
         {
-            // Esecuzioni programmate alle 10:00 e 17:00
             var nextRunMorning = new DateTimeOffset(now.Year, now.Month, now.Day, 10, 0, 0, now.Offset);
             var nextRunEvening = new DateTimeOffset(now.Year, now.Month, now.Day, 17, 0, 0, now.Offset);
 
-            if (now < nextRunMorning)
-            {
-                return nextRunMorning;
-            }
-            else if (now < nextRunEvening)
-            {
-                return nextRunEvening;
-            }
-            else
-            {
-                return nextRunMorning.AddDays(1);
-            }
+            if (now < nextRunMorning) return nextRunMorning;
+            if (now < nextRunEvening) return nextRunEvening;
+
+            return nextRunMorning.AddDays(1);
         }
 
         private bool IsWeekday(DateTimeOffset date)
         {
             return date.DayOfWeek >= DayOfWeek.Monday && date.DayOfWeek <= DayOfWeek.Friday;
         }
+
     }
 }

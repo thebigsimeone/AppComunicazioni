@@ -1,15 +1,17 @@
 ﻿@model IEnumerable<AppComunicazioni.Models.Destinatari>
 @using AppComunicazioni.Helpers
+@using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    ViewData["Title"] = "Destinatari";
+    ViewData["Title"] = "Contatti";
 }
 
-<h1>Destinatari</h1>
+<h1>Contatti</h1>
 
 <p>
-    <a class="btn btn-outline-primary" asp-action="Create">Inserisci nuovi destinatari</a>
+    <a class="btn btn-outline-primary" asp-action="Create">Inserisci nuovo contatto</a>
 </p>
+
 <table class="table table-hover">
     <thead>
         <tr>
@@ -17,7 +19,7 @@
             <th>@Html.DisplayNameFor(model => model.Attivo)</th>
             <th>@Html.DisplayNameFor(model => model.Monitor)</th>
             <th>@Html.DisplayNameFor(model => model.Report)</th>
-            <th></th>
+            <th>Azioni</th>
         </tr>
     </thead>
     <tbody>
@@ -25,17 +27,44 @@
         {
             <tr>
                 <td>@Html.DisplayFor(modelItem => item.Destinatario)</td>
-                <td>@Html.DisplayFor(modelItem => item.Attivo)</td>
-                <td>@Html.DisplayFor(modelItem => item.Monitor)</td>
-                <td>@Html.DisplayFor(modelItem => item.Report)</td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="text-primary">
+                    @if (item.Attivo == "S")
+                    {
+                        <span class="badge bg-success">Attivo</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Non Attivo</span>
+                    }
+                </td>
+                <td>
+                    @if (item.Monitor == "S")
+                    {
+                        <span class="badge bg-info">Monitorato</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Non Monitorato</span>
+                    }
+                </td>
+                <td>
+                    @if (item.Report == "S")
+                    {
+                        <span class="badge bg-warning">Report</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-light">No Report</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="text-primary" title="Modifica">
                         <i class="bi bi-pencil-square"></i>
                     </a> |
-                    <a asp-action="Details" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="text-info">
+                    <a asp-action="Details" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="text-info" title="Dettagli">
                         <i class="bi bi-info-circle-fill"></i>
                     </a> |
-                    <a asp-action="Delete" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="text-danger">
+                    <a asp-action="Delete" asp-route-id="@Html.EncryptId(item.Id.ToString())" class="text-danger" onclick="return confirm('Sei sicuro di voler eliminare questo destinatario?');" title="Elimina">
                         <i class="bi bi-trash-fill"></i>
                     </a>
                 </td>

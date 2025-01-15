@@ -51,7 +51,7 @@ public class SendMailService : ISendMailService
                          $"Numero protocolli: {comunicazioni.NProtocol}<br>" +
                          $"Protocolli da controllare: {comunicazioni.NsProtocol}<br>" +
                          $"{formattedNote}<br>" +
-                         "Cordiali saluti,<br>Flavio Simeone</p>";
+                         "Cordiali saluti,<br>Team Comunicazioni</p>";
 
         foreach (var destinatario in destinatari)
         {
@@ -78,6 +78,11 @@ public class SendMailService : ISendMailService
         if (!emailSuccess)
         {
             _logger.LogWarning("Invio email fallito. Flag Email_inviata non aggiornato.");
+        }
+        else
+        {
+            await _stopMonitoringService.StopMonitoringForComunicazioneAsync(comunicazioni.Id);
+            _logger.LogInformation($"Monitoraggio per la comunicazione '{comunicazioni.FileName}' interrotto.");
         }
     }
 
@@ -106,7 +111,7 @@ public class SendMailService : ISendMailService
             message.AppendLine($"Nome del file: {comunicazione.FileName}<br>");
             message.AppendLine($"Data di invio: {comunicazione.DateA:dd/MM/yyyy HH:mm:ss}<br>");
             message.AppendLine("<br>Il file non è stato ancora smarcato e il limite di tempo previsto è stato superato.<br>");
-            message.AppendLine("Cordiali saluti,<br><br>App Comunicazioni</p>");
+            message.AppendLine("Cordiali saluti,<br><br>Team Comunicazioni</p>");
 
             try
             {
@@ -147,6 +152,9 @@ public class SendMailService : ISendMailService
                 _context.Comunicazionis.Update(comunicazione);
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Comunicazione '{comunicazione.FileName}' è stata notificata.");
+
+                await _stopMonitoringService.StopMonitoringForComunicazioneAsync(comunicazione.Id);
+                _logger.LogInformation($"Monitoraggio per la comunicazione '{comunicazione.FileName}' interrotto.");
             }
             catch (Exception ex)
             {
@@ -192,6 +200,8 @@ public class SendMailService : ISendMailService
             }
             body.AppendLine("</ul>");
         }
+
+        body.AppendLine("Cordiali saluti,<br><br>Team Comunicazioni</p>");
 
         foreach (var destinatario in destinatari)
         {

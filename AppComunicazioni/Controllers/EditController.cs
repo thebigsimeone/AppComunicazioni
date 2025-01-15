@@ -1,5 +1,6 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
+using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
@@ -20,11 +21,12 @@ namespace AppComunicazioni.Controllers
         private readonly ILogger<EditController> _logger;
         private readonly IEncryptionService _encryptionService;
         private readonly IExcelService _excelService;
+        private readonly IStopMonitoringService _stopMonitoringService;
 
         public EditController(ComDbContext context, IMapper mapper,
                               IRetryService retryService, IViewBagService viewBagService,
                               ISendMailService sendMailService, IEncryptionService encryptionService,
-                              ILogger<EditController> logger, IExcelService excelService)
+                              ILogger<EditController> logger, IExcelService excelService, IStopMonitoringService stopMonitoringService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -34,6 +36,7 @@ namespace AppComunicazioni.Controllers
             _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _excelService = excelService ?? throw new ArgumentNullException(nameof(excelService));
+            _stopMonitoringService = stopMonitoringService ?? throw new ArgumentNullException(nameof(stopMonitoringService));
 
             _logger.LogInformation("EditController istanziato correttamente.");
         }
