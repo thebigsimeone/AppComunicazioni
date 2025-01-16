@@ -181,63 +181,69 @@ public class SendMailService : ISendMailService
         var body = new StringBuilder();
 
         // 🔵 HEADER DEL REPORT
-        body.AppendLine(@$"
-        <html>
-        <head>
-            <style>
-                body {{
-                    font-family: Arial, sans-serif;
-                    background-color: #f9f9f9;
-                    color: #333;
-                    padding: 20px;
-                }}
-                h3 {{
-                    color: #007BFF;
-                }}
-                h4 {{
-                    color: #343A40;
-                    border-bottom: 2px solid #007BFF;
-                    padding-bottom: 5px;
-                }}
-                table {{
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 15px;
-                    background-color: #fff;
-                }}
-                th, td {{
-                    padding: 10px;
-                    text-align: left;
-                    border-bottom: 1px solid #ddd;
-                }}
-                th {{
-                    background-color: #007BFF;
-                    color: white;
-                }}
-                tr:nth-child(even) {{
-                    background-color: #f2f2f2;
-                }}
-                tr:hover {{
-                    background-color: #e9ecef;
-                }}
-                .fornitore-header {{
-                    background-color: #343A40;
-                    color: white;
-                    padding: 10px;
-                    margin-top: 20px;
-                    font-weight: bold;
-                    text-transform: uppercase;
-                }}
-            </style>
-        </head>
-        <body>
-            <h3>📅 Report Giornaliero - {today}</h3>
-        ");
+        body.AppendLine($@"
+<html>
+<head>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            padding: 20px;
+        }}
+        h2 {{
+            color: #004085;
+            background-color: #CCE5FF;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }}
+        .section {{
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }}
+        th, td {{
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }}
+        th {{
+            background-color: #007BFF;
+            color: white;
+        }}
+        tr:nth-child(even) {{
+            background-color: #f2f2f2;
+        }}
+        tr:hover {{
+            background-color: #e9ecef;
+        }}
+        .fornitore-header {{
+            background-color: #343a40;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }}
+    </style>
+</head>
+<body>
+    <h2>📅 Report Giornaliero - {today}</h2>
+");
 
         // 🔴 FILE IN RITARDO
         if (ritardi.Any())
         {
-            body.AppendLine("<h4>🚨 File in Ritardo</h4>");
+            body.AppendLine("<div class='section'>");
+            body.AppendLine("<h3 style='color: #dc3545;'>🚨 File in Ritardo</h3>");
             body.AppendLine("<table>");
             body.AppendLine("<tr><th>Nome File</th><th>Data Notifica</th></tr>");
             foreach (var r in ritardi)
@@ -245,12 +251,14 @@ public class SendMailService : ISendMailService
                 body.AppendLine($"<tr><td>{r.FileName}</td><td>{r.Data_Notifica:dd/MM/yyyy}</td></tr>");
             }
             body.AppendLine("</table>");
+            body.AppendLine("</div>");
         }
 
         // 🟢 FILE RITORNATI E SMARCATI PER FORNITORE
         if (ritorni.Any())
         {
-            body.AppendLine("<h4>📦 File Ritornati e Smarcati per Fornitore</h4>");
+            body.AppendLine("<div class='section'>");
+            body.AppendLine("<h3 style='color: #28a745;'>📦 File Ritornati e Smarcati per Fornitore</h3>");
 
             var ritorniPerFornitore = ritorni
                 .GroupBy(r => r.Fornitore)
@@ -269,16 +277,18 @@ public class SendMailService : ISendMailService
                 }
                 body.AppendLine("</table>");
             }
+
+            body.AppendLine("</div>");
         }
 
         // 🔵 FOOTER
         body.AppendLine(@"
-            <br><br>
-            <p style='font-size: 12px; color: #6c757d;'>🔒 Questo è un messaggio automatico. Si prega di non rispondere a questa email.</p>
-            <p style='font-weight: bold;'>Cordiali saluti,<br>Team Comunicazioni</p>
-        </body>
-        </html>
-        ");
+    <br><br>
+    <p style='font-size: 12px; color: #6c757d;'>🔒 Questo è un messaggio automatico. Si prega di non rispondere a questa email.</p>
+    <p style='font-weight: bold;'>Cordiali saluti,<br>Team Comunicazioni</p>
+</body>
+</html>
+");
 
         // 📧 INVIO EMAIL
         foreach (var destinatario in destinatari)

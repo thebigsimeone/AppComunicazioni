@@ -19,7 +19,6 @@ public class StopMonitoringService : IStopMonitoringService
             var comunicazione = await _context.Comunicazionis.FindAsync(comunicazioneId);
             if (comunicazione != null)
             {
-                comunicazione.DateF = DateTime.Now;
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Monitoraggio per ID {comunicazioneId} interrotto.");
             }

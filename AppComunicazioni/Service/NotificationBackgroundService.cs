@@ -88,6 +88,12 @@ namespace AppComunicazioni.Service
             return nextRunMorning.AddDays(1);
         }
 
+/*        private DateTimeOffset GetNextRunTime(DateTimeOffset now)
+        {
+            // Esegui ogni minuto per test
+            return now.AddSeconds(30);  // Esegue ogni 30 secondi
+        }*/
+
         private bool IsWeekday(DateTimeOffset date)
         {
             return date.DayOfWeek >= DayOfWeek.Monday && date.DayOfWeek <= DayOfWeek.Friday;
