@@ -80,7 +80,7 @@ namespace AppComunicazioni.Controllers
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Comunicazione eliminata correttamente. ID: {Id}", id);
-                return RedirectToAction("Index", "Home"); // Modifica con il controller di destinazione.
+                return RedirectToAction("Index", "Home");
             }, _logger, this);
         }
 

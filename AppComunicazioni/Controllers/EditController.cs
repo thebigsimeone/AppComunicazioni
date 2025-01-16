@@ -1,12 +1,10 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
-using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using OfficeOpenXml;
 
 namespace AppComunicazioni.Controllers
 {
@@ -78,53 +76,56 @@ namespace AppComunicazioni.Controllers
 
             int decryptedId = DecryptId(Id);
 
-            var strategy = _context.Database.CreateExecutionStrategy();
-
-            await strategy.ExecuteAsync(async () =>
+            await _retryService.ExecuteWithRetry(async () =>
             {
-                using (var transaction = await _context.Database.BeginTransactionAsync())
+                var strategy = _context.Database.CreateExecutionStrategy();
+
+                await strategy.ExecuteAsync(async () =>
                 {
-                    try
+                    using (var transaction = await _context.Database.BeginTransactionAsync())
                     {
-                        var comunicazioniToUpdate = await _context.Comunicazionis.FirstOrDefaultAsync(c => c.Id == decryptedId);
-
-                        comunicazioniToUpdate.DateF = comunicazioniDTO.DateF;
-                        comunicazioniToUpdate.Note = comunicazioniDTO.Note;
-                        
-
-                        if (comunicazioniToUpdate.Email_inviata.HasValue && !comunicazioniToUpdate.Email_inviata.Value)
+                        try
                         {
-                            await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
-                            comunicazioniToUpdate.Email_inviata = true;
-                            comunicazioniToUpdate.Ritornato = true;
+                            var comunicazioniToUpdate = await _context.Comunicazionis.FirstOrDefaultAsync(c => c.Id == decryptedId);
+
+                            comunicazioniToUpdate.DateF = comunicazioniDTO.DateF;
+                            comunicazioniToUpdate.Note = comunicazioniDTO.Note;
+
+                            if (comunicazioniToUpdate.Email_inviata.HasValue && !comunicazioniToUpdate.Email_inviata.Value)
+                            {
+                                await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
+                                comunicazioniToUpdate.Email_inviata = true;
+                                comunicazioniToUpdate.Ritornato = true;
+                            }
+
+/*                          // Elaborazione del file Excel
+                            if (excelFile != null && excelFile.Length > 0)
+                            {
+                               var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioniDTO.Id);
+                               if (dettagli != null)
+                               {
+                                   _context.ComunicazioniDettagli.AddRange(dettagli);
+                                   await _context.SaveChangesAsync();
+                               }
+                            }*/
+
+                            _context.Entry(comunicazioniToUpdate).State = EntityState.Modified;
+                            await _context.SaveChangesAsync();
+
+                            await transaction.CommitAsync();
+                            TempData["Message"] = "Modifica salvata con successo.";
                         }
-
-/*                      // Elaborazione del file Excel
-                        if (excelFile != null && excelFile.Length > 0)
+                        catch (Exception ex)
                         {
-                           var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioniDTO.Id);
-                           if (dettagli != null)
-                           {
-                               _context.ComunicazioniDettagli.AddRange(dettagli);
-                               await _context.SaveChangesAsync();
-                           }
-                        }*/
-
-                        _context.Entry(comunicazioniToUpdate).State = EntityState.Modified;
-                        await _context.SaveChangesAsync();
-
-                        await transaction.CommitAsync();
-                        TempData["Message"] = "Modifica salvata con successo.";
+                            await transaction.RollbackAsync();
+                            _logger.LogError(ex, "Errore durante la modifica della comunicazione.");
+                            TempData["Message"] = "Errore durante la modifica.";
+                            throw;
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        await transaction.RollbackAsync();
-                        _logger.LogError(ex, "Errore durante la modifica della comunicazione.");
-                        TempData["Message"] = "Errore durante la modifica.";
-                        throw;
-                    }
-                }
-            });
+                });
+                return RedirectToAction(nameof(Index));
+            }, _logger, this);
 
             return RedirectToAction(nameof(Index));
         }
@@ -138,21 +139,6 @@ namespace AppComunicazioni.Controllers
             catch
             {
                 return -1;
-            }
-        }
-
-        private void LogModelStateErrors()
-        {
-            foreach (var key in ModelState.Keys)
-            {
-                var errors = ModelState[key]?.Errors;
-                if (errors != null && errors.Any())
-                {
-                    foreach (var error in errors)
-                    {
-                        _logger.LogError($"ModelState Error - Campo: {key}, Messaggio: {error.ErrorMessage}");
-                    }
-                }
             }
         }
 

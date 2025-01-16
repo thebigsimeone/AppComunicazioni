@@ -28,7 +28,7 @@ public class CreateController : Controller
         IExcelService excelService,
         IViewBagService viewBagService,
         IRetryService retryService,
-        IFornitoreService fornitoreService)  // Aggiunto FornitoreService
+        IFornitoreService fornitoreService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -40,7 +40,6 @@ public class CreateController : Controller
         _retryService = retryService ?? throw new ArgumentNullException(nameof(retryService));
         _fornitoreService = fornitoreService ?? throw new ArgumentNullException(nameof(fornitoreService));
     }
-
 
     public IActionResult Index()
     {
@@ -66,66 +65,65 @@ public class CreateController : Controller
             return View(comunicazioniDTO);
         }
 
-        var strategy = _context.Database.CreateExecutionStrategy();
-
-        await strategy.ExecuteAsync(async () =>
+        await _retryService.ExecuteWithRetry(async () =>
         {
-            using (var transaction = await _context.Database.BeginTransactionAsync())
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            await strategy.ExecuteAsync(async () =>
             {
-                try
+                using (var transaction = await _context.Database.BeginTransactionAsync())
                 {
-                    var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
-                    
-                    // Imposta il Mandante dal nome del file
-                    var fileNameParts = comunicazioni.FileName.Split('_');
-
-                    var mandante = fileNameParts.FirstOrDefault(part =>
-                        part.Equals("SSC", StringComparison.OrdinalIgnoreCase) ||
-                        part.Equals("EBI", StringComparison.OrdinalIgnoreCase));
-
-                    if (mandante != null)
+                    try
                     {
-                        comunicazioni.Mandante = mandante;
-                    }
+                        var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
 
-                    // Popoliamo automaticamente il campo Fornitore in base al Servizio e al nome del file
-                    comunicazioni.Fornitore = _fornitoreService.GetFornitoreByServizio(
-                        Enum.Parse<ServizioType>(comunicazioni.Servizio, true),
-                        comunicazioni.FileName
-                    ).ToString();
+                        var fileNameParts = comunicazioni.FileName.Split('_');
+                        var mandante = fileNameParts.FirstOrDefault(part =>
+                            part.Equals("SSC", StringComparison.OrdinalIgnoreCase) ||
+                            part.Equals("EBI", StringComparison.OrdinalIgnoreCase));
 
-                    comunicazioni.Notificato = false;
-                    comunicazioni.Ritornato = false;
-                    comunicazioni.NsProtocol = 0;
-                    comunicazioni.Email_inviata = false;
-
-                    _context.Add(comunicazioni);
-                    await _context.SaveChangesAsync();
-
-                    if (excelFile != null && excelFile.Length > 0)
-                    {
-                        var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioni.Id);
-                        if (dettagli != null)
+                        if (mandante != null)
                         {
-                            _context.ComunicazioniDettagli.AddRange(dettagli);
-                            await _context.SaveChangesAsync();
+                            comunicazioni.Mandante = mandante;
                         }
+
+                        comunicazioni.Fornitore = _fornitoreService.GetFornitoreByServizio(
+                            Enum.Parse<ServizioType>(comunicazioni.Servizio, true),
+                            comunicazioni.FileName).ToString();
+
+                        comunicazioni.Notificato = false;
+                        comunicazioni.Ritornato = false;
+                        comunicazioni.NsProtocol = 0;
+                        comunicazioni.Email_inviata = false;
+
+                        _context.Add(comunicazioni);
+                        await _context.SaveChangesAsync();
+
+                        if (excelFile != null && excelFile.Length > 0)
+                        {
+                            var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioni.Id);
+                            if (dettagli != null)
+                            {
+                                _context.ComunicazioniDettagli.AddRange(dettagli);
+                                await _context.SaveChangesAsync();
+                            }
+                        }
+
+                        await _monitoringService.CheckAndSendNotificationsAsync();
+                        await transaction.CommitAsync();
+                        TempData["Message"] = "Comunicazione creata con successo.";
                     }
-
-                    await _monitoringService.CheckAndSendNotificationsAsync();
-
-                    await transaction.CommitAsync();
-                    TempData["Message"] = "Comunicazione creata con successo.";
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        _logger.LogError(ex, "Errore durante la creazione della comunicazione.");
+                        TempData["Message"] = "Errore: Non è stato possibile completare l'operazione.";
+                        throw;
+                    }
                 }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    _logger.LogError(ex, "Errore durante la creazione della comunicazione.");
-                    TempData["Message"] = "Errore: Non è stato possibile completare l'operazione.";
-                    throw;
-                }
-            }
-        });
+            });
+            return RedirectToAction(nameof(Index));
+        }, _logger, this);
 
         return RedirectToAction(nameof(Index));
     }
@@ -134,5 +132,4 @@ public class CreateController : Controller
     {
         ViewBag.ServizioOptions = _viewBagService.GetServizioOptions() ?? new List<SelectListItem>();
     }
-
 }
