@@ -56,7 +56,7 @@ builder.Services.AddDbContext<ComDbContext>(options =>
     sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
             maxRetryCount: 5,           // Numero massimo di tentativi
             maxRetryDelay: TimeSpan.FromSeconds(20),  // Ritardo tra i tentativi
-            errorNumbersToAdd: null     // Errori specifici da gestire
+            errorNumbersToAdd: [4060, 10928, 10929, 40197, 40501, 40613]     // Errori specifici da gestire
         )));
 
 // Servizi HTTP e sessione
@@ -102,17 +102,6 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddHttpClient();
 builder.Services.AddMvc();
 builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddDbContext<ComDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext"),
-        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,           // Numero massimo di tentativi
-            maxRetryDelay: TimeSpan.FromSeconds(10),  // Ritardo tra i tentativi
-            errorNumbersToAdd: null     // Errori specifici da gestire
-        )
-    )
-);
-
 
 var app = builder.Build();
 
