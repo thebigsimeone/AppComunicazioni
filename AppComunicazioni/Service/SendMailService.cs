@@ -182,62 +182,62 @@ public class SendMailService : ISendMailService
 
         // 🔵 HEADER DEL REPORT
         body.AppendLine($@"
-<html>
-<head>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-            color: #333;
-            padding: 20px;
-        }}
-        h2 {{
-            color: #004085;
-            background-color: #CCE5FF;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-        }}
-        .section {{
-            background-color: #ffffff;
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 5px;
-        }}
-        table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }}
-        th, td {{
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }}
-        th {{
-            background-color: #007BFF;
-            color: white;
-        }}
-        tr:nth-child(even) {{
-            background-color: #f2f2f2;
-        }}
-        tr:hover {{
-            background-color: #e9ecef;
-        }}
-        .fornitore-header {{
-            background-color: #343a40;
-            color: white;
-            padding: 8px;
-            border-radius: 5px;
-            margin-top: 10px;
-            text-transform: uppercase;
-        }}
-    </style>
-</head>
-<body>
-    <h2>📅 Report Giornaliero - {today}</h2>
-");
+                        <html>
+                        <head>
+                            <style>
+                                body {{
+                                    font-family: Arial, sans-serif;
+                                    background-color: #f9f9f9;
+                                    color: #333;
+                                    padding: 20px;
+                                }}
+                                h2 {{
+                                    color: #004085;
+                                    background-color: #CCE5FF;
+                                    padding: 10px;
+                                    border-radius: 5px;
+                                    text-align: center;
+                                }}
+                                .section {{
+                                    background-color: #ffffff;
+                                    border: 1px solid #ddd;
+                                    padding: 15px;
+                                    margin-top: 20px;
+                                    border-radius: 5px;
+                                }}
+                                table {{
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    margin-top: 10px;
+                                }}
+                                th, td {{
+                                    padding: 10px;
+                                    text-align: left;
+                                    border-bottom: 1px solid #ddd;
+                                }}
+                                th {{
+                                    background-color: #007BFF;
+                                    color: white;
+                                }}
+                                tr:nth-child(even) {{
+                                    background-color: #f2f2f2;
+                                }}
+                                tr:hover {{
+                                    background-color: #e9ecef;
+                                }}
+                                .fornitore-header {{
+                                    background-color: #343a40;
+                                    color: white;
+                                    padding: 8px;
+                                    border-radius: 5px;
+                                    margin-top: 10px;
+                                    text-transform: uppercase;
+                                }}
+                            </style>
+                        </head>
+                        <body>
+                            <h2>📅 Report Giornaliero - {today}</h2>
+                        ");
 
         // 🔴 FILE IN RITARDO
         if (ritardi.Any())

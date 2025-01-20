@@ -1,5 +1,4 @@
 ﻿using AppComunicazioni.Interface;
-using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
 
 public class PaginationService : IPaginationService

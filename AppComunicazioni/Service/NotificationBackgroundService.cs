@@ -82,17 +82,26 @@ namespace AppComunicazioni.Service
             var nextRunMorning = new DateTimeOffset(now.Year, now.Month, now.Day, 10, 0, 0, now.Offset);
             var nextRunEvening = new DateTimeOffset(now.Year, now.Month, now.Day, 17, 0, 0, now.Offset);
 
-            if (now < nextRunMorning) return nextRunMorning;
-            if (now < nextRunEvening) return nextRunEvening;
-
-            return nextRunMorning.AddDays(1);
+            if (now < nextRunMorning)
+            {
+                return nextRunMorning;  // Prossima esecuzione alle 10:00
+            }
+            else if (now < nextRunEvening)
+            {
+                return nextRunEvening;  // Prossima esecuzione alle 17:00
+            }
+            else
+            {
+                // Se sono passate le 17:00, programma per il giorno successivo alle 10:00
+                return nextRunMorning.AddDays(1);
+            }
         }
 
-/*        private DateTimeOffset GetNextRunTime(DateTimeOffset now)
-        {
-            // Esegui ogni minuto per test
-            return now.AddSeconds(30);  // Esegue ogni 30 secondi
-        }*/
+        /*        private DateTimeOffset GetNextRunTime(DateTimeOffset now)
+                {
+                    // Esegui ogni minuto per test
+                    return now.AddSeconds(30);  // Esegue ogni 30 secondi
+                }*/
 
         private bool IsWeekday(DateTimeOffset date)
         {
