@@ -19,9 +19,16 @@ namespace AppComunicazioni.Service
             {
                 var now = DateTimeOffset.Now;
                 var nextRunTime = GetNextRunTime(now);
-                var delay = nextRunTime - now;
 
-                _logger.LogInformation($"Il prossimo controllo notifiche sarà alle {nextRunTime}. Attesa per {delay.TotalMinutes:F2} minuti.");
+                if (nextRunTime <= now)
+                {
+                    _logger.LogWarning($"Avvio del servizio dopo l'orario pianificato. Recupero task mancati.");
+                    await ExecuteTasks(nextRunTime, stoppingToken);
+                    nextRunTime = GetNextRunTime(DateTimeOffset.Now); // Aggiorna il prossimo ciclo
+                }
+
+                var delay = nextRunTime - DateTimeOffset.Now;
+                _logger.LogInformation($"Ora corrente: {now}. Prossima esecuzione pianificata alle {nextRunTime}. Attesa per {delay.TotalMinutes:F2} minuti.");
 
                 try
                 {
@@ -29,51 +36,54 @@ namespace AppComunicazioni.Service
                 }
                 catch (TaskCanceledException)
                 {
-                    _logger.LogInformation("Servizio di background cancellato.");
+                    _logger.LogWarning("Servizio di background interrotto. Task cancellato.");
                     break;
                 }
 
-                if (IsWeekday(nextRunTime))
+                await ExecuteTasks(nextRunTime, stoppingToken);
+            }
+        }
+
+        private async Task ExecuteTasks(DateTimeOffset runTime, CancellationToken stoppingToken)
+        {
+            if (IsWeekday(runTime))
+            {
+                _logger.LogInformation($"Esecuzione del servizio alle {runTime} (giorno lavorativo).");
+
+                using var scope = _serviceProvider.CreateScope();
+                var monitoringService = scope.ServiceProvider.GetService<IMonitoringService>();
+                var reportService = scope.ServiceProvider.GetService<IReportService>();
+
+                if (monitoringService == null || reportService == null)
                 {
-                    _logger.LogInformation($"Esecuzione del servizio alle {nextRunTime}...");
+                    _logger.LogError("Uno dei servizi necessari non è disponibile.");
+                    return;
+                }
 
-                    using (var scope = _serviceProvider.CreateScope())
+                try
+                {
+                    if (runTime.Hour == 10)
                     {
-                        var monitoringService = scope.ServiceProvider.GetService<IMonitoringService>();
-                        var reportService = scope.ServiceProvider.GetService<IReportService>();
+                        _logger.LogInformation("Avvio del controllo notifiche delle 10:00...");
+                        await monitoringService.CheckAndSendNotificationsAsync();
+                        _logger.LogInformation("Controllo notifiche completato.");
+                    }
 
-                        if (monitoringService == null || reportService == null)
-                        {
-                            _logger.LogError("Errore: I servizi MonitoringService o ReportService non sono disponibili.");
-                            continue;
-                        }
-
-                        try
-                        {
-                            if (nextRunTime.Hour == 10)
-                            {
-                                _logger.LogInformation("Avvio del controllo notifiche...");
-                                await monitoringService.CheckAndSendNotificationsAsync();
-                                _logger.LogInformation("Controllo notifiche completato.");
-                            }
-
-                            if (nextRunTime.Hour == 17)
-                            {
-                                _logger.LogInformation("Avvio invio report giornaliero...");
-                                await reportService.GenerateAndSendDailyReportAsync();
-                                _logger.LogInformation("Report giornaliero inviato.");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError($"Errore durante l'esecuzione del servizio di background: {ex.Message}");
-                        }
+                    if (runTime.Hour == 17)
+                    {
+                        _logger.LogInformation("Avvio del report giornaliero delle 17:00...");
+                        await reportService.GenerateAndSendDailyReportAsync();
+                        _logger.LogInformation("Report giornaliero inviato correttamente.");
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    _logger.LogInformation("Oggi non è un giorno lavorativo. Il servizio non verrà eseguito.");
+                    _logger.LogError($"Errore durante l'esecuzione del servizio alle {runTime}: {ex.Message}");
                 }
+            }
+            else
+            {
+                _logger.LogWarning($"Il giorno {runTime:yyyy-MM-dd} non è un giorno lavorativo. Nessuna azione eseguita.");
             }
         }
 
@@ -83,30 +93,22 @@ namespace AppComunicazioni.Service
             var nextRunEvening = new DateTimeOffset(now.Year, now.Month, now.Day, 17, 0, 0, now.Offset);
 
             if (now < nextRunMorning)
-            {
-                return nextRunMorning;  // Prossima esecuzione alle 10:00
-            }
-            else if (now < nextRunEvening)
-            {
-                return nextRunEvening;  // Prossima esecuzione alle 17:00
-            }
-            else
-            {
-                // Se sono passate le 17:00, programma per il giorno successivo alle 10:00
-                return nextRunMorning.AddDays(1);
-            }
+                return nextRunMorning; // Prossima esecuzione alle 10:00
+            if (now < nextRunEvening)
+                return nextRunEvening; // Prossima esecuzione alle 17:00
+
+            return nextRunMorning.AddDays(1); // Prossima esecuzione alle 10:00 del giorno successivo
         }
 
-        /*        private DateTimeOffset GetNextRunTime(DateTimeOffset now)
-                {
-                    // Esegui ogni minuto per test
-                    return now.AddSeconds(30);  // Esegue ogni 30 secondi
-                }*/
+/*        private DateTimeOffset GetNextRunTime(DateTimeOffset now)
+          {
+              // Esegui ogni minuto per test
+              return now.AddSeconds(30);  // Esegue ogni 30 secondi
+          }*/
 
         private bool IsWeekday(DateTimeOffset date)
         {
             return date.DayOfWeek >= DayOfWeek.Monday && date.DayOfWeek <= DayOfWeek.Friday;
         }
-
     }
 }

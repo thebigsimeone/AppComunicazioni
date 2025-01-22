@@ -47,11 +47,14 @@ public class SendMailService : ISendMailService
             ? _emailService.FormatNote(comunicazioni.Note)
             : "Nessuna nota disponibile.";
 
-        string message = $"<p>Il seguente file è stato smarcato: {comunicazioni.FileName}<br>" +
-                         $"Numero protocolli: {comunicazioni.NProtocol}<br>" +
-                         $"Protocolli da controllare: {comunicazioni.NsProtocol}<br>" +
-                         $"{formattedNote}<br>" +
-                         "Cordiali saluti,<br>Team Comunicazioni</p>";
+
+        var message = new StringBuilder();
+        message.AppendLine($"<p>Il seguente file è stato smarcato: {comunicazioni.FileName}<br>");
+        message.AppendLine($"Numero protocolli: {comunicazioni.NProtocol}<br>");
+        message.AppendLine($"Protocolli da controllare: {comunicazioni.NsProtocol}<br>");
+        message.AppendLine($"{formattedNote}<br>");
+        message.AppendLine("<br>🔒 Questo è un messaggio automatico. Si prega di non rispondere a questa email.<br>");
+        message.AppendLine("Cordiali saluti,<br>Team Comunicazioni</p>");
 
         foreach (var destinatario in destinatari)
         {
@@ -59,7 +62,7 @@ public class SendMailService : ISendMailService
             {
                 try
                 {
-                    await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message);
+                    await _emailService.SendEmailAsync(destinatario.Destinatario, subject, message.ToString());
                     _logger.LogInformation($"Email inviata a: {destinatario.Destinatario}");
                 }
                 catch (Exception ex)
@@ -111,6 +114,7 @@ public class SendMailService : ISendMailService
             message.AppendLine($"Nome del file: {comunicazione.FileName}<br>");
             message.AppendLine($"Data di invio: {comunicazione.DateA:dd/MM/yyyy HH:mm:ss}<br>");
             message.AppendLine("<br>Il file non è stato ancora smarcato e il limite di tempo previsto è stato superato.<br>");
+            message.AppendLine("<br>🔒 Questo è un messaggio automatico. Si prega di non rispondere a questa email.<br>");
             message.AppendLine("Cordiali saluti,<br><br>Team Comunicazioni</p>");
 
             try
@@ -248,7 +252,7 @@ public class SendMailService : ISendMailService
             body.AppendLine("<tr><th>Nome File</th><th>Data Notifica</th></tr>");
             foreach (var r in ritardi)
             {
-                body.AppendLine($"<tr><td>{r.FileName}</td><td>{r.Data_Notifica:dd/MM/yyyy}</td></tr>");
+                body.AppendLine($"<tr><td>{r.FileName}</td><td>{r.Data_Notifica:dd/MM/yyyy:HH-mm}</td></tr>");
             }
             body.AppendLine("</table>");
             body.AppendLine("</div>");
@@ -273,7 +277,7 @@ public class SendMailService : ISendMailService
                 body.AppendLine("<tr><th>Nome File</th><th>Data Ritorno</th></tr>");
                 foreach (var r in gruppo)
                 {
-                    body.AppendLine($"<tr><td>{r.FileName}</td><td>{r.DateF:dd/MM/yyyy}</td></tr>");
+                    body.AppendLine($"<tr><td>{r.FileName}</td><td>{r.DateF:dd/MM/yyyy:HH-mm}</td></tr>");
                 }
                 body.AppendLine("</table>");
             }
@@ -283,12 +287,12 @@ public class SendMailService : ISendMailService
 
         // 🔵 FOOTER
         body.AppendLine(@"
-    <br><br>
-    <p style='font-size: 12px; color: #6c757d;'>🔒 Questo è un messaggio automatico. Si prega di non rispondere a questa email.</p>
-    <p style='font-weight: bold;'>Cordiali saluti,<br>Team Comunicazioni</p>
-</body>
-</html>
-");
+                            <br><br>
+                            <p style='font-size: 12px; color: #6c757d;'>🔒 Questo è un messaggio automatico. Si prega di non rispondere a questa email.</p>
+                            <p style='font-weight: bold;'>Cordiali saluti,<br>Team Comunicazioni</p>
+                        </body>
+                        </html>
+                        ");
 
         // 📧 INVIO EMAIL
         foreach (var destinatario in destinatari)

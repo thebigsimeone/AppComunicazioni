@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/AppComunicazioni.styles.css" asp-append-version="true" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
     <header>
@@ -36,6 +36,11 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Destinataris" asp-action="Index">Destinatari</a>
                         </li>
                     </ul>
+                    <form asp-controller="Report" asp-action="ManualReport" method="post" class="d-flex">
+                        <button type="submit" class="btn btn-outline-secondary">
+                            <i class="bi bi-envelope-arrow-up"></i> Invia Report
+                        </button>
+                    </form>
                 </div>
             </div>
         </nav>
@@ -52,3 +57,16 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success text-center">
+        @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger text-center">
+        @TempData["ErrorMessage"]
+    </div>
+}
