@@ -32,6 +32,8 @@ namespace AppComunicazioni.Models.DTO_s
         public bool Email_inviata { get; set; }
         public string? Mandante { get; set; }
         public DateTimeOffset? Data_Notifica { get; set; }
+        [StringLength(1)]
+        public string? Report { get; set; }
 
         public string? fornitore { get; set; }
 

@@ -49,7 +49,7 @@ public class CreateController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note,Mandante,Fornitore")] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
+    public async Task<IActionResult> Create([Bind("Id,FileName,DateA,DateF,NProtocol,NsProtocol,Servizio,Note,Mandante,Fornitore,Report")] ComunicazioniDTO comunicazioniDTO, IFormFile? excelFile)
     {
         if (comunicazioniDTO == null)
         {
@@ -95,6 +95,7 @@ public class CreateController : Controller
                         comunicazioni.Ritornato = false;
                         comunicazioni.NsProtocol = 0;
                         comunicazioni.Email_inviata = false;
+                        comunicazioni.Report = "N";
 
                         _context.Add(comunicazioni);
                         await _context.SaveChangesAsync();

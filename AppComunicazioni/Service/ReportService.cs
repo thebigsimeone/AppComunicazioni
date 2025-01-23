@@ -20,7 +20,7 @@ public class ReportService : IReportService
         var today = DateTimeOffset.Now.Date;
 
         var ritardi = await _context.Comunicazionis
-            .Where(c => c.Notificato == true && c.Data_Notifica.HasValue && c.Data_Notifica.Value.Date == today)
+            .Where(c => c.Notificato == true && c.Data_Notifica.HasValue && c.Data_Notifica.Value.Date == today && c.Report == "R")
             .ToListAsync();
 
         var ritorni = await _context.Comunicazionis

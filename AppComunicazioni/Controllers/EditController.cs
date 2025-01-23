@@ -76,7 +76,7 @@ namespace AppComunicazioni.Controllers
 
             int decryptedId = DecryptId(Id);
 
-            await _retryService.ExecuteWithRetry(async () =>
+            return await _retryService.ExecuteWithRetry(async () =>
             {
                 var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -86,37 +86,57 @@ namespace AppComunicazioni.Controllers
                     {
                         try
                         {
+                            // Recupera la comunicazione da modificare
                             var comunicazioniToUpdate = await _context.Comunicazionis.FirstOrDefaultAsync(c => c.Id == decryptedId);
+                            if (comunicazioniToUpdate == null)
+                            {
+                                TempData["Message"] = "Errore: Comunicazione non trovata.";
+                                return NotFound("Comunicazione non trovata.");
+                            }
 
+                            // Aggiorna i campi modificabili
                             comunicazioniToUpdate.DateF = comunicazioniDTO.DateF;
                             comunicazioniToUpdate.Note = comunicazioniDTO.Note;
 
-                            if (comunicazioniToUpdate.Email_inviata.HasValue && !comunicazioniToUpdate.Email_inviata.Value)
+                            // Condizione: Email non inviata e DateF è NULL
+                            if (comunicazioniToUpdate.Email_inviata.HasValue && !comunicazioniToUpdate.Email_inviata.Value && comunicazioniToUpdate.DateF == null)
                             {
                                 await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                                 comunicazioniToUpdate.Email_inviata = true;
                                 comunicazioniToUpdate.Ritornato = true;
                             }
 
-/*                          // Elaborazione del file Excel
-                            if (excelFile != null && excelFile.Length > 0)
+                            // Condizione: DateF > Data_Notifica
+                            if (comunicazioniToUpdate.DateF.HasValue && comunicazioniToUpdate.Data_Notifica.HasValue)
                             {
-                               var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioniDTO.Id);
-                               if (dettagli != null)
-                               {
-                                   _context.ComunicazioniDettagli.AddRange(dettagli);
-                                   await _context.SaveChangesAsync();
-                               }
+                                if (comunicazioniToUpdate.DateF >= comunicazioniToUpdate.Data_Notifica)
+                                {
+                                    comunicazioniToUpdate.Report = "N";
+                                }
+                            }
+
+                            // Elaborazione opzionale del file Excel
+                            /*if (excelFile != null && excelFile.Length > 0)
+                            {
+                                var dettagli = await _excelService.ProcessExcelFileAsync(excelFile, comunicazioniDTO.Id);
+                                if (dettagli != null && dettagli.Any())
+                                {
+                                    _context.ComunicazioniDettagli.AddRange(dettagli);
+                                }
                             }*/
 
+                            // Salva le modifiche
                             _context.Entry(comunicazioniToUpdate).State = EntityState.Modified;
                             await _context.SaveChangesAsync();
 
+                            // Commit della transazione
                             await transaction.CommitAsync();
+
                             TempData["Message"] = "Modifica salvata con successo.";
                         }
                         catch (Exception ex)
                         {
+                            // Rollback della transazione in caso di errore
                             await transaction.RollbackAsync();
                             _logger.LogError(ex, "Errore durante la modifica della comunicazione.");
                             TempData["Message"] = "Errore durante la modifica.";
@@ -124,10 +144,9 @@ namespace AppComunicazioni.Controllers
                         }
                     }
                 });
+
                 return RedirectToAction(nameof(Index));
             }, _logger, this);
-
-            return RedirectToAction(nameof(Index));
         }
 
         private int DecryptId(string encryptedId)

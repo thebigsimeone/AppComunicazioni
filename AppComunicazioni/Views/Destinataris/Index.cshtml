@@ -17,6 +17,7 @@
         <tr>
             <th>@Html.DisplayNameFor(model => model.Destinatario)</th>
             <th>@Html.DisplayNameFor(model => model.Attivo)</th>
+            <th>@Html.DisplayNameFor(model => model.Smarchi)</th>
             <th>@Html.DisplayNameFor(model => model.Monitor)</th>
             <th>@Html.DisplayNameFor(model => model.Report)</th>
             <th>Azioni</th>
@@ -38,13 +39,23 @@
                     }
                 </td>
                 <td>
-                    @if (item.Monitor == "S")
+                    @if (item.Smarchi == "S")
                     {
-                        <span class="badge bg-info">Monitorato</span>
+                        <span class="badge bg-info">Smarchi</span>
                     }
                     else
                     {
-                        <span class="badge bg-secondary">Non Monitorato</span>
+                        <span class="badge bg-secondary">No Smarchi</span>
+                    }
+                </td>
+                <td>
+                    @if (item.Monitor == "S")
+                    {
+                        <span class="badge bg-info">Monitoraggio</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">No Monitoraggio</span>
                     }
                 </td>
                 <td>

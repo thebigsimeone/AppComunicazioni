@@ -25,6 +25,13 @@
         </dd>
 
         <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Smarchi)
+        </dt>
+        <dd class="col-sm-10">
+            @(Model.Smarchi == "S" ? "Attivo" : "Non Attivo")
+        </dd>
+
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Monitor)
         </dt>
         <dd class="col-sm-10">

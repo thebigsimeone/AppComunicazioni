@@ -34,7 +34,7 @@ public class SendMailService : ISendMailService
     public async Task SendMarkingEmailsAsync(Comunicazioni comunicazioni)
     {
         bool emailSuccess = true;
-        var destinatari = await _context.Destinataris.Where(d => d.Attivo == "S").ToListAsync();
+        var destinatari = await _context.Destinataris.Where(d => d.Attivo == "S" && d.Smarchi == "S").ToListAsync();
 
         if (!destinatari.Any())
         {
@@ -152,6 +152,7 @@ public class SendMailService : ISendMailService
 
                 comunicazione.Notificato = true;
                 comunicazione.Data_Notifica = DateTimeOffset.Now;
+                comunicazione.Report = "R";
 
                 _context.Comunicazionis.Update(comunicazione);
                 await _context.SaveChangesAsync();

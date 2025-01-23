@@ -61,6 +61,11 @@ public partial class Comunicazioni
     [Display(Name = "Data di notifica")]
 
     public DateTimeOffset? Data_Notifica { get; set; }
+    [Column("report")]
+    [StringLength(1)]
+    [Display(Name = "Report")]
+
+    public string? Report { get; set; }
 
     [Column("fornitore")]
     [Display(Name = "Fornitore")]

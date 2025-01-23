@@ -25,6 +25,11 @@
             </div>
 
             <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="smarchi" name="Smarchi" value="S" @(Model.Smarchi == "S" ? "checked" : "") />
+                <label class="form-check-label" for="smarchi">Smarchi</label>
+            </div>
+
+            <div class="form-check mb-3">
                 <input type="checkbox" class="form-check-input" id="monitor" name="Monitor" value="S" @(Model.Monitor == "S" ? "checked" : "") />
                 <label class="form-check-label" for="monitor">Monitoraggio</label>
             </div>
