@@ -92,7 +92,7 @@ namespace AppComunicazioni.Controllers
                     filtri.SearchTerm ?? Session?.GetString("SearchTerm") ?? string.Empty,
                     filtri.StartDate ?? (Session?.GetString("StartDate") != null ? DateTime.Parse(Session.GetString("StartDate")!) : null),
                     filtri.EndDate ?? (Session?.GetString("EndDate") != null ? DateTime.Parse(Session.GetString("EndDate")!) : null),
-                    filtri.CodCor,
+                    filtri.CodCor ?? Session?.GetString("CodCor") ?? string.Empty,
                     filtri.Servizio ?? Session?.GetString("Servizio") ?? string.Empty,
                     filtri.MonthYear ?? (Session?.GetString("MonthYear") != null ? DateTime.Parse(Session.GetString("MonthYear")!) : DateTime.UtcNow),
                     filtri.SortField ?? "DateA",
