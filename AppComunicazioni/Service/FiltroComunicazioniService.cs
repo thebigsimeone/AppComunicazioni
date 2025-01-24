@@ -1,7 +1,6 @@
 ﻿using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 public class FiltroComunicazioniService : IFiltroComunicazioniService
 {
@@ -69,6 +68,8 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
         _sessionService.Set("SortField", sortField);
         _sessionService.Set("SortOrder", sortOrder);
         _sessionService.Set("SoloRigheNonRestituite", soloRigheNonRestituite.ToString());
+
+        _logger.LogInformation($"CodCor corrente: {_sessionService.Get("CodCor")}");
 
         if (startDate.HasValue)
             _sessionService.Set("StartDate", startDate.Value.ToString("o"));
