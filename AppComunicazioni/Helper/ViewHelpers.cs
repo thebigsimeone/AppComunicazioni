@@ -1,0 +1,15 @@
+﻿namespace AppComunicazioni.Helper
+{
+    public class ViewHelpers
+    {
+        public static string FormatNoteForDisplay(string note)
+        {
+            if (string.IsNullOrEmpty(note))
+                return string.Empty;
+
+            var notes = note.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            var formattedNotes = notes.Select(n => $"{n}<br>");
+            return string.Join("", formattedNotes);
+        }
+    }
+}
