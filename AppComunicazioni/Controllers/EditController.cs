@@ -99,7 +99,7 @@ namespace AppComunicazioni.Controllers
             comunicazioniToUpdate.Note = comunicazioniDTO.Note;
 
             // Condizione: Email non inviata e DateF è NULL
-            if (comunicazioniToUpdate.Email_inviata.HasValue && !comunicazioniToUpdate.Email_inviata.Value && comunicazioniToUpdate.DateF == null)
+            if (comunicazioniToUpdate.Email_inviata.HasValue && !comunicazioniToUpdate.Email_inviata.Value && comunicazioniToUpdate.DateF.HasValue)
             {
                 await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                 comunicazioniToUpdate.Email_inviata = true;
