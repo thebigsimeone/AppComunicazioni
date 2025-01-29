@@ -32,4 +32,6 @@ public class StopMonitoringService : IStopMonitoringService
             _logger.LogError($"Errore durante l'interruzione del monitoraggio per ID {comunicazioneId}: {ex.Message}");
         }
     }
+
+
 }

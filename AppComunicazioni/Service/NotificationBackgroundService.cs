@@ -9,39 +9,51 @@ namespace AppComunicazioni.Service
 
         public NotificationBackgroundService(IServiceProvider serviceProvider, ILogger<NotificationBackgroundService> logger)
         {
-            _serviceProvider = serviceProvider;
-            _logger = logger;
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                var now = DateTimeOffset.Now;
-                var nextRunTime = GetNextRunTime(now);
-
-                if (nextRunTime <= now)
-                {
-                    _logger.LogWarning($"Avvio del servizio dopo l'orario pianificato. Recupero task mancati.");
-                    await ExecuteTasks(nextRunTime, stoppingToken);
-                    nextRunTime = GetNextRunTime(DateTimeOffset.Now); // Aggiorna il prossimo ciclo
-                }
-
-                var delay = nextRunTime - DateTimeOffset.Now;
-                _logger.LogInformation($"Ora corrente: {now}. Prossima esecuzione pianificata alle {nextRunTime}. Attesa per {delay.TotalMinutes:F2} minuti.");
-
                 try
                 {
-                    await Task.Delay(delay, stoppingToken);
-                }
-                catch (TaskCanceledException)
-                {
-                    _logger.LogWarning("Servizio di background interrotto. Task cancellato.");
-                    break;
-                }
+                    var now = DateTimeOffset.Now;
+                    var nextRunTime = GetNextRunTime(now);
+                    var delay = nextRunTime - now;
 
-                await ExecuteTasks(nextRunTime, stoppingToken);
+                    _logger.LogInformation($"Prossima esecuzione pianificata: {nextRunTime}. Attesa di {delay.TotalMinutes} minuti.");
+                    await Task.Delay(delay, stoppingToken);
+
+                    if (IsWeekday(nextRunTime))
+                    {
+                        await ExecuteTasks(nextRunTime, stoppingToken);
+                    }
+                }
+                catch (TaskCanceledException ex)
+                {
+                    _logger.LogWarning("Servizio interrotto: {Message}", ex.Message);
+
+                    // Creazione di uno scope per l'uso del servizio scoped
+                    using var scope = _serviceProvider.CreateScope();
+                    var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+
+                    try
+                    {
+                        await emailService.SendEmailAsync(
+                            "simeone.eurocredit@gmail.com",
+                            "Arresto del servizio rilevato",
+                            $"L'applicazione è stata arrestata alle {DateTime.Now}. Errore: {ex.Message}");
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogError("Errore durante l'invio della notifica email: {Message}", emailEx.Message);
+                    }
+                }
             }
+
+            _logger.LogWarning("Servizio di background interrotto.");
         }
 
         private async Task ExecuteTasks(DateTimeOffset runTime, CancellationToken stoppingToken)
@@ -93,19 +105,17 @@ namespace AppComunicazioni.Service
             var nextRunEvening = new DateTimeOffset(now.Year, now.Month, now.Day, 17, 0, 0, now.Offset);
 
             if (now < nextRunMorning)
-                return nextRunMorning; // Prossima esecuzione alle 10:00
+                return nextRunMorning;
             if (now < nextRunEvening)
-                return nextRunEvening; // Prossima esecuzione alle 17:00
+                return nextRunEvening;
 
-            return nextRunMorning.AddDays(1); // Prossima esecuzione alle 10:00 del giorno successivo
+            return nextRunMorning.AddDays(1);
         }
-
 /*        private DateTimeOffset GetNextRunTime(DateTimeOffset now)
           {
               // Esegui ogni minuto per test
               return now.AddSeconds(30);  // Esegue ogni 30 secondi
           }*/
-
         private bool IsWeekday(DateTimeOffset date)
         {
             return date.DayOfWeek >= DayOfWeek.Monday && date.DayOfWeek <= DayOfWeek.Friday;

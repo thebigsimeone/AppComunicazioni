@@ -11,7 +11,7 @@ public partial class Comunicazioni
     public int Id { get; set; }
 
     [Column("file_name")]
-    [StringLength(50)]
+    [StringLength(100)]
     [Display(Name = "Nome file")]
     public string? FileName { get; set; }
 

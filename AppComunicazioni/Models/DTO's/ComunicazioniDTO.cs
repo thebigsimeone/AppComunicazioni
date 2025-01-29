@@ -9,7 +9,7 @@ namespace AppComunicazioni.Models.DTO_s
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Il campo Nome file è obbligatorio.")]
-        [MaxLength(50)]
+        [MaxLength(100)]
         public string? FileName { get; set; }
 
         [Required(ErrorMessage = "Il campo Data di invio è obbligatorio.")]

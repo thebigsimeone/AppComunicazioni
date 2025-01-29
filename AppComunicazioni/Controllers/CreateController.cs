@@ -77,7 +77,7 @@ public class CreateController : Controller
                     {
                         var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
 
-                        var fileNameParts = comunicazioni.FileName.Split('_');
+                        var fileNameParts = (comunicazioni.FileName ?? string.Empty).Split('_');
                         var mandante = fileNameParts.FirstOrDefault(part =>
                             part.Equals("SSC", StringComparison.OrdinalIgnoreCase) ||
                             part.Equals("EBI", StringComparison.OrdinalIgnoreCase));
