@@ -1,5 +1,4 @@
 ﻿using AppComunicazioni.Models;
-using AppComunicazioni.Models.DTO_s;
 
 namespace AppComunicazioni.Interface
 {

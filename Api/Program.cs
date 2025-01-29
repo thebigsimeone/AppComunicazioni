@@ -1,7 +1,4 @@
-using apiSanges.Service;
 using AppComunicazioni.Data;
-using AppComunicazioni.Interface;
-using AppComunicazioni.Service;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,9 +6,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddDbContext<ComDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext")));
-
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IExcelService, ExcelService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

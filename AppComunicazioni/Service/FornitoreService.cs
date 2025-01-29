@@ -1,6 +1,5 @@
 ﻿using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
-using Microsoft.Extensions.Logging;
 
 namespace AppComunicazioni.Service
 {

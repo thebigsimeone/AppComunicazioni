@@ -28,6 +28,7 @@ namespace AppComunicazioni.Models.DTO_s
 
         [Required(ErrorMessage = "Il campo Servizio è obbligatorio.")]
         public ServizioType? Servizio { get; set; }
+        public bool Notificato { get; set; }
         public bool Ritornato { get; set; }
         public bool Email_inviata { get; set; }
         public string? Mandante { get; set; }
@@ -35,7 +36,7 @@ namespace AppComunicazioni.Models.DTO_s
         [StringLength(1)]
         public string? Report { get; set; }
 
-        public string? fornitore { get; set; }
+        public string? Fornitore { get; set; }
 
         public List<ComunicazioniDettaglioDTO>? Dettagli { get; set; }
     }

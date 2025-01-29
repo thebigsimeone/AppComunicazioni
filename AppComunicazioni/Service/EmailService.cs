@@ -4,7 +4,7 @@ using MailKit.Security;
 using MimeKit;
 using System.Text;
 
-namespace apiSanges.Service
+namespace AppComunicazioni.Service
 {
     public class EmailService : IEmailService
     {
