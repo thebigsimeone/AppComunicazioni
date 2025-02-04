@@ -104,6 +104,7 @@ namespace AppComunicazioni.Controllers
                 await _sendMailService.HandlePostEditActionsAsync(comunicazioniToUpdate);
                 comunicazioniToUpdate.Email_inviata = true;
                 comunicazioniToUpdate.Ritornato = true;
+                comunicazioniToUpdate.Report = "R";
             }
 
             // Condizione: DateF > Data_Notifica

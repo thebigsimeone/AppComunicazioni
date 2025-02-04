@@ -8,6 +8,8 @@ namespace AppComunicazioni.Service
     {
         public async Task<List<ComunicazioniDettaglio>> ProcessExcelFileAsync(IFormFile excelFile, int comunicazioneId)
         {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
             var dettagliList = new List<ComunicazioniDettaglio>();
 
             using (var stream = new MemoryStream())

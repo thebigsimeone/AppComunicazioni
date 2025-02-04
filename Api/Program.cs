@@ -1,6 +1,7 @@
 using AppComunicazioni.Data;
+using AppComunicazioni.Interface;
 using AppComunicazioni.Properties;
-using iText.Commons.Actions.Contexts;
+using AppComunicazioni.Service;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,9 @@ builder.Services.AddDbContext<ComDbContext>(options =>
 
 
 builder.Services.AddControllers();
+
+builder.Services.AddScoped<IExcelService, ExcelService>();
+builder.Services.AddScoped<IFornitoreService, FornitoreService>();
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
