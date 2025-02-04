@@ -158,10 +158,12 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
     {
         if (monthYear.HasValue)
         {
-            var start = new DateTime(monthYear.Value.Year, monthYear.Value.Month, 1);
-            var end = start.AddMonths(1).AddDays(-1);
+            var start = new DateTime(monthYear.Value.Year, monthYear.Value.Month, 1, 0, 0, 0);
+            var end = start.AddMonths(1).AddTicks(-1); // Include l'ultimo secondo dell'ultimo giorno
+
             query = query.Where(x => x.DateA >= start && x.DateA <= end);
         }
+
         return query;
     }
 

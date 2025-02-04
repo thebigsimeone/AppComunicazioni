@@ -1,4 +1,6 @@
 using AppComunicazioni.Data;
+using AppComunicazioni.Properties;
+using iText.Commons.Actions.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,7 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ComDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext")));
 
+
 builder.Services.AddControllers();
+
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

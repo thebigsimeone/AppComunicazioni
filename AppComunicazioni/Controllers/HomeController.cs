@@ -1,5 +1,8 @@
+using AppComunicazioni.Data;
 using AppComunicazioni.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Diagnostics;
 
 namespace AppComunicazioni.Controllers
@@ -7,14 +10,30 @@ namespace AppComunicazioni.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly ComDbContext _context;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, ComDbContext context)
         {
             _logger = logger;
+            _context = context;
         }
 
         public IActionResult Index()
         {
+            try
+            {
+                var conn = _context.Database.GetDbConnection();
+                Log.Information($"Tentativo di connessione al database: {conn.ConnectionString}");
+
+                conn.Open();
+                Log.Information("Connessione al database riuscita!");
+                conn.Close();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Errore di connessione al database: {ex.Message}");
+            }
+
             return View();
         }
 

@@ -1,7 +1,5 @@
 ﻿using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
-using AppComunicazioni.Models;
-using AppComunicazioni.Models.DTO_s;
 using AppComunicazioni.Utility;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;

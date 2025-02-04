@@ -49,14 +49,26 @@ builder.Services.AddResponseCompression(options =>
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 // Configurazione del contesto del database
+// Configurazione del contesto del database con logging
 builder.Services.AddDbContext<ComDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("ComDbContext")
-    ?? throw new InvalidOperationException("La stringa di connessione non può essere null."),
-    sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,           // Numero massimo di tentativi
-            maxRetryDelay: TimeSpan.FromSeconds(20),  // Ritardo tra i tentativi
-            errorNumbersToAdd: [4060, 10928, 10929, 40197, 40501, 40613]     // Errori specifici da gestire
-        )));
+{
+    var connectionString = builder.Configuration.GetConnectionString("ComDbContext");
+
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        Log.Error("La stringa di connessione è null o vuota!");
+        throw new InvalidOperationException("La stringa di connessione non può essere null.");
+    }
+
+    Log.Information($"Usando la stringa di connessione: {connectionString}");
+
+    options.UseSqlServer(connectionString,
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(20),
+            errorNumbersToAdd: [4060, 10928, 10929, 40197, 40501, 40613]
+        ));
+});
 
 // Servizi HTTP e sessione
 builder.Services.AddHttpContextAccessor();

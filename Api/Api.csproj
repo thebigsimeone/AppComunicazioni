@@ -20,8 +20,4 @@
 	  <ProjectReference Include="..\AppComunicazioni\AppComunicazioni.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>
