@@ -20,15 +20,15 @@ public class CreateController : Controller
     private readonly IFornitoreService _fornitoreService;
 
     public CreateController(
-        ComDbContext context,
-        IMapper mapper,
-        IEmailService emailService,
-        ILogger<CreateController> logger,
-        IMonitoringService monitoringService,
-        IExcelService excelService,
-        IViewBagService viewBagService,
-        IRetryService retryService,
-        IFornitoreService fornitoreService)
+            ComDbContext context,
+            IMapper mapper,
+            IEmailService emailService,
+            ILogger<CreateController> logger,
+            IMonitoringService monitoringService,
+            IExcelService excelService,
+            IViewBagService viewBagService,
+            IRetryService retryService,
+            IFornitoreService fornitoreService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
