@@ -14,6 +14,7 @@ namespace AppComunicazioni.Service
             { ServizioType.APP, new List<CodCorType>{ CodCorType.DATAVIZ } },
             { ServizioType.APT, new List<CodCorType>{ CodCorType.DATAVIZ } },
             { ServizioType.APL, new List<CodCorType>{ CodCorType.DATAVIZ } },
+            { ServizioType.ATS, new List<CodCorType>{ CodCorType.DATAVIZ } },
             { ServizioType.BA2, new List<CodCorType>{ CodCorType.DATAVIZ, CodCorType.CESSIONI } },  // Condizione speciale
             { ServizioType.DIM, new List<CodCorType>{ CodCorType.DATAVIZ } },
             { ServizioType.DV,  new List<CodCorType>{ CodCorType.DATAVIZ } },
