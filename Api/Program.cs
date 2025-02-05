@@ -5,14 +5,26 @@ using AppComunicazioni.Service;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "AppComunicazioni")
+});
 
-// Add services to the container.
+
+// Configura Kestrel per ascoltare su IP e porta specifica
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5280); // Usa la stessa porta di AppComunicazioni
+});
+
+// Leggi la stringa di connessione
 var connectionString = builder.Configuration.GetConnectionString("ComDbContext");
 if (string.IsNullOrEmpty(connectionString))
 {
     throw new InvalidOperationException("La stringa di connessione non è stata trovata.");
 }
+
 // Configura il DbContext
 builder.Services.AddDbContext<ComDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -26,15 +38,15 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(builder =>
+    options.AddDefaultPolicy(policy =>
     {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Configura Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -48,7 +60,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Middleware per Swagger in modalità sviluppo
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -59,9 +71,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
