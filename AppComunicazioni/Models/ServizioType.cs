@@ -4,9 +4,9 @@ namespace AppComunicazioni.Models
 {
     public enum ServizioType
     {
+        APL,
         APP,
         APT,
-        APL,
         ATS,
         BA2,
         BAN,
