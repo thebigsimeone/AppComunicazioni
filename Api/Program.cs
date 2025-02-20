@@ -11,7 +11,6 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     ContentRootPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "AppComunicazioni")
 });
 
-
 // Configura Kestrel per ascoltare su IP e porta specifica
 builder.WebHost.ConfigureKestrel(options =>
 {
