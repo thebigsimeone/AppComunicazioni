@@ -77,7 +77,7 @@ public class CreateController : Controller
                     {
                         var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
 
-                        var fileNameParts = (comunicazioni.FileName ?? string.Empty).Split('_');
+                        var fileNameParts = CommunicationFileName.Split(comunicazioni.FileName ?? string.Empty);
                         var mandante = fileNameParts.FirstOrDefault(part =>
                             part.Equals("TENANT_B", StringComparison.OrdinalIgnoreCase) ||
                             part.Equals("TENANT_A", StringComparison.OrdinalIgnoreCase));
@@ -134,4 +134,3 @@ public class CreateController : Controller
         ViewBag.ServizioOptions = _viewBagService.GetServizioOptions() ?? new List<SelectListItem>();
     }
 }
-

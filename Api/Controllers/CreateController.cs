@@ -101,7 +101,7 @@ namespace Api.Controllers
             {
                 // Rimuove l'estensione .xlsx
                 string fileName = Path.GetFileNameWithoutExtension(fullFileName);
-                var fileNameParts = fileName.Split('_');
+                var fileNameParts = CommunicationFileName.Split(fileName);
 
                 if (fileNameParts.Length < 3)
                 {
