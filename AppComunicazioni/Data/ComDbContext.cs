@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
@@ -31,8 +31,6 @@ public partial class ComDbContext : DbContext
         {
             // Usa la stringa di connessione dal file di configurazione
             var connectionString = _configuration.GetConnectionString("ComDbContext");
-           //var connectionString = _configuration.GetConnectionString("ComDbContext_old_ufficio");
-           //var connectionString = _configuration.GetConnectionString("ComDbContext_old_flavio");
             optionsBuilder.UseSqlServer(connectionString);
         }
     }
@@ -76,3 +74,4 @@ public partial class ComDbContext : DbContext
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
+

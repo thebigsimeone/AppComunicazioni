@@ -1,4 +1,4 @@
-﻿using AppComunicazioni.Data;
+using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +38,7 @@ namespace AppComunicazioni.Controllers
         {
             return await _retryService.ExecuteWithRetry(async () =>
             {
-                tipoAccertamento ??= "SSC";
+                tipoAccertamento ??= "TENANT_B";
 
                 // Setup ViewBag per i filtri
                 SetViewBagOptions(codCor, tipoAccertamento, meseAnno);
@@ -91,8 +91,8 @@ namespace AppComunicazioni.Controllers
             ViewBag.CodCorOptions = _viewBagService.GetCodCorOptions(codCor);
             ViewBag.TipoAccertamentoOptions = new List<SelectListItem>
             {
-                new SelectListItem { Value = "SSC", Text = "SSC", Selected = tipoAccertamento == "SSC" },
-                new SelectListItem { Value = "EBI", Text = "EBI", Selected = tipoAccertamento == "EBI" }
+                new SelectListItem { Value = "TENANT_B", Text = "TENANT_B", Selected = tipoAccertamento == "TENANT_B" },
+                new SelectListItem { Value = "TENANT_A", Text = "TENANT_A", Selected = tipoAccertamento == "TENANT_A" }
             };
             ViewData["MeseAnno"] = meseAnno;
             ViewData["CodCor"] = codCor;
@@ -100,3 +100,4 @@ namespace AppComunicazioni.Controllers
         }
     }
 }
+

@@ -1,4 +1,4 @@
-﻿// Abilita spinner al submit
+// Abilita spinner al submit
 document.addEventListener('submit', function (e) {
     const form = e.target;
     if (form.tagName === 'FORM') {
@@ -50,13 +50,13 @@ function updateServizioOptions() {
     // Aggiunge nuove opzioni in base al CodCor selezionato
     let options = [];
     switch (codCor) {
-        case "CESSIONI":
+        case "FORNITORE_B":
             options = ["BA2", "BAN", "CEP"];
             break;
-        case "DATAVIZ":
+        case "FORNITORE_A":
             options = ["APL", "APP", "APT", "ATS", "BA2", "DIM", "DV", "ERE", "MA7", "MIM", "PDL", "S035", "VL1", "VLA", "VL3", "VPP", "VSA", "VSS"];
             break;
-        case "FORZA":
+        case "FORNITORE_C":
             options = ["DP1", "VED"];
             break;
         default:

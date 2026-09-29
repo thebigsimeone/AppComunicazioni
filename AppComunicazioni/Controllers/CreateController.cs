@@ -1,4 +1,4 @@
-﻿using AppComunicazioni.Data;
+using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
@@ -79,8 +79,8 @@ public class CreateController : Controller
 
                         var fileNameParts = (comunicazioni.FileName ?? string.Empty).Split('_');
                         var mandante = fileNameParts.FirstOrDefault(part =>
-                            part.Equals("SSC", StringComparison.OrdinalIgnoreCase) ||
-                            part.Equals("EBI", StringComparison.OrdinalIgnoreCase));
+                            part.Equals("TENANT_B", StringComparison.OrdinalIgnoreCase) ||
+                            part.Equals("TENANT_A", StringComparison.OrdinalIgnoreCase));
 
                         if (mandante != null)
                         {
@@ -134,3 +134,4 @@ public class CreateController : Controller
         ViewBag.ServizioOptions = _viewBagService.GetServizioOptions() ?? new List<SelectListItem>();
     }
 }
+

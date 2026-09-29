@@ -1,16 +1,16 @@
-﻿using AppComunicazioni.Controllers;
+using AppComunicazioni.Controllers;
 using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models.DTO_s;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
-[Route("ComunicazionisSsc")]
-public class ComunicazionisSscController : ComunicazioniBaseController<ComunicazionisSscController>
+[Route("ComunicazionisTenantA")]
+public class ComunicazionisTenantAController : ComunicazioniBaseController<ComunicazionisTenantAController>
 {
     private readonly ILogger<EditController> _editLogger;
 
-    public ComunicazionisSscController(
+    public ComunicazionisTenantAController(
         ComDbContext context,
         IMapper mapper,
         IEmailService emailService,
@@ -22,7 +22,7 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
         IViewBagService viewBagService,
         IRetryService retryService,
         IEncryptionService encryptionService,
-        ILogger<ComunicazionisSscController> logger,
+        ILogger<ComunicazionisTenantAController> logger,
         ILogger<EditController> editLogger,
         IPaginationService paginationService,
         IHttpContextAccessor httpContextAccessor)
@@ -35,7 +35,7 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
     [HttpGet]
     public async Task<IActionResult> Index([FromQuery] ComunicazioniViewModel filtri)
     {
-        return await BaseIndex(filtri, "SSC");
+        return await BaseIndex(filtri, "TENANT_A");
     }
 
     [HttpGet("Details/{id}")]
@@ -66,6 +66,7 @@ public class ComunicazionisSscController : ComunicazioniBaseController<Comunicaz
     [HttpPost("ResetFiltri")]
     public IActionResult ResetFiltri()
     {
-        return base.ResetFiltri("SSC");
+        return base.ResetFiltri("TENANT_A");
     }
 }
+
