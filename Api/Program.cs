@@ -3,7 +3,7 @@ using AppComunicazioni.Interface;
 using AppComunicazioni.Properties;
 using AppComunicazioni.Service;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -33,7 +33,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<IFornitoreService, FornitoreService>();
 
-builder.Services.AddAutoMapper(typeof(MappingProfile));
+builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfile));
 
 builder.Services.AddCors(options =>
 {

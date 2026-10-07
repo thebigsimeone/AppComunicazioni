@@ -1,4 +1,4 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 public class SwaggerFileUploadFilter : IOperationFilter
@@ -7,27 +7,50 @@ public class SwaggerFileUploadFilter : IOperationFilter
     {
         if (operation.RequestBody == null)
         {
-            operation.RequestBody = new OpenApiRequestBody();
-        }
-
-        operation.RequestBody.Content = new Dictionary<string, OpenApiMediaType>
-        {
-            ["multipart/form-data"] = new OpenApiMediaType
+            operation.RequestBody = new OpenApiRequestBody
             {
-                Schema = new OpenApiSchema
+                Content = new Dictionary<string, OpenApiMediaType>
                 {
-                    Type = "object",
-                    Properties = new Dictionary<string, OpenApiSchema>
+                    ["multipart/form-data"] = new OpenApiMediaType
                     {
-                        ["file"] = new OpenApiSchema
+                        Schema = new OpenApiSchema
                         {
-                            Type = "string",
-                            Format = "binary"
+                            Type = "object",
+                            Properties = new Dictionary<string, OpenApiSchema>
+                            {
+                                ["file"] = new OpenApiSchema
+                                {
+                                    Type = "string",
+                                    Format = "binary"
+                                }
+                            },
+                            Required = new HashSet<string> { "file" }
                         }
-                    },
-                    Required = new HashSet<string> { "file" }
+                    }
                 }
-            }
-        };
+            };
+        }
+        else if (operation.RequestBody is OpenApiRequestBody openApiRequestBody)
+        {
+            openApiRequestBody.Content = new Dictionary<string, OpenApiMediaType>
+            {
+                ["multipart/form-data"] = new OpenApiMediaType
+                {
+                    Schema = new OpenApiSchema
+                    {
+                        Type = "object",
+                        Properties = new Dictionary<string, OpenApiSchema>
+                        {
+                            ["file"] = new OpenApiSchema
+                            {
+                                Type = "string",
+                                Format = "binary"
+                            }
+                        },
+                        Required = new HashSet<string> { "file" }
+                    }
+                }
+            };
+        }
     }
 }

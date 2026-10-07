@@ -46,7 +46,8 @@ builder.Services.AddResponseCompression(options =>
     options.MimeTypes = new[] { "text/javascript", "text/css", "application/json" };
 });
 
-ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+// api corretta per EPPlus 8+
+ExcelPackage.License.SetNonCommercialPersonal("Flavio Simeone"); // Sostituisci con il tuo nome reale
 
 // Configurazione del contesto del database
 // Configurazione del contesto del database con logging
@@ -107,7 +108,7 @@ builder.Services.AddHostedService<NotificationBackgroundService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 
 // Registrazione di AutoMapper
-builder.Services.AddAutoMapper(typeof(MappingProfile));
+builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<MappingProfile>(); });
 
 // Aggiunta delle funzionalità per HTTP Client, MVC e API Explorer
 builder.Services.AddHttpClient();
