@@ -1,4 +1,4 @@
-﻿using AppComunicazioni.Interface;
+using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,7 +43,7 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
         if (string.IsNullOrEmpty(tenant))
         {
             _logger.LogWarning("Il valore del tenant è nullo o vuoto. Utilizzo di un valore predefinito.");
-            tenant = "SSC";
+            tenant = "TENANT_B";
         }
 
         sortField ??= "DateA";
@@ -192,3 +192,4 @@ public class FiltroComunicazioniService : IFiltroComunicazioniService
         };
     }
 }
+

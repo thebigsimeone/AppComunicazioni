@@ -12,7 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 // Chiave di crittografia - 32 caratteri per AES
-var encryptionKey = "12345678901234567890123456789012";
+var encryptionKey = builder.Configuration["Encryption:Key"]
+    ?? throw new InvalidOperationException("Configurare Encryption:Key tramite configurazione privata.");
 builder.Services.AddSingleton<IEncryptionService>(provider => new EncryptionService(encryptionKey));
 
 Log.Logger = new LoggerConfiguration()
@@ -57,11 +58,10 @@ builder.Services.AddDbContext<ComDbContext>(options =>
 
     if (string.IsNullOrEmpty(connectionString))
     {
-        Log.Error("La stringa di connessione Ë null o vuota!");
-        throw new InvalidOperationException("La stringa di connessione non puÚ essere null.");
+        Log.Error("La stringa di connessione √® null o vuota!");
+        throw new InvalidOperationException("La stringa di connessione non pu√≤ essere null.");
     }
 
-    Log.Information($"Usando la stringa di connessione: {connectionString}");
 
     options.UseSqlServer(connectionString,
         sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
@@ -90,7 +90,7 @@ builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 builder.Services.AddScoped<IStopMonitoringService, StopMonitoringService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 
-builder.Services.AddScoped<IContabilit‡Service, Contabilit‡Service>();
+builder.Services.AddScoped<IContabilit√†Service, Contabilit√†Service>();
 builder.Services.AddScoped<IFiltroComunicazioniService, FiltroComunicazioniService>();
 builder.Services.AddScoped<IViewBagService, ViewBagService>();
 builder.Services.AddScoped<IPaginationService, PaginationService>();
@@ -110,7 +110,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 // Registrazione di AutoMapper
 builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<MappingProfile>(); });
 
-// Aggiunta delle funzionalit‡ per HTTP Client, MVC e API Explorer
+// Aggiunta delle funzionalit√† per HTTP Client, MVC e API Explorer
 builder.Services.AddHttpClient();
 builder.Services.AddMvc();
 builder.Services.AddEndpointsApiExplorer();
@@ -151,5 +151,6 @@ if (app.Environment != null)
 }
 else
 {
-    throw new InvalidOperationException("La configurazione di 'app.Environment' Ë null. Verificare il contesto di esecuzione.");
+    throw new InvalidOperationException("La configurazione di 'app.Environment' √® null. Verificare il contesto di esecuzione.");
 }
+

@@ -1,4 +1,4 @@
-﻿using AppComunicazioni.Interface;
+using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 
 namespace AppComunicazioni.Service
@@ -6,42 +6,44 @@ namespace AppComunicazioni.Service
     public class FornitoreService : IFornitoreService
     {
         private readonly ILogger<FornitoreService> _logger;
+        private readonly IConfiguration _configuration;
 
         // Mappa Enum Servizio -> Enum Fornitore
         private static readonly Dictionary<ServizioType, List<CodCorType>> ServizioToFornitoreMap = new()
         {
-            // DATAVIZ
-            { ServizioType.APL, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.APP, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.APT, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.ATS, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.BA2, new List<CodCorType>{ CodCorType.DATAVIZ, CodCorType.CESSIONI } },  // Condizione speciale
-            { ServizioType.DIM, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.DV,  new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.ERE, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.MA7, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.MIM, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.PDL, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.S035, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.VL1, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.VLA, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.VL3, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.VPP, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.VSA, new List<CodCorType>{ CodCorType.DATAVIZ } },
-            { ServizioType.VSS, new List<CodCorType>{ CodCorType.DATAVIZ } },
+            // FORNITORE_A
+            { ServizioType.APL, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.APP, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.APT, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.ATS, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.BA2, new List<CodCorType>{ CodCorType.FORNITORE_A, CodCorType.FORNITORE_B } },  // Condizione speciale
+            { ServizioType.DIM, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.DV,  new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.ERE, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.MA7, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.MIM, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.PDL, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.S035, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.VL1, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.VLA, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.VL3, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.VPP, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.VSA, new List<CodCorType>{ CodCorType.FORNITORE_A } },
+            { ServizioType.VSS, new List<CodCorType>{ CodCorType.FORNITORE_A } },
 
-            // CESSIONI
-            { ServizioType.BAN, new List<CodCorType>{ CodCorType.CESSIONI } },
-            { ServizioType.CEP, new List<CodCorType>{ CodCorType.CESSIONI } },
+            // FORNITORE_B
+            { ServizioType.BAN, new List<CodCorType>{ CodCorType.FORNITORE_B } },
+            { ServizioType.CEP, new List<CodCorType>{ CodCorType.FORNITORE_B } },
 
-            // FORZA
-            { ServizioType.DP1, new List<CodCorType>{ CodCorType.FORZA } },
-            { ServizioType.VED, new List<CodCorType>{ CodCorType.FORZA } }
+            // FORNITORE_C
+            { ServizioType.DP1, new List<CodCorType>{ CodCorType.FORNITORE_C } },
+            { ServizioType.VED, new List<CodCorType>{ CodCorType.FORNITORE_C } }
         };
 
-        public FornitoreService(ILogger<FornitoreService> logger)
+        public FornitoreService(ILogger<FornitoreService> logger, IConfiguration configuration)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -51,22 +53,24 @@ namespace AppComunicazioni.Service
         {
             if (!ServizioToFornitoreMap.TryGetValue(servizio, out var fornitori))
             {
-                _logger.LogWarning($"Servizio '{servizio}' non trovato. Fornitore impostato su 'DATAVIZ'.");
-                return CodCorType.DATAVIZ;
+                _logger.LogWarning($"Servizio '{servizio}' non trovato. Fornitore impostato su 'FORNITORE_A'.");
+                return CodCorType.FORNITORE_A;
             }
 
             // Gestione speciale per BA2
             if (servizio == ServizioType.BA2)
             {
-                if (fileName.Contains("1988") || fileName.Contains("1990"))
+                if ((_configuration.GetSection("SupplierRouting:SupplierBMarkers").Get<string[]>() ?? Array.Empty<string>())
+                    .Any(marker => !string.IsNullOrWhiteSpace(marker) && fileName.Contains(marker, StringComparison.Ordinal)))
                 {
-                    _logger.LogInformation("Servizio 'BA2' associato a 'CESSIONI' per presenza di 1988 o 1990.");
-                    return CodCorType.CESSIONI;
+                    _logger.LogInformation("Servizio 'BA2' associato a 'FORNITORE_B' tramite configurazione privata.");
+                    return CodCorType.FORNITORE_B;
                 }
-                else if (fileName.Contains("8033"))
+                else if ((_configuration.GetSection("SupplierRouting:SupplierAMarkers").Get<string[]>() ?? Array.Empty<string>())
+                    .Any(marker => !string.IsNullOrWhiteSpace(marker) && fileName.Contains(marker, StringComparison.Ordinal)))
                 {
-                    _logger.LogInformation("Servizio 'BA2' associato a 'DATAVIZ' per presenza di 8033.");
-                    return CodCorType.DATAVIZ;
+                    _logger.LogInformation("Servizio 'BA2' associato a 'FORNITORE_A' tramite configurazione privata.");
+                    return CodCorType.FORNITORE_A;
                 }
             }
 
@@ -81,3 +85,4 @@ namespace AppComunicazioni.Service
         }
     }
 }
+

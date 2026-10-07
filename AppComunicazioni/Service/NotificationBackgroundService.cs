@@ -1,15 +1,17 @@
-﻿using AppComunicazioni.Interface;
+using AppComunicazioni.Interface;
 
 namespace AppComunicazioni.Service
 {
     public class NotificationBackgroundService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly IConfiguration _configuration;
         private readonly ILogger<NotificationBackgroundService> _logger;
 
-        public NotificationBackgroundService(IServiceProvider serviceProvider, ILogger<NotificationBackgroundService> logger)
+        public NotificationBackgroundService(IServiceProvider serviceProvider, ILogger<NotificationBackgroundService> logger, IConfiguration configuration)
         {
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+            _configuration = configuration;
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -41,8 +43,10 @@ namespace AppComunicazioni.Service
 
                     try
                     {
+                        var recipient = _configuration["Notifications:Recipient"];
+                        if (string.IsNullOrWhiteSpace(recipient)) return;
                         await emailService.SendEmailAsync(
-                            "simeone.eurocredit@gmail.com",
+                            recipient,
                             "Arresto del servizio rilevato",
                             $"L'applicazione è stata arrestata alle {DateTime.Now}. Errore: {ex.Message}");
                     }
@@ -122,3 +126,4 @@ namespace AppComunicazioni.Service
         }
     }
 }
+

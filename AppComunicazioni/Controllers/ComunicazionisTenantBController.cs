@@ -1,16 +1,16 @@
-﻿using AppComunicazioni.Controllers;
+using AppComunicazioni.Controllers;
 using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models.DTO_s;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
-[Route("ComunicazionisEbi")]
-public class ComunicazionisEbiController : ComunicazioniBaseController<ComunicazionisEbiController>
+[Route("ComunicazionisTenantB")]
+public class ComunicazionisTenantBController : ComunicazioniBaseController<ComunicazionisTenantBController>
 {
     private readonly ILogger<EditController> _editLogger;
 
-    public ComunicazionisEbiController(
+    public ComunicazionisTenantBController(
         ComDbContext context,
         IMapper mapper,
         IEmailService emailService,
@@ -22,7 +22,7 @@ public class ComunicazionisEbiController : ComunicazioniBaseController<Comunicaz
         IViewBagService viewBagService,
         IRetryService retryService,
         IEncryptionService encryptionService,
-        ILogger<ComunicazionisEbiController> logger,
+        ILogger<ComunicazionisTenantBController> logger,
         ILogger<EditController> editLogger,
         IPaginationService paginationService,
         IHttpContextAccessor httpContextAccessor)
@@ -35,7 +35,7 @@ public class ComunicazionisEbiController : ComunicazioniBaseController<Comunicaz
     [HttpGet]
     public async Task<IActionResult> Index([FromQuery] ComunicazioniViewModel filtri)
     {
-        return await BaseIndex(filtri, "EBI");
+        return await BaseIndex(filtri, "TENANT_B");
     }
 
     [HttpGet("Details/{id}")]
@@ -66,6 +66,7 @@ public class ComunicazionisEbiController : ComunicazioniBaseController<Comunicaz
     [HttpPost("ResetFiltri")]
     public IActionResult ResetFiltri()
     {
-        return base.ResetFiltri("EBI");
+        return base.ResetFiltri("TENANT_B");
     }
 }
+

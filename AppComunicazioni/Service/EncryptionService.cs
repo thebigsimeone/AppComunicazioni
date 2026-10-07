@@ -1,4 +1,4 @@
-﻿using AppComunicazioni.Interface;
+using AppComunicazioni.Interface;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -10,8 +10,8 @@ namespace AppComunicazioni.Services
 
         public EncryptionService(string key)
         {
-            if (string.IsNullOrEmpty(key) || key.Length != 32) // AES richiede 32 caratteri
-                throw new ArgumentException("Chiave di crittografia non valida. Deve essere lunga 32 caratteri.");
+            if (string.IsNullOrEmpty(key) || Encoding.UTF8.GetByteCount(key) != 32) // AES richiede 32 byte UTF-8
+                throw new ArgumentException("Chiave di crittografia non valida. Deve essere lunga 32 byte UTF-8.");
 
             _key = key;
         }
@@ -55,3 +55,4 @@ namespace AppComunicazioni.Services
         }
     }
 }
+

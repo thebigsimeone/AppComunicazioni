@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using Api.ModelsDTO;
 using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
@@ -101,7 +101,7 @@ namespace Api.Controllers
             {
                 // Rimuove l'estensione .xlsx
                 string fileName = Path.GetFileNameWithoutExtension(fullFileName);
-                var fileNameParts = fileName.Split('_');
+                var fileNameParts = CommunicationFileName.Split(fileName);
 
                 if (fileNameParts.Length < 3)
                 {
@@ -110,8 +110,8 @@ namespace Api.Controllers
                 }
 
                 // Estrai il codice fornitore, il mandante e il servizio
-                string codiceFornitore = fileNameParts[0].Split('-').Last(); // Ottiene 8033
-                string mandante = fileNameParts[1]; // SSC o EBI
+                string codiceFornitore = fileNameParts[0].Split('-').Last(); // Ottiene il codice fornitore
+                string mandante = fileNameParts[1]; // TENANT_B o TENANT_A
                 string servizioString = fileNameParts[2]; // APT
 
                 // Determina il servizio
