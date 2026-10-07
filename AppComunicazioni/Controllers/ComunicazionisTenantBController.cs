@@ -10,22 +10,21 @@ public class ComunicazionisTenantBController : ComunicazioniBaseController<Comun
 {
     private readonly ILogger<EditController> _editLogger;
 
-    public ComunicazionisTenantBController(
-        ComDbContext context,
-        IMapper mapper,
-        IEmailService emailService,
-        IMonitoringService monitoringService,
-        IStopMonitoringService stopMonitoringService,
-        IFiltroComunicazioniService filtroService,
-        IExcelService excelService,
-        ISendMailService sendMailService,
-        IViewBagService viewBagService,
-        IRetryService retryService,
-        IEncryptionService encryptionService,
-        ILogger<ComunicazionisTenantBController> logger,
-        ILogger<EditController> editLogger,
-        IPaginationService paginationService,
-        IHttpContextAccessor httpContextAccessor)
+    public ComunicazionisTenantBController(ComDbContext context,
+                                           IMapper mapper,
+                                           IEmailService emailService,
+                                           IMonitoringService monitoringService,
+                                           IStopMonitoringService stopMonitoringService,
+                                           IFiltroComunicazioniService filtroService,
+                                           IExcelService excelService,
+                                           ISendMailService sendMailService,
+                                           IViewBagService viewBagService,
+                                           IRetryService retryService,
+                                           IEncryptionService encryptionService,
+                                           ILogger<ComunicazionisTenantBController> logger,
+                                           ILogger<EditController> editLogger,
+                                           IPaginationService paginationService,
+                                           IHttpContextAccessor httpContextAccessor)
         : base(context, mapper, emailService, monitoringService, stopMonitoringService, filtroService, excelService,
                sendMailService, logger, viewBagService, retryService, encryptionService, paginationService, httpContextAccessor)
     {
