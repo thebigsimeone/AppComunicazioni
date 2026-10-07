@@ -1,4 +1,4 @@
-﻿using AppComunicazioni.Data;
+using AppComunicazioni.Data;
 using AppComunicazioni.Interface;
 using AppComunicazioni.Models;
 using AppComunicazioni.Models.DTO_s;
@@ -77,10 +77,10 @@ public class CreateController : Controller
                     {
                         var comunicazioni = _mapper.Map<Comunicazioni>(comunicazioniDTO);
 
-                        var fileNameParts = (comunicazioni.FileName ?? string.Empty).Split('_');
+                        var fileNameParts = CommunicationFileName.Split(comunicazioni.FileName ?? string.Empty);
                         var mandante = fileNameParts.FirstOrDefault(part =>
-                            part.Equals("SSC", StringComparison.OrdinalIgnoreCase) ||
-                            part.Equals("EBI", StringComparison.OrdinalIgnoreCase));
+                            part.Equals("TENANT_B", StringComparison.OrdinalIgnoreCase) ||
+                            part.Equals("TENANT_A", StringComparison.OrdinalIgnoreCase));
 
                         if (mandante != null)
                         {

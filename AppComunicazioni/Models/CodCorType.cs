@@ -1,13 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 public enum CodCorType
 {
-    [Display(Name = "DATEVIZ")]
-    DATEVIZ,
+    [Display(Name = "FORNITORE_A")]
+    FORNITORE_A,
 
-    [Display(Name = "CESSIONI")]
-    CESSIONI,
+    [Display(Name = "FORNITORE_B")]
+    FORNITORE_B,
 
-    [Display(Name = "FORZA")]
-    FORZA
+    [Display(Name = "FORNITORE_C")]
+    FORNITORE_C
 }

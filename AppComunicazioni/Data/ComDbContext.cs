@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using AppComunicazioni.Models;
 using Microsoft.EntityFrameworkCore;
@@ -74,3 +74,4 @@ public partial class ComDbContext : DbContext
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
+

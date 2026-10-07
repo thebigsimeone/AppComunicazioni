@@ -1,4 +1,4 @@
-﻿@model ComunicazioniViewModel
+@model ComunicazioniViewModel
 @using AppComunicazioni.Interface
 @using AppComunicazioni.Models
 @using AppComunicazioni.Helpers
@@ -23,7 +23,7 @@
 }
 
 <div class="container-fluid px-4">
-    <h1 class="mb-4 text-center" style="font-size: 1.5rem;">Comunicazioni SSC</h1>
+    <h1 class="mb-4 text-center" style="font-size: 1.5rem;">Comunicazioni TENANT_B</h1>
     
     <partial name="_Filters" model="Model" />
 
@@ -45,3 +45,4 @@
         return encryptionService.Encrypt(id.ToString());
     }
 }
+
