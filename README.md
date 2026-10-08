@@ -116,3 +116,7 @@ dotnet run --project tests/FileNames/FileNames.csproj
 Il controllo verifica il riconoscimento dei nomi con entrambi i tenant, anche in minuscolo, senza richiedere SQL Server. Il flusso completo di importazione e notifica richiede database e SMTP configurati.
 
 Vedere [PUBLICATION.md](PUBLICATION.md) per la gestione delle impostazioni riservate.
+
+## Flussi operativi e automazioni
+
+Vedere [FLUSSI.md](FLUSSI.md) per i percorsi dall'azione iniziale al risultato, le operazioni interne, gli errori, gli effetti parziali e le automazioni attive o disattivate.
