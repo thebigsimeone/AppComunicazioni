@@ -1,14 +1,16 @@
-# Flussi operativi — AppComunicazioni
+# AppComunicazioni — Flussi operativi
 
-[README](README.md) · [Controller MVC](AppComunicazioni/Controllers) · [Servizi](AppComunicazioni/Service) · [API](Api/Controllers)
+[README del progetto](README.md) · [Flussi nel README](README.md#flussi-operativi)
 
-## Ambito e ingresso
+I flussi descrivono il comportamento implementato, inclusi gli effetti parziali e le automazioni non attive. La ricostruzione si basa sull'analisi statica dei sorgenti dell'8 ottobre 2026; le verifiche proposte non costituiscono test già eseguiti.
 
-Documentazione ricavata dai sorgenti disponibili il 8 ottobre 2026; verifica statica, senza inviare email o modificare dati reali. La soluzione comprende un'app MVC per l'operatore e un processo API per importare Excel. I processi automatici descritti sotto sono registrati **nella web app MVC**.
+## Contesto operativo
+
+La soluzione comprende un'app MVC per l'operatore e un processo API per importare Excel. I processi automatici descritti sotto sono registrati **nella web app MVC**.
 
 L'operatore parte dalla home, sceglie il tenant, consulta o crea una comunicazione e ne registra il rientro. Non risulta un flusso di login applicativo nei sorgenti esaminati. SQL, chiave di cifratura e SMTP devono essere configurati.
 
-## 1. Destinatari delle notifiche
+## Destinatari delle notifiche
 
 1. L'utente apre `Destinataris/Index`; il controller legge il database e mostra l'elenco.
 2. Può aprire Create, Details, Edit o Delete.
@@ -24,9 +26,9 @@ L'operatore parte dalla home, sceglie il tenant, consulta o crea una comunicazio
 | Smarchi = S | Email di rientro/smarco |
 | Report = S | Riepilogo giornaliero/manuale |
 
-Il flag di categoria viene usato insieme ad Attivo. Non c'è un invio di conferma al destinatario al salvataggio dell'anagrafica. Riferimento: [DestinatarisController](AppComunicazioni/Controllers/DestinatarisController.cs).
+Il flag di categoria viene usato insieme ad Attivo. Non è presente un invio di conferma al destinatario al salvataggio dell'anagrafica. Riferimento: [DestinatarisController](AppComunicazioni/Controllers/DestinatarisController.cs).
 
-## 2. Elenco comunicazioni, filtri e dettagli
+## Elenco comunicazioni, filtri e dettagli
 
 1. L'utente apre la sezione TENANT_A o TENANT_B.
 2. `BaseIndex` costruisce la query del tenant, applica ricerca, date, fornitore, servizio, mese, ordinamento e opzione non restituite.
@@ -37,9 +39,9 @@ Il flag di categoria viene usato insieme ad Attivo. Non c'è un invio di conferm
 
 Riferimenti: [controller base](AppComunicazioni/Controllers/ComunicazioniBaseController.cs), [filtri](AppComunicazioni/Service/FiltroComunicazioniService.cs), [dettagli](AppComunicazioni/Controllers/DetailsController.cs).
 
-## 3. Creazione manuale con Excel facoltativo
+## Creazione manuale con Excel facoltativo
 
-**Inizio:** l'utente apre `Create/Index`, compila nome file, servizio, date, quantità e note; può allegare Excel.
+**Punto di ingresso:** l'utente apre `Create/Index`, compila nome file, servizio, date, quantità e note; può allegare Excel.
 
 1. Invia POST `Create/Create` con antiforgery.
 2. Modulo nullo/invalido: messaggio di errore e redirect o ripresentazione del modello secondo il ramo del controller.
@@ -57,9 +59,9 @@ Riferimenti: [controller base](AppComunicazioni/Controllers/ComunicazioniBaseCon
 
 Riferimento: [CreateController MVC](AppComunicazioni/Controllers/CreateController.cs).
 
-## 4. Importazione automatizzata via API
+## Importazione automatizzata via API
 
-**Inizio:** un client o un'altra applicazione invia `POST /api/Create/upload`, multipart/form-data con campo `File`.
+**Punto di ingresso:** un client o un'altra applicazione invia `POST /api/Create/upload`, multipart/form-data con campo `File`.
 
 1. L'API rifiuta file assente/vuoto con 400.
 2. Analizza il nome preservando il tenant con underscore; estrae servizio e conteggio dall'ultimo segmento.
@@ -72,13 +74,13 @@ Riferimento: [CreateController MVC](AppComunicazioni/Controllers/CreateControlle
 
 Esempio nome: `IT-1_TENANT_A_VSA_20261008-1200_3.xlsx`. Non aggiungere un suffisso numerico dopo il conteggio: il parser lo interpreta come quantità.
 
-**Differenza dalla creazione MVC:** l'API esegue due salvataggi senza una transazione esplicita comune. Se fallisce la lettura o il salvataggio dei dettagli, può restare la comunicazione già inserita anche con risposta 500. Non c'è deduplicazione di upload o chiave di idempotenza.
+**Differenza dalla creazione MVC:** l'API esegue due salvataggi senza una transazione esplicita comune. Se fallisce la lettura o il salvataggio dei dettagli, può restare la comunicazione già inserita anche con risposta 500. Non è presente deduplicazione di upload o chiave di idempotenza.
 
 In entrambi i percorsi, un foglio vuoto o privo delle intestazioni richieste restituisce una lista dettagli vuota: il messaggio di successo non prova che i dettagli siano stati importati. Le righe con entrambi i campi vuoti vengono saltate.
 
 Riferimenti: [CreateController API](Api/Controllers/CreateController.cs), [ExcelService](AppComunicazioni/Service/ExcelService.cs).
 
-## 5. Aggiornamento e rientro/smarco
+## Aggiornamento e rientro/smarco
 
 1. Dall'elenco l'utente apre la modifica con id cifrato.
 2. Il controller decifra id, carica il record e mostra il modulo.
@@ -91,13 +93,13 @@ Riferimenti: [CreateController API](Api/Controllers/CreateController.cs), [Excel
 9. L'eventuale Excel aggiunge nuovi dettagli; non sostituisce né deduplica quelli già esistenti.
 10. Salva e reindirizza all'azione di modifica; l'utente controlla il record e l'elenco.
 
-**Limiti effettivi:** Email_inviata nullo non entra nel ramo condizionato a false. Errori SMTP vengono intercettati per destinatario; il chiamante può comunque impostare Email_inviata=true, anche senza consegna completa. Il flag non è una ricevuta di recapito. Non è implementato un recupero automatico degli invii parziali.
+**Limiti dell'implementazione:** Email_inviata nullo non entra nel ramo condizionato a false. Errori SMTP vengono intercettati per destinatario; il chiamante può comunque impostare Email_inviata=true, anche senza consegna completa. Il flag non è una ricevuta di recapito. Non è implementato un recupero automatico degli invii parziali.
 
 `StopMonitoringService` viene richiamato dopo alcune email ma non modifica alcun campo del record: esegue un salvataggio e logging. L'esclusione dal monitoraggio dipende realmente da DateF e Notificato nella query.
 
 Riferimenti: [EditController](AppComunicazioni/Controllers/EditController.cs), [SendMailService](AppComunicazioni/Service/SendMailService.cs), [StopMonitoringService](AppComunicazioni/Service/StopMonitoringService.cs).
 
-## 6. Eliminazione, contabilità e report manuale
+## Eliminazione, contabilità e report manuale
 
 | Azione | Ciclo completo | Fine |
 | --- | --- | --- |
@@ -109,7 +111,7 @@ Il report manuale può mostrare successo anche se non ci sono righe o destinatar
 
 Riferimenti: [DeleteController](AppComunicazioni/Controllers/DeleteController.cs), [ContabilitàService](AppComunicazioni/Service/ContabilitàService.cs), [ReportController](AppComunicazioni/Controllers/ReportController.cs).
 
-## 7. Automazione attiva: monitoraggio ritardi
+## Automazione attiva: monitoraggio ritardi
 
 [NotificationBackgroundService](AppComunicazioni/Service/NotificationBackgroundService.cs) viene avviato dalla web app e pianifica le esecuzioni con **orario locale del server**, lunedì–venerdì. Richiede che il processo resti attivo: non è una schedulazione esterna persistente e non recupera esplicitamente esecuzioni perse.
 
@@ -136,7 +138,7 @@ Non è un sollecito giornaliero ripetuto: il flag Notificato impedisce la nuova 
 
 Riferimento: [MonitoringService](AppComunicazioni/Service/MonitoringService.cs).
 
-## 8. Automazione attiva: report delle 17:00
+## Automazione attiva: report delle 17:00
 
 Nei giorni feriali alle 17:00:
 
@@ -149,7 +151,7 @@ Nei giorni feriali alle 17:00:
 
 Riferimento: [ReportService](AppComunicazioni/Service/ReportService.cs).
 
-## 9. Automazioni di manutenzione e gestione errori
+## Automazioni di manutenzione e gestione errori
 
 | Trigger | Operazione | Stato/limite |
 | --- | --- | --- |
@@ -179,10 +181,12 @@ flowchart TD
     I --> J["Email report automatica o manuale"]
 ```
 
-Il diagramma riassume il ciclo, ma non garantisce recapito SMTP: per gli invii parziali e le condizioni dei flag valgono i limiti sopra.
+Il diagramma riassume il ciclo, ma non garantisce recapito SMTP: per gli invii parziali e le condizioni dei flag valgono i limiti descritti nelle sezioni dedicate.
 
-## Dopo la risposta e verifiche suggerite
+## Attività successive alla risposta
 
 Le operazioni interattive terminano prima della risposta; le email richiamate dal controller non vengono accodate. Dopo il redirect/JSON l'utente può controllare il dato. Separatamente, monitoraggio, report e cleanup continuano finché la **web app MVC** è in esecuzione. Se gira solo il processo API, questi hosted service non vengono avviati. Non risultano workflow GitHub Actions nel repository esaminato.
+
+## Verifica dei flussi
 
 Con ambienti di prova verificare: entrambi i tenant, filtri/reset, CRUD destinatari, creazione con/senza intestazioni Excel, importazione fallita dopo il primo save, rientro con email false/nullo, invio SMTP parziale, dettaglio e cancellazione, soglie ritardo, report senza dati, fuso orario server e cleanup su record dimostrativi.
